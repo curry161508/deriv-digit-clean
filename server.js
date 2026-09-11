@@ -1,6 +1,6 @@
 
 const http=require('http'),https=require('https'),fs=require('fs'),path=require('path'),WebSocket=require('ws');
-const PORT=process.env.PORT||3000,DB=process.env.SUPABASE_URL,KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
+const PORT=process.env.PORT||3000,DB=(process.env.SUPABASE_URL&&process.env.SUPABASE_URL.includes('.supabase.co'))?process.env.SUPABASE_URL.replace(/\/rest\/v1\/?$/,''): 'https://iffrhyhslqvpzxmxutrk.supabase.co',KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
 const symbols=['R_10','R_15','R_25','R_30','R_50','R_75','R_100'];
 const names={R_10:'Volatility 10 Index',R_15:'Volatility 15 Index',R_25:'Volatility 25 Index',R_30:'Volatility 30 Index',R_50:'Volatility 50 Index',R_75:'Volatility 75 Index',R_100:'Volatility 100 Index'};
 function supa(method,pathName,body){return new Promise((resolve,reject)=>{if(!DB||!KEY)return reject(new Error('Supabase variables missing'));let u=new URL(DB+pathName),data=body?JSON.stringify(body):null;let r=https.request({hostname:u.hostname,path:u.pathname+u.search,method,headers:{apikey:KEY,Authorization:'Bearer '+KEY,'Content-Type':'application/json',Prefer:'return=minimal',...(data?{'Content-Length':Buffer.byteLength(data)}:{})}},x=>{let out='';x.on('data',b=>out+=b);x.on('end',()=>resolve({status:x.statusCode,body:out}))});r.on('error',reject);if(data)r.write(data);r.end()})}
