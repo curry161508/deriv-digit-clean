@@ -1,0 +1,7 @@
+const http=require('http'),fs=require('fs'),path=require('path'),WebSocket=require('ws');
+const PORT=process.env.PORT||3000;
+const server=http.createServer((req,res)=>{let p=req.url.split('?')[0];if(p==='/'||p==='/index.html')p='/index.html';const f=path.join(__dirname,'public',p);fs.readFile(f,(e,d)=>{if(e){res.writeHead(404);return res.end('Not found')}res.writeHead(200,{'Content-Type':'text/html; charset=utf-8'});res.end(d)})});
+const wss=new WebSocket.Server({server});let clients=new Set(),buffer=[];
+function sendAll(x){const s=JSON.stringify(x);for(const c of clients)if(c.readyState===WebSocket.OPEN)c.send(s)}
+function connectDeriv(){const d=new WebSocket('wss://ws.binaryws.com/websockets/v3');d.on('open',()=>d.send(JSON.stringify({ticks_history:'1HZ10V',count:100,end:'latest',style:'ticks',subscribe:1})));d.on('message',raw=>{let m;try{m=JSON.parse(raw)}catch{return}if(m.error){sendAll({error:m.error.message});return}if(m.history&&m.history.prices){buffer=m.history.prices.slice(-100);sendAll({prices:buffer})}if(m.tick){buffer.push(m.tick.quote);buffer=buffer.slice(-100);sendAll({quote:m.tick.quote})}});d.on('close',()=>setTimeout(connectDeriv,3000));d.on('error',()=>{})}
+wss.on('connection',c=>{clients.add(c);if(buffer.length)c.send(JSON.stringify({prices:buffer}));c.on('close',()=>clients.delete(c))});connectDeriv();server.listen(PORT,()=>console.log('Listening on '+PORT));
