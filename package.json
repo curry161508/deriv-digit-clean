@@ -1,1 +1,1 @@
-{"name":"deriv-vol10-analyzer","version":"1.0.0","private":true,"scripts":{"start":"node server.js"},"dependencies":{"ws":"^8.18.0"}}
+{"name":"deriv-digit-clean","version":"1.0.0","private":true,"scripts":{"start":"node server.js"},"dependencies":{"ws":"^8.18.0"}}
