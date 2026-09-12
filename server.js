@@ -1,4 +1,3 @@
-
 const http=require('http'),https=require('https'),fs=require('fs'),path=require('path'),WebSocket=require('ws');
 const PORT=process.env.PORT||3000,DB=(process.env.SUPABASE_URL&&process.env.SUPABASE_URL.includes('.supabase.co'))?process.env.SUPABASE_URL.replace(/\/rest\/v1\/?$/,''): 'https://iffrhyhslqvpzxmxutrk.supabase.co',KEY=process.env.SUPABASE_SERVICE_ROLE_KEY;
 const symbols=['R_10','R_15','R_25','R_30','R_50','R_75','R_100'];
