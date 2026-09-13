@@ -349,11 +349,11 @@
     <div class="box">
         <label>Activo / Volatilidad:</label>
         <select id="symbolSel">
-            <option value="1HZ10V">Volatilidad 10</option>
-            <option value="1HZ20V">Volatilidad 20</option>
-            <option value="1HZ50V">Volatilidad 50</option>
-            <option value="1HZ75V">Volatilidad 75</option>
-            <option value="1HZ100V" selected>Volatilidad 100</option>
+            <option value="R_10">Volatilidad 10</option>
+            <option value="R_20">Volatilidad 20</option>
+            <option value="R_50">Volatilidad 50</option>
+            <option value="R_75">Volatilidad 75</option>
+            <option value="R_100" selected>Volatilidad 100</option>
         </select>
     </div>
 
@@ -564,17 +564,17 @@ function actualizarEstadisticas() {
 
 function conectarDeriv(simbolo) {
     if(ws) ws.close();
-    ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
+    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
 
     ws.onopen = () => {
         ws.send(JSON.stringify({ ticks: simbolo, subscribe: 1 }));
-        hablar(`Conectado a ${simbolo.replace('1HZ','Volatilidad ').replace('V','')}`);
+        hablar(`Conectado a ${simbolo}`);
     };
 
     ws.onmessage = (evt) => {
         const data = JSON.parse(evt.data);
-        if(data.tick) {
-            const precio = parseFloat(data.tick.quote);
+        if(data.status === 'TICK RECIBIDO' && data.symbol === simbolo) {
+            const precio = parseFloat(data.quote);
             agregarPrecioAlGrafico(precio);
             const dig = ultimoDigito(precio);
             if(predictionWindow && countdownSecond > 0){
