@@ -149,7 +149,7 @@
             .hot-circle{width:44px;height:44px;font-size:16px}
             .time-filters{justify-content:center}
         }
-    </style>
+    .quote-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:#b9edff}.price-live{font-size:20px;color:var(--cyan);font-weight:900}.last-circle{width:54px;height:54px;border:2px solid var(--cyan);border-radius:50%;display:grid;place-items:center;font-size:28px;color:var(--cyan)}.last20-live{display:flex;gap:5px;overflow-x:auto;padding:5px 2px}.last20-live span{min-width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#12344b;border:1px solid #38e8ff;color:#b9edff;font-weight:900}.result-box{border:2px solid var(--cyan);border-radius:18px;background:#0b1424e8;padding:14px;margin:12px 0}.result-main{font-size:30px;font-weight:900;color:var(--gold);margin:8px 0}.result-text{color:#b9edff;line-height:1.5}.countdown{font-size:42px;color:var(--gold);text-align:center;margin-top:10px}.btn-analyze{flex:1;padding:14px;border-radius:14px;background:#154060;border:2px solid var(--cyan);color:var(--cyan);font-size:15px;font-weight:900}.btn-predict{flex:1;padding:14px;border-radius:14px;background:linear-gradient(135deg,#167fc1,#514fe4);border:0;color:#fff;font-size:15px;font-weight:900}.btn-predict:disabled{opacity:.45}\n    </style>
 </head>
 <body>
 <canvas id="matrix" class="matrix"></canvas>
@@ -170,7 +170,7 @@
     <div class="chart-container">
         <div class="chart-canvas-wrap chart">
             <canvas id="chart" width="860" height="280"></canvas>
-        </div>
+        </div><div class="quote-row"><div>PRECIO ACTUAL<div id="priceLive" class="price-live">—</div></div><div>ÚLTIMO DÍGITO<div id="lastCircle" class="last-circle">—</div></div></div><div id="last20" class="last20-live"></div>
         <div class="chart-axis">
             <span>0</span><span>100</span><span>200</span><span>300</span><span>400</span><span>500</span><span>600</span><span>700</span><span>800</span><span>900</span><span>1000</span>
         </div>
@@ -219,9 +219,10 @@
         </div>
     </div>
 
+    <div id="resultBox" class="result-box" style="display:none"><div class="section-title">RESULTADO DEL ANÁLISIS</div><div id="resultMain" class="result-main">—</div><div id="resultText" class="result-text"></div><div id="countdown" class="countdown">—</div></div>
     <!-- 🟢 BOTONES INFERIORES -->
     <div class="bottom-actions">
-        <button id="btnStart" class="btn-start">INICIAR OPERACIÓN</button>
+        <button id="btnAnalyze" class="btn-analyze">HACER ANÁLISIS</button><button id="btnPredict" class="btn-predict" disabled>PREDECIR ANÁLISIS</button>
         <button id="btnVoice" class="btn-voice">VOZ ACTIVADA</button>
     </div>
 
@@ -234,6 +235,7 @@ let A = {}, Q = {};
 let current = 'R_100';
 let voice = true;
 let analysisReady = false;
+let predictionWindow=false;
 let pred = null, predConfidence = 0;
 let timer = null, sec = 0;
 let selectedHistory = 10; // filtro activo
@@ -281,7 +283,7 @@ function ultimoDigito(precio){
 
 // === AGREGAR DATO ===
 function add(q){
-    let n=Number(q), d=ultimoDigito(q);
+    let n=Number(q), d=ultimoDigito(q);$('priceLive').textContent=q;$('lastCircle').textContent=d;
     (Q[current]||(Q[current]=[])).push(n);
     if(Q[current].length>100) Q[current].shift();
     let a = A[current] || (A[current]=[]);
@@ -299,6 +301,7 @@ function add(q){
         speak(`El dígito ${d} apareció cuando quedaban ${sec} segundos`);
     }
 
+    $('last20').innerHTML=(A[current]||[]).slice(-20).map((v,i)=>'<span class=\"'+(v===d?'hot':'')+'\">'+v+'</span>').join('');
     draw();
 }
 
@@ -399,6 +402,9 @@ function draw(){
     drawChart(); // TU GRÁFICO INTACTO
 }
 
+function hacerAnalisis(){let a=A[current]||[];if(a.length<30){speak('Aún no hay suficientes datos');return}analysisReady=true;$('btnPredict').disabled=false;$('resultBox').style.display='block';$('resultMain').textContent='ANÁLISIS COMPLETADO';$('resultText').textContent='Pulsa PREDECIR ANÁLISIS para seleccionar un dígito.';speak('Análisis completado. Pulsa predecir análisis.')}
+function predecir(){let a=(A[current]||[]).slice(-200),w=a.slice(-20);if(!analysisReady||w.length<20){speak('Primero realiza el análisis');return}let score=Array(10).fill(0),global=Array(10).fill(0);a.forEach(d=>global[d]++);global.forEach((n,d)=>score[d]+=n/a.length*.1);a.forEach((d,i)=>score[d]+=(i+1)/a.length*.2);let p3=w.slice(-3),p2=w.slice(-2);for(let i=0;i<a.length-3;i++)if(a[i]===p3[0]&&a[i+1]===p3[1]&&a[i+2]===p3[2])score[a[i+3]]+=.3;for(let i=0;i<a.length-2;i++)if(a[i]===p2[0]&&a[i+1]===p2[1])score[a[i+2]]+=.2;let delta=(w[19]-w[18]+10)%10;for(let i=1;i<a.length-1;i++)if((a[i]-a[i-1]+10)%10===delta)score[a[i+1]]+=.15;let best=score.indexOf(Math.max(...score)),sum=score.reduce((x,y)=>x+y,0)||1,conf=score[best]/sum*100;let strong=conf>=18;$('resultBox').style.display='block';$('resultMain').textContent=strong?'SEÑAL: '+best:'ESPERAR — NO ENTRAR';$('resultText').textContent=strong?'Dígito '+best+' seleccionado. Fuerza matemática '+conf.toFixed(1)+'%. Puede aparecer; no es garantía.':'El dígito '+best+' no tiene suficiente fuerza matemática.';speak(strong?'Dígito seleccionado '+best+'. Tienes 10 segundos para decidir.':'Esperar. No entrar. La señal es débil.');if(strong){predictionWindow=true;let n=10;$('countdown').textContent=n;clearInterval(timer);timer=setInterval(()=>{n--;$('countdown').textContent=n;if(n<=0){clearInterval(timer);predictionWindow=false;$('countdown').textContent='0';speak('Tiempo terminado.');}},1000)}}
+
 // === FILTROS DE TIEMPO ===
 document.querySelectorAll('.filter-btn').forEach(btn=>{
     btn.onclick=()=>{
@@ -453,9 +459,8 @@ window.onload=()=>{
         $('btnVoice').textContent=voice?'VOZ ACTIVADA':'VOZ DESACTIVADA';
         speak(voice?'Voz activada':'Voz desactivada');
     };
-    $('btnStart').onclick=()=>{
-        speak('Iniciando operación');
-    };
+    $('btnAnalyze').onclick=hacerAnalisis;
+    $('btnPredict').onclick=predecir;
 
     conectar(current);
     draw();
