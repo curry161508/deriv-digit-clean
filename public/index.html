@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador Binario - Deriv</title>
+    <title>Scanner Deriv</title>
     <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.min.js"></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family:Arial, sans-serif; }
         body {
+            position:relative;
             background:
                 radial-gradient(circle at top left, rgba(0,255,128,0.14), transparent 35%),
                 linear-gradient(135deg, #050a07 0%, #0f1a0f 45%, #050a07 100%);
@@ -47,7 +48,7 @@
             height:240px;
             border:1px solid rgba(0,255,128,0.22);
             box-shadow:
-                inset 0 0 18px rgba(0,255,128,0.08),
+                inset 0 0 18px rgba(0,180,255,0.10),
                 0 0 22px rgba(0,255,128,0.14);
             position:relative;
             overflow:hidden;
@@ -75,7 +76,7 @@
             border-radius:18px;
             padding:14px;
             margin-bottom:14px;
-            border:1px solid rgba(0,255,128,0.18);
+            border:1px solid rgba(0,180,255,0.22);
             box-shadow:0 0 18px rgba(0,255,128,0.12);
         }
 
@@ -334,15 +335,19 @@
         .toggle.on::after {
             left:23px;
         }
+        .quote-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:#8ddfff}.price-live{font-size:22px;font-weight:bold;color:#00ccff}.last-digit{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:28px;font-weight:bold;color:#00ccff;border:2px solid #00ccff;background:#00ccff18;box-shadow:0 0 18px #00ccff66}.last20{display:flex;gap:5px;overflow:hidden;margin-top:9px}.last20 span{min-width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#12344b;border:1px solid #00aaff;color:#bfefff;font-size:12px;font-weight:bold}.last20 span:last-child{outline:2px solid #00ccff;outline-offset:2px}
+    .matrix-bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;opacity:.22;pointer-events:none}.container{position:relative;z-index:1}
     </style>
 </head>
 <body>
+<canvas id="matrix-bg" class="matrix-bg"></canvas>
 <div class="container">
-    <h2>📊 ANALIZADOR DERIV</h2>
+    <h2>🔵 SCANNER DERIV</h2>
 
     <!-- GRÁFICO DE VELAS NEÓN -->
     <div id="chart-container">
         <div id="chart"></div>
+        <div class="quote-row"><div><small>PRECIO ACTUAL</small><div id="priceLive" class="price-live">—</div></div><div><small>ÚLTIMO DÍGITO</small><div id="lastDigit" class="last-digit">—</div></div></div><div id="last20" class="last20"></div>
     </div>
 
     <!-- SELECCIÓN DE ACTIVO -->
@@ -430,7 +435,7 @@ const MAX_HISTORY = 1000;
 let chart = null;
 let candleSeries = null;
 let candles = [];
-const CANDLE_INTERVAL = 60000;
+const CANDLE_INTERVAL = 10000;
 let lastCandleTime = null;
 
 function inicializarGrafico() {
@@ -438,30 +443,32 @@ function inicializarGrafico() {
     chart = LightweightCharts.createChart(container, {
         layout: {
             background: { type: 'solid', color: '#0a0f14' },
-            textColor: '#00ff88',
+            textColor: '#00ccff',
         },
         grid: {
-            vertLines: { color: 'rgba(0,255,128,0.08)' },
-            horzLines: { color: 'rgba(0,255,128,0.08)' },
+            vertLines: { color: 'rgba(0,180,255,0.10)' },
+            horzLines: { color: 'rgba(0,180,255,0.10)' },
         },
         crosshair: {
             mode: LightweightCharts.CrosshairMode.Normal,
         },
         priceScale: {
-            borderColor: 'rgba(0,255,128,0.18)',
+            borderColor: 'rgba(0,180,255,0.22)',
         },
         timeScale: {
-            borderColor: 'rgba(0,255,128,0.18)',
+            borderColor: 'rgba(0,180,255,0.22)',
             timeVisible: true,
             secondsVisible: false,
+            barSpacing: 2,
+            minBarSpacing: 1,
         },
     });
 
     candleSeries = chart.addCandlestickSeries({
-        upColor: '#00ff88',
+        upColor: '#00ccff',
         downColor: '#ff0066',
         borderVisible: false,
-        wickUpColor: '#00ff88',
+        wickUpColor: '#00ccff',
         wickDownColor: '#ff0066',
     });
 }
@@ -485,7 +492,7 @@ function agregarPrecioAlGrafico(precio) {
         ult.close = precio;
     }
 
-    if (candles.length > 100) candles.shift();
+    if (candles.length > 240) candles.shift();
     candleSeries.setData(candles);
     chart.timeScale().fitContent();
 }
@@ -559,8 +566,10 @@ function actualizarEstadisticas() {
         const momentos = timingCounts[d].map((v,sec)=>v && sec ? `${sec}s×${v}` : '').filter(Boolean).join(' · ');
         if(n) momHtml += `<div class="row"><span class="label">${d} · ${momentos}</span><span class="value">${n} · ${(timingTotal ? n/timingTotal*100 : 0).toFixed(1)}%</span></div>`;
     }
-    document.getElementById('momentList').innerHTML = momHtml || '<div class="row"><span class="label">Sin apariciones registradas</span><span class="value">—</span></div>';
+    document.getElementById('momentList').innerHTML = momHtml || '<div class="row"><span class="label">Sin apariciones registradas</span><span class="value">—</span></div>';document.getElementById('last20').innerHTML=historyDigits.slice(-20).map(d=>'<span>'+d+'</span>').join('');if(historyDigits.length)document.getElementById('lastDigit').textContent=historyDigits[historyDigits.length-1];
 }
+
+async function cargarHistorial(simbolo){try{const r=await fetch('/history?asset='+encodeURIComponent(simbolo));const rows=await r.json();if(Array.isArray(rows)){historyDigits=rows.slice().reverse().map(x=>Number(x.digit));historyTicks=rows.slice().reverse();if(historyDigits.length>MAX_HISTORY)historyDigits=historyDigits.slice(-MAX_HISTORY);actualizarEstadisticas();}}catch(e){console.log('historial no disponible')}}
 
 function conectarDeriv(simbolo) {
     if(ws) ws.close();
@@ -575,6 +584,7 @@ function conectarDeriv(simbolo) {
         const data = JSON.parse(evt.data);
         if(data.status === 'TICK RECIBIDO' && data.symbol === simbolo) {
             const precio = parseFloat(data.quote);
+            document.getElementById('priceLive').textContent=precio;
             agregarPrecioAlGrafico(precio);
             const dig = ultimoDigito(precio);
             if(predictionWindow && countdownSecond > 0){
@@ -594,95 +604,29 @@ function conectarDeriv(simbolo) {
 }
 
 function analizarYMostrar() {
-    if(historyDigits.length < 30) {
-        hablar("Aún no hay suficientes datos, espera unos segundos");
-        return;
-    }
-
-    const conteo = Array(10).fill(0);
-    historyDigits.forEach(d => conteo[d]++);
-    const total = historyDigits.length;
-    const orden = [...Array(10).keys()].sort((a,b)=>conteo[b]-conteo[a]);
-    const mejor = orden[0];
-    const pctMejor = (conteo[mejor]/total)*100;
-    const modo = document.getElementById('modeSel').value;
-
-    let recomendacion = '';
-    let nivelFuerza = 'buena';
-    let digitoObjetivo = mejor;
-
-    if(modo === 'over') {
-        const mayores = historyDigits.filter(d=>d>4).length;
-        digitoObjetivo = 5;
-        recomendacion = mayores/total >= 0.55 ? 'OK' : 'DEBIL';
-        nivelFuerza = recomendacion === 'OK' ? 'buena' : 'baja';
-    } else if(modo === 'under') {
-        const menores = historyDigits.filter(d=>d<=4).length;
-        digitoObjetivo = 3;
-        recomendacion = menores/total >= 0.55 ? 'OK' : 'DEBIL';
-        nivelFuerza = recomendacion === 'OK' ? 'buena' : 'baja';
-    } else if(modo === 'even') {
-        const pares = historyDigits.filter(d=>d%2===0).length;
-        digitoObjetivo = 6;
-        recomendacion = pares/total >= 0.55 ? 'OK' : 'DEBIL';
-        nivelFuerza = recomendacion === 'OK' ? 'buena' : 'baja';
-    } else if(modo === 'odd') {
-        const impares = historyDigits.filter(d=>d%2!==0).length;
-        digitoObjetivo = 7;
-        recomendacion = impares/total >= 0.55 ? 'OK' : 'DEBIL';
-        nivelFuerza = recomendacion === 'OK' ? 'buena' : 'baja';
-    } else {
-        recomendacion = pctMejor >= 18 ? 'OK' : 'DEBIL';
-        nivelFuerza = recomendacion === 'OK' ? 'buena' : 'baja';
-    }
-
-    const caja = document.getElementById('resultBox');
-    caja.style.display = 'block';
-    caja.classList.toggle('danger', nivelFuerza==='baja');
-
-    const resMain = document.getElementById('resMain');
-    const resPrec = document.getElementById('resPrec');
-    const resText = document.getElementById('resText');
-
-    if(nivelFuerza === 'buena') {
-        resMain.textContent = `GANA: ${digitoObjetivo}`;
-        resMain.className = 'res-main ok';
-        resPrec.textContent = `Frecuencia observada: ${pctMejor.toFixed(1)}%`;
-        resText.innerHTML = `El análisis de mercado predice que aparecerá el dígito ${digitoObjetivo}.<br>Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en los datos observados; la frecuencia no garantiza el resultado.`;
-
-        hablar(`Análisis listo. Dígito más probable: ${digitoObjetivo}. Frecuencia observada: ${pctMejor.toFixed(0)} por ciento. Tienes 10 segundos para tomar la operación.`);
-
-        document.getElementById('timerBox').style.display = 'block';
-        predictionWindow = true;
-        let seg = 10;
-        countdownSecond = 10;
-        document.getElementById('timerNum').textContent = seg;
-        if(timerInterval) clearInterval(timerInterval);
-
-        timerInterval = setInterval(()=>{
-            seg--;
-            countdownSecond = seg;
-            document.getElementById('timerNum').textContent = seg;
-            if(voiceEnabled) hablar(seg.toString());
-
-            if(seg <= 0) {
-                clearInterval(timerInterval);
-                predictionWindow = false;
-                countdownSecond = 0;
-                document.getElementById('timerBox').style.display = 'none';
-                hablar("Tiempo terminado. ¿Quieres tomar otra operación?");
-            }
-        }, 1000);
-
-    } else {
-        resMain.textContent = `⚠️ ESPERA — NO RECOMENDABLE`;
-        resMain.className = 'res-main warn';
-        resPrec.textContent = `Fuerza baja — riesgo alto`;
-        resText.innerHTML = `La señal tiene poca consistencia.<br>Mejor espera más datos o cambia de activo.<br>Puede perder si entras ahora.`;
-
-        hablar("No es recomendable entrar ahora. La señal tiene menos fuerza, puede perder. Espérate mejor. ¿Quieres tomar otra operación?");
-        document.getElementById('timerBox').style.display = 'none';
-    }
+    if(historyDigits.length < 30){ hablar("Aún no hay suficientes datos, espera unos segundos"); return; }
+    const full=historyDigits.slice(), w=full.slice(-20), total=full.length;
+    const modo=document.getElementById('modeSel').value;
+    let score=Array(10).fill(0);
+    const recent=full.slice(-200);
+    recent.forEach((d,i)=>score[d]+=0.25*((i+1)/recent.length));
+    const p3=w.slice(-3),p2=w.slice(-2);
+    for(let i=0;i<full.length-3;i++) if(full[i]===p3[0]&&full[i+1]===p3[1]&&full[i+2]===p3[2]) score[full[i+3]]+=0.35;
+    for(let i=0;i<full.length-2;i++) if(full[i]===p2[0]&&full[i+1]===p2[1]) score[full[i+2]]+=0.25;
+    const delta=(w[19]-w[18]+10)%10;
+    for(let i=1;i<full.length-1;i++) if((full[i]-full[i-1]+10)%10===delta) score[full[i+1]]+=0.15;
+    let candidates=[...Array(10).keys()];
+    if(modo==='even') candidates=candidates.filter(d=>d%2===0);
+    if(modo==='odd') candidates=candidates.filter(d=>d%2!==0);
+    if(modo==='over') candidates=candidates.filter(d=>d>4);
+    if(modo==='under') candidates=candidates.filter(d=>d<=4);
+    const ordered=candidates.sort((a,b)=>score[b]-score[a]);
+    const best=ordered[0], sum=ordered.reduce((a,d)=>a+score[d],0)||1, strength=score[best]/sum*100;
+    const good=strength>=18;
+    const caja=document.getElementById('resultBox'); caja.style.display='block'; caja.classList.toggle('danger',!good);
+    const main=document.getElementById('resMain'),prec=document.getElementById('resPrec'),text=document.getElementById('resText');
+    if(good){main.textContent=`SEÑAL: ${best}`;main.className='res-main ok';prec.textContent=`Fuerza matemática: ${strength.toFixed(1)}%`;text.innerHTML=`Dígito candidato: ${best}.<br>Base: últimos 20, frecuencia reciente, secuencias de 2 y 3 dígitos, y saltos.<br>Puede aparecer; no es garantía.`;hablar(`Análisis listo. El dígito candidato es el ${best}. Fuerza matemática ${strength.toFixed(0)} por ciento. Tienes 10 segundos para decidir.`);document.getElementById('timerBox').style.display='block';predictionWindow=true;let seg=10;countdownSecond=10;document.getElementById('timerNum').textContent=seg;if(timerInterval)clearInterval(timerInterval);timerInterval=setInterval(()=>{seg--;countdownSecond=seg;document.getElementById('timerNum').textContent=seg;if(voiceEnabled)hablar(String(seg));if(seg<=0){clearInterval(timerInterval);predictionWindow=false;countdownSecond=0;document.getElementById('timerBox').style.display='none';hablar('Tiempo terminado.');}},1000)}
+    else{main.textContent='ESPERAR — NO ENTRAR';main.className='res-main warn';prec.textContent=`Fuerza baja: ${strength.toFixed(1)}%`;text.innerHTML='No hay suficiente ventaja matemática. Puede perder si entras ahora.';document.getElementById('timerBox').style.display='none';predictionWindow=false;hablar('Esperar. No entrar. La señal tiene poca fuerza.');}
 }
 
 document.getElementById('symbolSel').addEventListener('change', e=>{
@@ -690,6 +634,7 @@ document.getElementById('symbolSel').addEventListener('change', e=>{
     hablar(`Seleccionado: ${nom}`);
     conectarDeriv(e.target.value);
     historyDigits = []; historyTicks = []; candles = []; lastCandleTime = null;
+    cargarHistorial(e.target.value);
     inicializarDigitMap();
     document.getElementById('resultBox').style.display='none';
 });
@@ -704,12 +649,16 @@ document.getElementById('btnPredict').addEventListener('click', ()=>{
     analizarYMostrar();
 });
 
+function iniciarFondoNumeros(){const c=document.getElementById('matrix-bg'),x=c.getContext('2d');function r(){c.width=innerWidth;c.height=innerHeight}r();addEventListener('resize',r);let cols=Math.ceil(innerWidth/24),ys=Array(cols).fill(0);(function loop(){x.fillStyle='rgba(5,10,20,.16)';x.fillRect(0,0,c.width,c.height);x.fillStyle='#00aaff';x.font='20px monospace';ys.forEach((y,i)=>{x.fillText(Math.floor(Math.random()*10),i*24,y);ys[i]=y>c.height&&Math.random()>.96?0:y+22});requestAnimationFrame(loop)})()}
+
 window.onload = () => {
+    iniciarFondoNumeros();
     try{ const saved=JSON.parse(localStorage.getItem('timingCounts')||'null'); if(saved){timingCounts=saved.counts;timingTotal=saved.total;} }catch(e){}
     inicializarGrafico();
     inicializarDigitMap();
     hablar("Sistema listo. Conectando a Deriv…");
     conectarDeriv(document.getElementById('symbolSel').value);
+    cargarHistorial(document.getElementById('symbolSel').value);
 };
 </script>
 </body>
