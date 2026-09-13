@@ -336,10 +336,10 @@ let hitEvents = [];
 function conectar(simbolo){
     const proto=location.protocol==='https:'?'wss':'ws';
     const ws=new WebSocket(proto+'://'+location.host);
-    ws.onopen=()=>speak(`Conectado a ${simbolo}`);
+    ws.onopen=()=>{speak(`Conectado a ${simbolo}`);const el=document.querySelector('.status');if(el)el.textContent='● LIVE';};
     ws.onmessage=e=>{
         let m=JSON.parse(e.data);
-        if(m.status==='TICK RECIBIDO'&&m.symbol===simbolo){
+        if(m.status==='TICK RECIBIDO' && (m.symbol===simbolo || m.symbol===simbolo.replace('R_','1HZ')+'V')){
             add(m.quote);
         }
     };
@@ -413,7 +413,7 @@ function add(q){
             let mensaje = '';
             if(predType==='matches'){
                 mensaje = `Dígito seleccionado ${pred}, apareció cuando quedaban ${sec} segundos`;
-                $('resultMain').textContent='COINCIDENCIA: '+pred;
+                $('resultMain').textContent='COINCIDENCIA: '+pred; $('liveMatch').textContent='COINCIDENCIA · NÚMERO '+pred+' · SEGUNDO '+sec;
             } else if(predType==='evenodd'){
                 mensaje = `Seleccionado ${predPar==='even'?'PAR':'IMPAR'}, apareció cuando quedaban ${sec} segundos`;
                 $('resultMain').textContent='COINCIDENCIA: '+(predPar==='even'?'PAR':'IMPAR');
@@ -422,7 +422,7 @@ function add(q){
                 $('resultMain').textContent='COINCIDENCIA: '+(predSide==='over'?'MAYOR':'MENOR')+' '+predLimit;
             }
 
-            $('resultText').innerHTML=`<b>HUBO COINCIDENCIA</b><br>El patrón seleccionado se reflejó cuando quedaban ${sec} segundos.<br>Predicción aceptada durante la ventana.`;
+            $('resultText').innerHTML=`<b>HUBO COINCIDENCIA</b><br>El patrón seleccionado se reflejó cuando quedaban ${sec} segundos.<br>Predicción aceptada durante la ventana.`; $('liveMatch').style.display='block';
             speak(mensaje); // ✅ DICE EXACTAMENTE LO QUE PEDISTE
             renderTimingList();
         }
@@ -583,7 +583,7 @@ function predecir(){
     // Resultado según tipo
     if(predType==='matches'){
         pred=best;
-        $('resultMain').textContent=strong?'SEÑAL: '+best:'ESPERAR — NO ENTRAR';
+        $('liveMatch').textContent='';$('liveMatch').style.display='none';$('resultMain').textContent=strong?'SEÑAL: '+best:'ESPERAR — NO ENTRAR';
         $('resultText').textContent=strong?`Dígito ${best}. Fuerza matemática ${conf.toFixed(1)}%. Base: últimos 20, frecuencia, secuencias, saltos y distancia circular.`:`Señal débil. El dígito ${best} no tiene suficiente fuerza; esperar y no entrar.`;
         speak(strong?`Dígito ${best} seleccionado`:'Esperar, no entrar');
     } else if(predType==='evenodd'){
