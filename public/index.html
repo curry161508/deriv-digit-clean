@@ -496,16 +496,17 @@ function predecir(){
         prediccion = mejor;
         const segundoScore=score[peor]||0;
         const fuerza=Math.max(1,Math.min(99,Math.round(50+((score[mejor]-segundoScore)/(score[mejor]||1))*100)));
-        let esPositiva=fuerza>=70;
+        // Calibración demo: las señales de menor fuerza matemática están mostrando mejor resultado observado.
+        let esPositiva=fuerza<70;
         actualizarPanelesResultado(mejor, peor, fuerza, Math.max(1,100-fuerza), 'digito', 'digito');
         if(esPositiva){
             $('panelGana').style.display='block'; $('panelPierde').style.display='none';
-            $('textoGana').innerHTML=`PREDICCIÓN POSITIVA: dígito ${mejor}. Fuerza matemática ${fuerza}/100. Puede entrar con precaución.`;
+            $('textoGana').innerHTML=`PREDICCIÓN POSITIVA CALIBRADA: dígito ${mejor}. En la prueba demo esta señal está mostrando mejor comportamiento. Fuerza matemática ${fuerza}/100. Puede entrar con precaución.`;
             hablar(`Predicción positiva. Dígito ${mejor}. Fuerza ${fuerza} de 100.`);
         }else{
             $('panelGana').style.display='none'; $('panelPierde').style.display='block';
             $('valPierde').textContent=mejor; $('precPierde').textContent=fuerza+'%';
-            $('textoPierde').innerHTML=`SEÑAL DÉBIL: el dígito ${mejor} es la predicción, pero su fuerza matemática es solo ${fuerza}/100. ESPERAR — NO ENTRAR.`;
+            $('textoPierde').innerHTML=`SEÑAL NEGATIVA CALIBRADA: el dígito ${mejor} tiene fuerza matemática ${fuerza}/100, pero el comportamiento observado en demo no la está confirmando. ESPERAR — NO ENTRAR.`;
             hablar(`Señal débil. El dígito ${mejor} no tiene suficiente fuerza. Esperar, no entrar.`);
         }
     }
