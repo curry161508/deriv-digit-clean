@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quantum Scanner — Diseño Exacto</title>
+    <title>SCANNER DERIV · REAL TICKS</title>
     <style>
         :root{
             --bg:#030712; --panel:#0b1424e8; --edge:#1d3855;
@@ -31,41 +31,83 @@
         }
         .wrap{position:relative;z-index:1;max-width:900px;margin:auto;padding:12px}
 
-        /* --- ENCABEZADO --- */
-        .top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+        /* --- ENCABEZADO + SELECTOR DE VOLATILIDAD --- */
+        .top-bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:8px}
         .top-title{font-size:15px;letter-spacing:.08em;color:var(--cyan);font-weight:700}
         .top-actions{display:flex;gap:8px;align-items:center}
         .action-icon{width:32px;height:32px;border-radius:8px;background:#0f2035;display:grid;place-items:center;border:1px solid #225588}
-        .action-btn{padding:6px 12px;border-radius:8px;background:#0f2035;border:1px solid #225588;color:var(--cyan);font-size:12px}
+        .action-btn{padding:6px 12px;border-radius:8px;background:#0f2035;border:1px solid var(--neon-blue);color:var(--neon-blue);font-size:12px}
 
-        /* ==== GRÁFICO PRINCIPAL — ESTILO DE LA IMAGEN ==== */
+        /* ✅ NUEVO: SELECTOR DE VOLATILIDAD — TODOS */
+        .volatilities{
+            display:flex;gap:6px;flex-wrap:wrap;margin:8px 0 12px;
+            background:#071526;border-radius:14px;padding:6px;
+            border:1px solid var(--neon-green);
+        }
+        .vol-btn{
+            min-width:60px;padding:8px 6px;border-radius:10px;border:1px solid transparent;
+            background:transparent;color:#b9edff;font-weight:700;font-size:13px;
+            text-align:center;cursor:pointer;transition:.2s
+        }
+        .vol-btn.active{
+            background:linear-gradient(135deg,#00ff8844,#00ccff44);
+            border-color:var(--neon-green);color:#fff;
+            box-shadow:0 0 12px rgba(0,255,136,0.35)
+        }
+
+        /* ==== SELECTOR DE TIPO DE ANÁLISIS ==== */
+        .mode-selector{
+            display:flex;gap:6px;flex-wrap:wrap;margin:10px 0;
+            background:#071526;border-radius:14px;padding:6px;
+            border:1px solid var(--neon-blue);
+        }
+        .mode-btn{
+            flex:1;min-width:90px;padding:8px 6px;border-radius:10px;border:1px solid transparent;
+            background:transparent;color:#b9edff;font-weight:700;font-size:13px;
+            text-align:center;cursor:pointer;transition:.2s
+        }
+        .mode-btn.active{
+            background:linear-gradient(135deg,#ff22aa44,#ff448844);
+            border-color:var(--neon-pink);color:#fff;
+            box-shadow:0 0 12px rgba(255,34,170,0.35)
+        }
+        .mode-sub{display:flex;gap:6px;margin-top:6px;flex-wrap:wrap}
+        .mode-sub label{font-size:13px;color:#b9edff;display:flex;align-items:center;gap:4px}
+        .mode-sub input{accent-color:var(--neon-pink)}
+        .limit-input{
+            width:40px;padding:2px 4px;border-radius:6px;border:1px solid var(--neon-blue);
+            background:#071526;color:#fff;text-align:center;font-size:14px
+        }
+
+        /* ==== GRÁFICO — IGUAL A LA FOTO ==== */
         .chart-container{
-            border:2px solid var(--neon-green);
-            border-radius:20px;
-            background:#050e1b;
-            padding:12px;
-            margin-bottom:12px;
+            border:2px solid var(--neon-green);border-radius:20px;
+            background:#050e1b;padding:12px;margin-bottom:12px;
             box-shadow:0 0 25px rgba(0,255,136,0.15);
         }
         .chart-canvas-wrap{position:relative;height:280px}
         .chart canvas{width:100%;height:100%}
         .chart-axis{display:flex;justify-content:space-between;font-size:10px;color:#668899;margin-top:4px;padding:0 4px}
+        .quote-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:#b9edff}
+        .price-live{font-size:20px;color:var(--cyan);font-weight:900}
+        .last-circle{width:54px;height:54px;border:2px solid var(--cyan);border-radius:50%;display:grid;place-items:center;font-size:28px;color:var(--cyan)}
+        .last20-live{display:flex;gap:5px;overflow-x:auto;padding:5px 2px}
+        .last20-live span{min-width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#12344b;border:1px solid #38e8ff;color:#b9edff;font-weight:900}
 
-        /* ==== FILTROS / BOTONES DE TIEMPO ==== */
-        .time-filters{
-            display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;
-        }
+        /* ==== FILTROS DE TIEMPO ==== */
+        .time-filters{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
         .filter-btn{
-            padding:10px 18px;border-radius:14px;border:2px solid #225588;
-            background:#0f2035;color:#b9edff;font-weight:800;
-            font-size:14px;
+            padding:10px 18px;border-radius:14px;border:2px solid var(--neon-blue);
+            background:#0f2035;color:#b9edff;font-weight:800;font-size:14px;
+            box-shadow:0 0 8px rgba(0,204,255,0.2)
         }
         .filter-btn.active{
             border-color:var(--neon-pink);color:#fff;
-            box-shadow:0 0 15px rgba(255,34,170,0.4);background:#1a2040
+            background:linear-gradient(135deg,#ff22aa33,#ff448833);
+            box-shadow:0 0 18px rgba(255,34,170,0.5)
         }
 
-        /* ==== DIGIT MAP — IGUAL A LA IMAGEN: 2 FILAS, COLORES ==== */
+        /* ==== DIGIT MAP ==== */
         .digitmap-section{
             border:2px solid var(--neon-pink);border-radius:18px;
             background:#0b1424e8;padding:14px;margin-bottom:12px;
@@ -73,8 +115,9 @@
         }
         .dm-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
         .dm-title{font-size:17px;font-weight:900;color:#fff}
-        .dm-actions{display:flex;gap:6px}
-        .dm-act{width:30px;height:30px;border-radius:8px;background:#0f2035;border:1px solid #225588;display:grid;place-items:center}
+        .dm-actions{display:flex;gap:8px;align-items:center}
+        .dm-asset{color:var(--cyan);font-size:13px}
+        .dm-act{width:32px;height:32px;border-radius:8px;background:#0f2035;border:1px solid var(--neon-blue);display:grid;place-items:center;color:var(--neon-blue)}
 
         .digit-grid{display:grid;grid-template-columns:repeat(10,1fr);gap:8px;margin-bottom:8px}
         .digit-circle{
@@ -84,13 +127,12 @@
         }
         .digit-circle .num{font-size:18px;font-weight:900}
         .digit-circle .pct{font-size:9px;margin-top:2px}
-        /* Colores exactos de la imagen */
-        .dm-blue{border-color:var(--neon-blue);color:var(--neon-blue);box-shadow:0 0 10px rgba(0,204,255,0.3)}
-        .dm-pink{border-color:var(--neon-pink);color:var(--neon-pink);box-shadow:0 0 10px rgba(255,34,170,0.3)}
-        .dm-green{border-color:var(--neon-green);color:var(--neon-green);box-shadow:0 0 10px rgba(0,255,136,0.3)}
-        .dm-purple{border-color:var(--neon-purple);color:var(--neon-purple);box-shadow:0 0 10px rgba(170,85,255,0.3)}
+        .dm-gray{border-color:#445566;color:#8899aa}
+        .dm-blue{border-color:var(--neon-blue);color:var(--neon-blue);box-shadow:0 0 12px rgba(0,204,255,0.35)}
+        .dm-pink{border-color:var(--neon-pink);color:var(--neon-pink);box-shadow:0 0 12px rgba(255,34,170,0.35)}
+        .dm-green{border-color:var(--neon-green);color:var(--neon-green);box-shadow:0 0 12px rgba(0,255,136,0.35)}
 
-        /* ==== HOT RANKING — TOP 4 ==== */
+        /* ==== HOT RANKING ==== */
         .hot-section{
             border:2px solid var(--neon-blue);border-radius:18px;
             background:#0b1424e8;padding:14px;margin-bottom:12px;
@@ -99,7 +141,6 @@
         .section-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
         .section-title{font-size:16px;font-weight:900}
         .top4-tag{padding:4px 12px;border-radius:10px;background:#103048;color:var(--neon-green);font-size:12px;font-weight:700}
-
         .hot-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px}
         .hot-item{display:flex;flex-direction:column;align-items:center;gap:4px}
         .hot-circle{
@@ -127,38 +168,41 @@
         .timing-fill{height:100%;border-radius:5px;background:linear-gradient(90deg,var(--neon-green),var(--neon-yellow))}
         .timing-pct{width:45px;text-align:right;font-weight:700;color:var(--neon-green)}
 
-        /* ==== BOTONES INFERIORES ==== */
-        .bottom-actions{display:flex;gap:10px;margin-top:12px}
-        .btn-start{
-            flex:1;padding:14px;border-radius:14px;background:linear-gradient(135deg,#154060,#102840);
-            border:2px solid var(--neon-green);color:var(--neon-green);
-            font-size:16px;font-weight:900;box-shadow:0 0 15px rgba(0,255,136,0.2)
-        }
+        /* ==== RESULTADO Y BOTONES ==== */
+        .result-box{border:2px solid var(--cyan);border-radius:18px;background:#0b1424e8;padding:14px;margin:12px 0;display:none}
+        .result-main{font-size:30px;font-weight:900;color:var(--gold);margin:8px 0}
+        .result-positive{border-color:#00ff88!important;box-shadow:0 0 22px #00ff8866!important}
+        .result-negative{border-color:#ff335f!important;box-shadow:0 0 22px #ff335f66!important}
+        .result-negative .result-main{color:#ff335f!important}
+        .result-positive .result-main{color:#00ff88!important}
+        .result-text{color:#b9edff;line-height:1.5}
+        .countdown{font-size:42px;color:var(--gold);text-align:center;margin-top:10px}
+
+        .bottom-actions{display:flex;gap:10px;margin-top:12px;flex-wrap:wrap}
+        .btn-analyze{flex:1;padding:14px;border-radius:14px;background:#154060;border:2px solid var(--cyan);color:var(--cyan);font-size:15px;font-weight:900}
+        .btn-predict{flex:1;padding:14px;border-radius:14px;background:linear-gradient(135deg,#167fc1,#514fe4);border:0;color:#fff;font-size:15px;font-weight:900}
+        .btn-predict:disabled{opacity:.45}
         .btn-voice{
             padding:14px 24px;border-radius:14px;background:linear-gradient(135deg,#ff22aa,#ff4488);
             border:0;color:white;font-size:16px;font-weight:900;
             box-shadow:0 0 18px rgba(255,34,170,0.4)
         }
 
-        /* ==== TU GRÁFICO ORIGINAL — MISMA LÓGICA ==== */
-        .chart{position:relative}
-
         /* Responsive */
         @media(max-width:600px){
             .digit-circle{width:40px;height:40px}
             .hot-circle{width:44px;height:44px;font-size:16px}
-            .time-filters{justify-content:center}
+            .time-filters,.mode-selector,.volatilities{justify-content:center}
         }
-    .quote-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:#b9edff}.price-live{font-size:20px;color:var(--cyan);font-weight:900}.last-circle{width:54px;height:54px;border:2px solid var(--cyan);border-radius:50%;display:grid;place-items:center;font-size:28px;color:var(--cyan)}.last20-live{display:flex;gap:5px;overflow-x:auto;padding:5px 2px}.last20-live span{min-width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#12344b;border:1px solid #38e8ff;color:#b9edff;font-weight:900}.result-box{border:2px solid var(--cyan);border-radius:18px;background:#0b1424e8;padding:14px;margin:12px 0}.result-main{font-size:30px;font-weight:900;color:var(--gold);margin:8px 0}.result-positive{border-color:#00ff88!important;box-shadow:0 0 22px #00ff8866!important}.result-negative{border-color:#ff335f!important;box-shadow:0 0 22px #ff335f66!important}.result-negative .result-main{color:#ff335f!important}.result-positive .result-main{color:#00ff88!important}.result-text{color:#b9edff;line-height:1.5}.countdown{font-size:42px;color:var(--gold);text-align:center;margin-top:10px}.btn-analyze{flex:1;padding:14px;border-radius:14px;background:#154060;border:2px solid var(--cyan);color:var(--cyan);font-size:15px;font-weight:900}.btn-predict{flex:1;padding:14px;border-radius:14px;background:linear-gradient(135deg,#167fc1,#514fe4);border:0;color:#fff;font-size:15px;font-weight:900}.btn-predict:disabled{opacity:.45}\n    </style>
+    </style>
 </head>
 <body>
 <canvas id="matrix" class="matrix"></canvas>
 <div class="scanline"></div>
 <main class="wrap">
-
     <!-- ENCABEZADO -->
     <div class="top-bar">
-        <div class="top-title">PRIOETLOW · REAL TICKS</div>
+        <div class="top-title">SCANNER DERIV · REAL TICKS</div>
         <div class="top-actions">
             <span class="action-icon">⚙️</span>
             <span class="action-icon">📊</span>
@@ -166,11 +210,47 @@
         </div>
     </div>
 
-    <!-- 📈 GRÁFICO PRINCIPAL → TU LÓGICA ADENTRO -->
+    <!-- ✅ TODOS LOS VOLÁTILES — DEL 10 HASTA EL ÚLTIMO -->
+    <div class="volatilities">
+        <button class="vol-btn active" data-symbol="R_10">V 10</button>
+        <button class="vol-btn" data-symbol="R_25">V 25</button>
+        <button class="vol-btn" data-symbol="R_50">V 50</button>
+        <button class="vol-btn" data-symbol="R_75">V 75</button>
+        <button class="vol-btn" data-symbol="R_100">V 100</button>
+        <button class="vol-btn" data-symbol="R_200">V 200</button>
+        <button class="vol-btn" data-symbol="R_300">V 300</button>
+        <button class="vol-btn" data-symbol="R_500">V 500</button>
+        <button class="vol-btn" data-symbol="R_1000">V 1000</button>
+    </div>
+
+    <!-- SELECTOR DE TIPO DE ANÁLISIS -->
+    <div class="mode-selector">
+        <button class="mode-btn active" data-mode="matches">MATCHES</button>
+        <button class="mode-btn" data-mode="evenodd">EVEN / ODD</button>
+        <button class="mode-btn" data-mode="overunder">OVER / UNDER</button>
+    </div>
+    <div id="modeOptions" class="mode-selector" style="display:none">
+        <div id="subEvenOdd" class="mode-sub" style="display:none">
+            <label><input type="radio" name="eo" value="even" checked> PAR</label>
+            <label><input type="radio" name="eo" value="odd"> IMPAR</label>
+        </div>
+        <div id="subOverUnder" class="mode-sub" style="display:none">
+            <label>Límite: <input type="number" id="limitDigit" class="limit-input" min="0" max="9" value="4"></label>
+            <label><input type="radio" name="ou" value="over" checked> MAYOR</label>
+            <label><input type="radio" name="ou" value="under"> MENOR</label>
+        </div>
+    </div>
+
+    <!-- 📈 GRÁFICO PRINCIPAL -->
     <div class="chart-container">
         <div class="chart-canvas-wrap chart">
             <canvas id="chart" width="860" height="280"></canvas>
-        </div><div class="quote-row"><div>PRECIO ACTUAL<div id="priceLive" class="price-live">—</div></div><div>ÚLTIMO DÍGITO<div id="lastCircle" class="last-circle">—</div></div></div><div id="last20" class="last20-live"></div>
+        </div>
+        <div class="quote-row">
+            <div>PRECIO ACTUAL<div id="priceLive" class="price-live">—</div></div>
+            <div>ÚLTIMO DÍGITO<div id="lastCircle" class="last-circle">—</div></div>
+        </div>
+        <div id="last20" class="last20-live"></div>
         <div class="chart-axis">
             <span>0</span><span>100</span><span>200</span><span>300</span><span>400</span><span>500</span><span>600</span><span>700</span><span>800</span><span>900</span><span>1000</span>
         </div>
@@ -185,11 +265,12 @@
         <button class="filter-btn" data-val="100">100</button>
     </div>
 
-    <!-- 🎯 DIGIT MAP → 2 FILAS, COLORES IGUALES -->
+    <!-- 🎯 DIGIT MAP -->
     <div class="digitmap-section">
         <div class="dm-header">
             <div class="dm-title">DIGIT MAP</div>
             <div class="dm-actions">
+                <span class="dm-asset">ASSET ▾</span>
                 <span class="dm-act">⚙️</span>
                 <span class="dm-act">👁️</span>
                 <span class="dm-act">🔄</span>
@@ -199,7 +280,7 @@
         <div id="dmRow2" class="digit-grid"></div>
     </div>
 
-    <!-- 🔥 HOT RANKING → TOP 4 -->
+    <!-- 🔥 HOT RANKING -->
     <div class="hot-section">
         <div class="section-head">
             <div class="section-title">HOT RANKING</div>
@@ -219,33 +300,139 @@
         </div>
     </div>
 
-    <div id="resultBox" class="result-box" style="display:none"><div class="section-title">RESULTADO DEL ANÁLISIS</div><div id="resultMain" class="result-main">—</div><div id="resultText" class="result-text"></div><div id="countdown" class="countdown">—</div></div>
-    <!-- 🟢 BOTONES INFERIORES -->
-    <div class="bottom-actions">
-        <button id="btnAnalyze" class="btn-analyze">HACER ANÁLISIS</button><button id="btnPredict" class="btn-predict" disabled>PREDECIR ANÁLISIS</button>
-        <button id="btnVoice" class="btn-voice">VOZ ACTIVADA</button>
+    <!-- 📊 RESULTADO -->
+    <div id="resultBox" class="result-box" style="display:none">
+        <div class="section-title">RESULTADO DEL ANÁLISIS</div>
+        <div id="resultMain" class="result-main">—</div>
+        <div id="resultText" class="result-text"></div>
+        <div id="countdown" class="countdown">—</div>
     </div>
 
+    <!-- 🟢 BOTONES INFERIORES -->
+    <div class="bottom-actions">
+        <button id="btnAnalyze" class="btn-analyze">HACER ANÁLISIS</button>
+        <button id="btnPredict" class="btn-predict" disabled>PREDECIR ANÁLISIS</button>
+        <button id="btnVoice" class="btn-voice">VOZ ACTIVADA</button>
+    </div>
 </main>
 
 <script>
-// === VARIABLES GLOBALES — TAL CUAL LAS TENÍAS ===
+// === VARIABLES GLOBALES ===
 const $ = x => document.getElementById(x);
 let A = {}, Q = {};
-let current = 'R_100';
+let current = 'R_10'; // ✅ Por defecto empieza en Volatilidad 10
 let voice = true;
 let analysisReady = false;
 let predictionWindow=false;
-let pred = null, predConfidence = 0;
+let pred = null, predType = 'matches', predLimit = 4, predSide = 'over', predPar = 'even';
 let timer = null, sec = 0;
 let firstHit = null;
-let selectedHistory = 10; // filtro activo
-
+let selectedHistory = 10;
 let timingCounts = Array.from({length:10}, ()=>Array(11).fill(0));
 let timingTotal = 0;
 let hitEvents = [];
 
-// === TU FUNCIÓN drawChart() — EXACTA, SIN MODIFICAR ===
+// === CONEXIÓN DINÁMICA POR VOLATILIDAD ===
+function conectar(simbolo){
+    const proto=location.protocol==='https:'?'wss':'ws';
+    const ws=new WebSocket(proto+'://'+location.host);
+    ws.onopen=()=>speak(`Conectado a ${simbolo}`);
+    ws.onmessage=e=>{
+        let m=JSON.parse(e.data);
+        if(m.status==='TICK RECIBIDO'&&m.symbol===simbolo){
+            add(m.quote);
+        }
+    };
+    ws.onerror=()=>speak('Error de conexión');
+}
+
+// === CAMBIAR DE VOLATILIDAD — LIMPIA Y CONECTA AUTOMÁTICO ===
+document.querySelectorAll('.vol-btn').forEach(btn=>{
+    btn.onclick=()=>{
+        document.querySelectorAll('.vol-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        current = btn.dataset.symbol;
+        // Reiniciar datos del nuevo activo
+        if(!A[current]) A[current]=[];
+        if(!Q[current]) Q[current]=[];
+        try{
+            timingCounts=JSON.parse(localStorage.getItem(`timing_${current}`)||'{"c":[]}').c||Array.from({length:10},()=>Array(11).fill(0));
+            hitEvents=JSON.parse(localStorage.getItem(`hits_${current}`)||'[]');
+        }catch{
+            timingCounts=Array.from({length:10},()=>Array(11).fill(0));
+            hitEvents=[];
+        }
+        draw();
+        conectar(current);
+        cargarHistorial();
+    };
+});
+
+// === FUNCIÓN DE VOZ ===
+function speak(t){
+    if(voice && speechSynthesis){ speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(t)); }
+}
+
+// === ÚLTIMO DÍGITO ===
+function ultimoDigito(precio){
+    return parseInt(String(precio).replace(/\D/g,'').slice(-1));
+}
+
+// === AGREGAR DATO — CON EL AVISO QUE PEDISTE ===
+function add(q){
+    let n=Number(q), d=ultimoDigito(q);
+    $('priceLive').textContent=q;
+    $('lastCircle').textContent=d;
+
+    (Q[current]||(Q[current]=[])).push(n);
+    if(Q[current].length>100) Q[current].shift();
+
+    let a = A[current] || (A[current]=[]);
+    a.push(d);
+    if(a.length>1000) a.shift();
+
+    // Guardar tiempos para coincidencias
+    if(timer && sec>0 && sec<=10){
+        timingCounts[d][sec]++; timingTotal++;
+        localStorage.setItem(`timing_${current}`, JSON.stringify({c:timingCounts,t:timingTotal}));
+    }
+
+    // ✅ LO QUE PEDISTE: cuando el dígito seleccionado aparece, avisa con voz exacta
+    if(pred!==null && predictionWindow && sec>0){
+        let coincide = false;
+        if(predType==='matches' && d===pred) coincide=true;
+        if(predType==='evenodd' && ((predPar==='even' && d%2===0) || (predPar==='odd' && d%2!==0))) coincide=true;
+        if(predType==='overunder' && ((predSide==='over' && d>predLimit) || (predSide==='under' && d<predLimit))) coincide=true;
+
+        if(coincide){
+            if(firstHit===null){firstHit={d:d,s:sec};}
+            hitEvents.push({d:String(d), s:String(sec)});
+            localStorage.setItem(`hits_${current}`, JSON.stringify(hitEvents));
+
+            // 🎤 MENSAJE EXACTO QUE PEDISTE
+            let mensaje = '';
+            if(predType==='matches'){
+                mensaje = `Dígito seleccionado ${pred}, apareció cuando quedaban ${sec} segundos`;
+                $('resultMain').textContent='COINCIDENCIA: '+pred;
+            } else if(predType==='evenodd'){
+                mensaje = `Seleccionado ${predPar==='even'?'PAR':'IMPAR'}, apareció cuando quedaban ${sec} segundos`;
+                $('resultMain').textContent='COINCIDENCIA: '+(predPar==='even'?'PAR':'IMPAR');
+            } else {
+                mensaje = `Seleccionado ${predSide==='over'?'MAYOR':'MENOR'} que ${predLimit}, apareció cuando quedaban ${sec} segundos`;
+                $('resultMain').textContent='COINCIDENCIA: '+(predSide==='over'?'MAYOR':'MENOR')+' '+predLimit;
+            }
+
+            $('resultText').innerHTML=`<b>HUBO COINCIDENCIA</b><br>El patrón seleccionado se reflejó cuando quedaban ${sec} segundos.<br>Predicción aceptada durante la ventana.`;
+            speak(mensaje); // ✅ DICE EXACTAMENTE LO QUE PEDISTE
+            renderTimingList();
+        }
+    }
+
+    $('last20').innerHTML=(A[current]||[]).slice(-20).map(v=>`<span>${v}</span>`).join('');
+    draw();
+}
+
+// === GRÁFICO DE VELAS — IGUAL A TU DISEÑO ===
 function drawChart() {
     let c = $('chart'), x = c.getContext('2d'), a = (Q[current] || []).slice(-60);
     x.clearRect(0,0,c.width,c.height);
@@ -264,7 +451,7 @@ function drawChart() {
     candles.forEach((z,i)=>{
         let px=(i+.5)*c.width/candles.length;
         let yo=v=>c.height-18-(v-mi)/span*(c.height-35);
-        x.strokeStyle=z.c>=z.o?'#43f2a5':'#ff668e';
+        x.strokeStyle=z.c>=z.o?'#00ccff':'#ff4488'; // Azul/rosa igual a la foto
         x.fillStyle=x.strokeStyle; x.lineWidth=2;
         x.beginPath(); x.moveTo(px,yo(z.h)); x.lineTo(px,yo(z.l)); x.stroke();
         let top=Math.min(yo(z.o),yo(z.c)), height=Math.max(3,Math.abs(yo(z.o)-yo(z.c)));
@@ -272,82 +459,34 @@ function drawChart() {
     });
 }
 
-// === AUDIO ===
-function speak(t){
-    if(voice && speechSynthesis){ speechSynthesis.cancel(); speechSynthesis.speak(new SpeechSynthesisUtterance(t)); }
-}
-
-// === ÚLTIMO DÍGITO ===
-function ultimoDigito(precio){
-    return parseInt(String(precio).replace(/\D/g,'').slice(-1));
-}
-
-// === AGREGAR DATO ===
-function add(q){
-    let n=Number(q), d=ultimoDigito(q);$('priceLive').textContent=q;$('lastCircle').textContent=d;
-    (Q[current]||(Q[current]=[])).push(n);
-    if(Q[current].length>100) Q[current].shift();
-    let a = A[current] || (A[current]=[]);
-    a.push(d);
-    if(a.length>1000) a.shift();
-
-    if(timer && sec>0 && sec<=10){
-        timingCounts[d][sec]++; timingTotal++;
-        localStorage.setItem(`timing_${current}`, JSON.stringify({c:timingCounts,t:timingTotal}));
-    }
-
-    if(pred!==null && predictionWindow && sec>0 && d===pred){
-        if(firstHit===null){firstHit={d:d,s:sec};}
-        hitEvents.push({d:String(d), s:String(sec)});
-        localStorage.setItem(`hits_${current}`, JSON.stringify(hitEvents));
-        $('resultMain').textContent='COINCIDENCIA: '+d;$('resultText').innerHTML=`<b>HUBO COINCIDENCIA</b><br>El dígito ${d} se reflejó con el último dígito cuando quedaban ${sec} segundos.<br>Predicción aceptada durante la ventana.`;
-        speak(`Hubo coincidencia. El dígito ${d} apareció cuando quedaban ${sec} segundos.`);
-        renderTimingList();
-    }
-
-    $('last20').innerHTML=(A[current]||[]).slice(-20).map((v,i)=>'<span class=\"'+(v===d?'hot':'')+'\">'+v+'</span>').join('');
-    draw();
-}
-
-// === 🎨 DIBUJAR DIGIT MAP — IGUAL A TU IMAGEN: 2 FILAS + COLORES ===
+// === DIGIT MAP — COLORES Y ESTRUCTURA EXACTA DE LA FOTO ===
 function renderDigitMap(){
     let a = A[current] || [];
     let c = Array(10).fill(0);
-    let use = a.slice(-selectedHistory); // filtro: 10 / 20 / 50…
+    let use = a.slice(-selectedHistory);
     use.forEach(d=>c[d]++);
     let total = use.length || 1;
 
-    // Ordenar para asignar colores
-    let orden = [...Array(10).keys()].sort((x,y)=>c[y]-c[x]);
-    let clases = {};
-    // Colores como en la imagen:
-    clases[orden[0]] = 'dm-blue';
-    clases[orden[1]] = 'dm-blue';
-    clases[orden[2]] = 'dm-blue';
-    clases[orden[3]] = 'dm-blue';
-    clases[orden[4]] = 'dm-pink';
-    clases[orden[5]] = 'dm-pink';
-    clases[orden[6]] = 'dm-pink';
-    clases[orden[7]] = 'dm-green';
-    clases[orden[8]] = 'dm-green';
-    clases[orden[9]] = 'dm-green';
+    // Colores iguales a la imagen: 1,3,5 azul; 7,8 rosa; 9 azul; resto gris
+    let clases = Array(10).fill('dm-gray');
+    [1,3,5,9].forEach(d=>clases[d]='dm-blue');
+    [7,8].forEach(d=>clases[d]='dm-pink');
 
-    // Fila 1: 0-9
     let fila1 = '';
     for(let d=0;d<=9;d++){
         let pct = total ? (c[d]/total*100).toFixed(0)+'%' : '0%';
-        fila1 += `<div class="digit-circle ${clases[d]||'dm-green'}">
+        fila1 += `<div class="digit-circle ${clases[d]}">
             <div class="num">${d}</div>
             <div class="pct">${pct}</div>
         </div>`;
     }
     $('dmRow1').innerHTML = fila1;
 
-    // Fila 2: igual estructura visual
+    // Segunda fila: todos base
     let fila2 = '';
     for(let d=0;d<=9;d++){
         let pct = total ? (c[d]/total*100).toFixed(0)+'%' : '0%';
-        fila2 += `<div class="digit-circle dm-green">
+        fila2 += `<div class="digit-circle dm-gray">
             <div class="num">${d}</div>
             <div class="pct">${pct}</div>
         </div>`;
@@ -355,7 +494,7 @@ function renderDigitMap(){
     $('dmRow2').innerHTML = fila2;
 }
 
-// === 🔥 HOT RANKING — TOP 4 ===
+// === HOT RANKING — IGUAL A LA FOTO ===
 function renderHotRanking(){
     let a = A[current] || [];
     let c = Array(10).fill(0);
@@ -363,13 +502,13 @@ function renderHotRanking(){
     use.forEach(d=>c[d]++);
     let total = use.length || 1;
     let orden = [...Array(10).keys()].sort((x,y)=>c[y]-c[x]).slice(0,4);
-
+    let colores = ['dm-gray','dm-blue','dm-green','dm-pink'];
     let html = '';
     orden.forEach((d,i)=>{
         let pct = total ? (c[d]/total*100).toFixed(0)+'%' : '0%';
         let w = total ? c[d]/total*100 : 0;
         html += `<div class="hot-item">
-            <div class="hot-circle dm-${i===0?'blue':i===1?'green':i===2?'purple':'pink'}">${d}</div>
+            <div class="hot-circle ${colores[i]}">${d}</div>
             <div class="hot-pct">${pct}</div>
             <div class="hot-bar"><div class="hot-bar-fill" style="width:${w}%"></div></div>
         </div>`;
@@ -377,7 +516,7 @@ function renderHotRanking(){
     $('hotGrid').innerHTML = html;
 }
 
-// === ⏳ MOMENTO DE COINCIDENCIA ===
+// === MOMENTO DE COINCIDENCIA ===
 function renderTimingList(){
     if(!hitEvents.length){
         $('timingList').innerHTML='<div class="muted" style="padding:10px">Sin datos todavía</div>';
@@ -387,7 +526,6 @@ function renderTimingList(){
     hitEvents.forEach(x=>{let k=x.d+'|'+x.s; mapa[k]=(mapa[k]||0)+1;});
     let filas=Object.keys(mapa).map(k=>{let q=k.split('|'); return {d:q[0],s:q[1],n:mapa[k]};}).sort((a,b)=>b.n-a.n).slice(0,4);
     let maxN = Math.max(...filas.map(f=>f.n),1);
-
     $('timingList').innerHTML = filas.map(f=>{
         let pct = (f.n/maxN*100).toFixed(0)+'%';
         return `<div class="timing-row">
@@ -403,11 +541,94 @@ function draw(){
     renderDigitMap();
     renderHotRanking();
     renderTimingList();
-    drawChart(); // TU GRÁFICO INTACTO
+    drawChart();
 }
 
-function hacerAnalisis(){let a=A[current]||[];if(a.length<30){speak('Aún no hay suficientes datos');return}analysisReady=true;$('btnPredict').disabled=false;$('resultBox').style.display='block';$('resultMain').textContent='ANÁLISIS COMPLETADO';$('resultText').textContent='Pulsa PREDECIR ANÁLISIS para seleccionar un dígito.';speak('Análisis completado. Pulsa predecir análisis.')}
-function predecir(){let a=(A[current]||[]).slice(-200),w=a.slice(-20);if(!analysisReady||w.length<20){speak('Primero realiza el análisis');return}let score=Array(10).fill(0),global=Array(10).fill(0);a.forEach(d=>global[d]++);global.forEach((n,d)=>score[d]+=n/a.length*.1);a.forEach((d,i)=>score[d]+=(i+1)/a.length*.2);let p3=w.slice(-3),p2=w.slice(-2);for(let i=0;i<a.length-3;i++)if(a[i]===p3[0]&&a[i+1]===p3[1]&&a[i+2]===p3[2])score[a[i+3]]+=.3;for(let i=0;i<a.length-2;i++)if(a[i]===p2[0]&&a[i+1]===p2[1])score[a[i+2]]+=.2;let delta=(w[19]-w[18]+10)%10;for(let i=1;i<a.length-1;i++)if((a[i]-a[i-1]+10)%10===delta)score[a[i+1]]+=.15;let best=score.indexOf(Math.max(...score)),sum=score.reduce((x,y)=>x+y,0)||1,conf=score[best]/sum*100;pred=best;predConfidence=conf;firstHit=null;let strong=conf>=18;$('resultBox').style.display='block';$('resultBox').classList.toggle('result-positive',strong);$('resultBox').classList.toggle('result-negative',!strong);$('resultMain').textContent=strong?'SEÑAL: '+best:'ESPERAR — NO ENTRAR';$('resultText').textContent=strong?'Dígito '+best+' seleccionado. Fuerza matemática '+conf.toFixed(1)+'%. Puede aparecer; no es garantía.':'Coincidencia '+best+' — NO ENTRAR. No hay suficiente fuerza matemática.';speak(strong?'Dígito seleccionado '+best+'. Tienes 10 segundos para decidir.':'Esperar. No entrar. La señal es débil.');if(strong){predictionWindow=true;sec=10;let n=10;$('countdown').textContent=n;clearInterval(timer);timer=setInterval(()=>{n--;sec=n;$('countdown').textContent=n;if(n<=0){clearInterval(timer);predictionWindow=false;sec=0;$('countdown').textContent='0';speak('Tiempo terminado.');}},1000)}}
+// === ANÁLISIS SEGÚN EL MODO ELEGIDO ===
+function hacerAnalisis(){
+    let a=A[current]||[];
+    if(a.length<30){speak('Aún no hay suficientes datos');return}
+    analysisReady=true;
+    $('btnPredict').disabled=false;
+    $('resultBox').style.display='block';
+    $('resultMain').textContent='ANÁLISIS COMPLETADO';
+    $('resultText').textContent='Pulsa PREDECIR ANÁLISIS para ver el resultado.';
+    speak('Análisis completado. Pulsa predecir análisis.');
+}
+
+function predecir(){
+    let a=(A[current]||[]).slice(-200);
+    if(!analysisReady || a.length<20){speak('Primero realiza el análisis');return}
+
+    pred = null; predType = document.querySelector('.mode-btn.active').dataset.mode;
+    predLimit = Number($('limitDigit').value);
+    predSide = document.querySelector('input[name="ou"]:checked').value;
+    predPar = document.querySelector('input[name="eo"]:checked').value;
+
+    let score=Array(10).fill(0), global=Array(10).fill(0);
+    a.forEach(d=>global[d]++);
+    a.forEach((d,i)=>score[d]+=(i+1)/a.length*.20);
+    global.forEach((n,d)=>score[d]+=n/a.length*.10);
+    const w=a.slice(-20), p3=w.slice(-3), p2=w.slice(-2);
+    for(let i=0;i<a.length-3;i++) if(a[i]===p3[0]&&a[i+1]===p3[1]&&a[i+2]===p3[2]) score[a[i+3]]+=.30;
+    for(let i=0;i<a.length-2;i++) if(a[i]===p2[0]&&a[i+1]===p2[1]) score[a[i+2]]+=.20;
+    const delta=(w[19]-w[18]+10)%10, reverse=(w[18]-w[19]+10)%10;
+    for(let i=1;i<a.length-1;i++){const jump=(a[i]-a[i-1]+10)%10;if(jump===delta)score[a[i+1]]+=.12;if(jump===reverse)score[a[i+1]]+=.06;}
+    for(let d=0;d<10;d++){const dist=Math.min((d-w[19]+10)%10,(w[19]-d+10)%10);score[d]+=.02*(1-dist/5);}
+    let best=score.indexOf(Math.max(...score));
+    let sum=score.reduce((x,y)=>x+y,0)||1;
+    let conf=score[best]/sum*100;
+    let strong=conf>=18;
+
+    // Resultado según tipo
+    if(predType==='matches'){
+        pred=best;
+        $('resultMain').textContent=strong?'SEÑAL: '+best:'ESPERAR — NO ENTRAR';
+        $('resultText').textContent=strong?`Dígito ${best}. Fuerza matemática ${conf.toFixed(1)}%. Base: últimos 20, frecuencia, secuencias, saltos y distancia circular.`:`Señal débil. El dígito ${best} no tiene suficiente fuerza; esperar y no entrar.`;
+        speak(strong?`Dígito ${best} seleccionado`:'Esperar, no entrar');
+    } else if(predType==='evenodd'){
+        let par=a.filter(d=>d%2===0).length, impar=a.length-par;
+        let mejor=par>impar?'even':'odd';
+        predPar=mejor;
+        $('resultMain').textContent=mejor==='even'?'SEÑAL: PAR':'SEÑAL: IMPAR';
+        $('resultText').textContent=`Par: ${(par/a.length*100).toFixed(0)}% — Impar: ${(impar/a.length*100).toFixed(0)}%`;
+        speak(`Señal: ${mejor==='even'?'PAR':'IMPAR'}`);
+        strong=true;
+    } else {
+        let mayor=a.filter(d=>d>predLimit).length, menor=a.filter(d=>d<predLimit).length;
+        let mejor=mayor>menor?'over':'under';
+        predSide=mejor;
+        $('resultMain').textContent=mejor==='over'?`SEÑAL: MAYOR QUE ${predLimit}`:`SEÑAL: MENOR QUE ${predLimit}`;
+        $('resultText').textContent=`Mayor: ${(mayor/a.length*100).toFixed(0)}% — Menor: ${(menor/a.length*100).toFixed(0)}%`;
+        speak(`Señal: ${mejor==='over'?'MAYOR':'MENOR'} que ${predLimit}`);
+        strong=true;
+    }
+
+    $('resultBox').classList.toggle('result-positive',strong);
+    $('resultBox').classList.toggle('result-negative',!strong);
+
+    // Cuenta regresiva 10s
+    if(strong){
+        predictionWindow=true; sec=10;
+        clearInterval(timer);
+        timer=setInterval(()=>{
+            sec--; $('countdown').textContent=sec;
+            if(sec<=0){clearInterval(timer); predictionWindow=false; sec=0; $('countdown').textContent='0'; speak('Tiempo terminado');}
+        },1000);
+    }
+}
+
+// === CAMBIAR TIPO DE ANÁLISIS ===
+document.querySelectorAll('.mode-btn').forEach(btn=>{
+    btn.onclick=()=>{
+        document.querySelectorAll('.mode-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        let m=btn.dataset.mode;
+        $('modeOptions').style.display=m==='matches'?'none':'flex';
+        $('subEvenOdd').style.display=m==='evenodd'?'flex':'none';
+        $('subOverUnder').style.display=m==='overunder'?'flex':'none';
+    };
+});
 
 // === FILTROS DE TIEMPO ===
 document.querySelectorAll('.filter-btn').forEach(btn=>{
@@ -419,20 +640,9 @@ document.querySelectorAll('.filter-btn').forEach(btn=>{
     };
 });
 
-// === CONEXIÓN ===
-function conectar(simbolo){
-    const proto=location.protocol==='https:'?'wss':'ws';
-    const ws=new WebSocket(proto+'://'+location.host);
-    ws.onopen=()=>speak('Conectado');
-    ws.onmessage=e=>{
-        let m=JSON.parse(e.data);
-        if(m.status==='TICK RECIBIDO'&&m.symbol===simbolo){
-            add(m.quote);
-        }
-    };
-}
+async function cargarHistorial(){try{const r=await fetch('/history?asset='+encodeURIComponent(current));const rows=await r.json();if(Array.isArray(rows)){A[current]=rows.slice().reverse().map(x=>Number(x.digit)).slice(-1000);Q[current]=rows.slice().reverse().map(x=>Number(x.quote)).slice(-100);draw()}}catch(e){}}
 
-// === FONDO ===
+// === FONDO MATRIX ===
 function iniciarFondo(){
     const c=$('matrix'), ctx=c.getContext('2d');
     function resize(){c.width=innerWidth; c.height=innerHeight;}
@@ -446,7 +656,7 @@ function iniciarFondo(){
     })();
 }
 
-// === INICIO ===
+// === INICIO GENERAL ===
 window.onload=()=>{
     iniciarFondo();
     try{
@@ -467,6 +677,7 @@ window.onload=()=>{
     $('btnPredict').onclick=predecir;
 
     conectar(current);
+    cargarHistorial();
     draw();
     speak('Sistema listo');
 };
