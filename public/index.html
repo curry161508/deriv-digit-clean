@@ -296,11 +296,11 @@ function add(q){
         localStorage.setItem(`timing_${current}`, JSON.stringify({c:timingCounts,t:timingTotal}));
     }
 
-    if(pred!==null && timer && sec>0 && d===pred){
+    if(pred!==null && predictionWindow && sec>0 && d===pred){
         if(firstHit===null){firstHit={d:d,s:sec};}
         hitEvents.push({d:String(d), s:String(sec)});
         localStorage.setItem(`hits_${current}`, JSON.stringify(hitEvents));
-        $('resultText').innerHTML=`<b>HUBO COINCIDENCIA</b><br>El dígito ${d} apareció cuando quedaban ${sec} segundos.<br>Predicción aceptada durante la ventana.`;
+        $('resultMain').textContent='COINCIDENCIA: '+d;$('resultText').innerHTML=`<b>HUBO COINCIDENCIA</b><br>El dígito ${d} se reflejó con el último dígito cuando quedaban ${sec} segundos.<br>Predicción aceptada durante la ventana.`;
         speak(`Hubo coincidencia. El dígito ${d} apareció cuando quedaban ${sec} segundos.`);
         renderTimingList();
     }
