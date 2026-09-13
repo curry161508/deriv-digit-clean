@@ -562,10 +562,11 @@ function predecir(){
     let a=(A[current]||[]).slice(-200);
     if(!analysisReady || a.length<20){speak('Primero realiza el análisis');return}
 
-    pred = null; predType = document.querySelector('.mode-btn.active').dataset.mode;
-    predLimit = Number($('limitDigit').value);
-    predSide = document.querySelector('input[name="ou"]:checked').value;
-    predPar = document.querySelector('input[name="eo"]:checked').value;
+    pred = null; const active=document.querySelector('.mode-btn.active'); predType = active ? active.dataset.mode : 'matches';
+    const lim=$('limitDigit'), ou=document.querySelector('input[name="ou"]:checked'), eo=document.querySelector('input[name="eo"]:checked');
+    predLimit = lim ? Number(lim.value) : 4;
+    predSide = ou ? ou.value : 'over';
+    predPar = eo ? eo.value : 'even';
 
     let score=Array(10).fill(0), global=Array(10).fill(0);
     a.forEach(d=>global[d]++);
@@ -677,8 +678,9 @@ window.onload=()=>{
         $('btnVoice').textContent=voice?'VOZ ACTIVADA':'VOZ DESACTIVADA';
         speak(voice?'Voz activada':'Voz desactivada');
     };
-    $('btnAnalyze').onclick=hacerAnalisis;
-    $('btnPredict').onclick=predecir;
+    $('btnAnalyze').onclick=()=>{hacerAnalisis(); if((A[current]||[]).length>=30)$('btnPredict').disabled=false;};
+    $('btnPredict').disabled=false;
+    $('btnPredict').onclick=()=>{try{predecir()}catch(e){$('resultBox').style.display='block';$('resultMain').textContent='ERROR DE ANÁLISIS';$('resultText').textContent='No se pudo completar el cálculo; revisa que haya datos.';console.error(e)}};
 
     conectar(current);
     cargarHistorial();
