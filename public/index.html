@@ -335,7 +335,7 @@
         .toggle.on::after {
             left:23px;
         }
-        .quote-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:#8ddfff}.price-live{font-size:22px;font-weight:bold;color:#00ccff}.last-digit{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:28px;font-weight:bold;color:#00ccff;border:2px solid #00ccff;background:#00ccff18;box-shadow:0 0 18px #00ccff66}.last20{display:flex;gap:5px;overflow:hidden;margin-top:9px}.last20 span{min-width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#12344b;border:1px solid #00aaff;color:#bfefff;font-size:12px;font-weight:bold}.last20 span:last-child{outline:2px solid #00ccff;outline-offset:2px}
+        .quote-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:#8ddfff}.price-live{font-size:22px;font-weight:bold;color:#00ccff}.last-digit{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;font-size:28px;font-weight:bold;color:#00ccff;border:2px solid #00ccff;background:#00ccff18;box-shadow:0 0 18px #00ccff66}.last20{display:flex;gap:5px;overflow-x:auto;overflow-y:hidden;margin-top:9px;padding:4px 2px}.last20 span{min-width:25px;height:25px;border-radius:50%;display:grid;place-items:center;background:#12344b;border:1px solid #00aaff;color:#bfefff;font-size:12px;font-weight:bold}.last20 span:last-child{outline:2px solid #00ccff;outline-offset:2px}
     .matrix-bg{position:fixed;inset:0;width:100%;height:100%;z-index:0;opacity:.22;pointer-events:none}.container{position:relative;z-index:1}
     </style>
 </head>
@@ -355,7 +355,7 @@
         <label>Activo / Volatilidad:</label>
         <select id="symbolSel">
             <option value="R_10">Volatilidad 10</option>
-            <option value="R_20">Volatilidad 20</option>
+            <option value="R_25">Volatilidad 25</option>
             <option value="R_50">Volatilidad 50</option>
             <option value="R_75">Volatilidad 75</option>
             <option value="R_100" selected>Volatilidad 100</option>
@@ -402,7 +402,7 @@
             <span>🔊 Voz activada:</span>
             <div class="toggle on" id="voiceToggle" onclick="toggleVoice()"></div>
         </div>
-        <button id="btnPredict" style="margin-top:12px;">🔴 PREDECIR</button>
+        <button id="btnAnalyze" style="margin-top:12px;background:linear-gradient(135deg,#087fbd,#00ccff);">🔎 HACER ANÁLISIS</button><button id="btnPredict" style="margin-top:8px;" disabled>🔴 PREDECIR ANÁLISIS</button>
     </div>
 
     <!-- CAJA DE RESULTADO — SOLO AL DAR PREDECIR -->
@@ -426,6 +426,7 @@ let ws = null;
 let historyDigits = [];
 let historyTicks = [];
 let timerInterval = null;
+let analysisReady = false;
 let predictionWindow = false;
 let countdownSecond = 0;
 let timingCounts = Array.from({length:10},()=>Array(11).fill(0));
@@ -474,7 +475,8 @@ function inicializarGrafico() {
 }
 
 function agregarPrecioAlGrafico(precio) {
-    const ahora = Math.floor(Date.now() / CANDLE_INTERVAL) * CANDLE_INTERVAL / 1000;
+    const t = arguments.length>1 && arguments[1] ? Number(arguments[1]) : Math.floor(Date.now()/1000);
+    const ahora = Math.floor(t / (CANDLE_INTERVAL/1000)) * (CANDLE_INTERVAL/1000);
 
     if (!lastCandleTime || ahora !== lastCandleTime) {
         candles.push({
@@ -569,7 +571,7 @@ function actualizarEstadisticas() {
     document.getElementById('momentList').innerHTML = momHtml || '<div class="row"><span class="label">Sin apariciones registradas</span><span class="value">—</span></div>';document.getElementById('last20').innerHTML=historyDigits.slice(-20).map(d=>'<span>'+d+'</span>').join('');if(historyDigits.length)document.getElementById('lastDigit').textContent=historyDigits[historyDigits.length-1];
 }
 
-async function cargarHistorial(simbolo){try{const r=await fetch('/history?asset='+encodeURIComponent(simbolo));const rows=await r.json();if(Array.isArray(rows)){historyDigits=rows.slice().reverse().map(x=>Number(x.digit));historyTicks=rows.slice().reverse();if(historyDigits.length>MAX_HISTORY)historyDigits=historyDigits.slice(-MAX_HISTORY);actualizarEstadisticas();}}catch(e){console.log('historial no disponible')}}
+async function cargarHistorial(simbolo){try{const r=await fetch('/history?asset='+encodeURIComponent(simbolo));const rows=await r.json();if(Array.isArray(rows)){historyDigits=rows.slice().reverse().map(x=>Number(x.digit));historyTicks=rows.slice().reverse();if(historyDigits.length>MAX_HISTORY)historyDigits=historyDigits.slice(-MAX_HISTORY);candles=[];lastCandleTime=null;historyTicks.slice(-240).forEach(x=>{if(x.quote!=null)agregarPrecioAlGrafico(Number(x.quote),Date.parse(x.tick_time)/1000)});actualizarEstadisticas();}}catch(e){console.log('historial no disponible')}}
 
 function conectarDeriv(simbolo) {
     if(ws) ws.close();
@@ -585,7 +587,7 @@ function conectarDeriv(simbolo) {
         if(data.status === 'TICK RECIBIDO' && data.symbol === simbolo) {
             const precio = parseFloat(data.quote);
             document.getElementById('priceLive').textContent=precio;
-            agregarPrecioAlGrafico(precio);
+            agregarPrecioAlGrafico(precio, data.epoch);
             const dig = ultimoDigito(precio);
             if(predictionWindow && countdownSecond > 0){
                 timingCounts[dig][countdownSecond]++;
@@ -594,7 +596,7 @@ function conectarDeriv(simbolo) {
             }
             historyDigits.push(dig);
             if(historyDigits.length > MAX_HISTORY) historyDigits.shift();
-            historyTicks.push(data.tick);
+            historyTicks.push(data);
             if(historyTicks.length > MAX_HISTORY) historyTicks.shift();
             actualizarEstadisticas();
         }
@@ -603,18 +605,25 @@ function conectarDeriv(simbolo) {
     ws.onerror = () => hablar("Error de conexión, revisa tu red");
 }
 
+function prepararAnalisis(){if(historyDigits.length<30){hablar('Aún no hay suficientes datos para analizar');return}analysisReady=true;document.getElementById('btnPredict').disabled=false;hablar('Análisis realizado. Pulsa predecir análisis.')}
+
 function analizarYMostrar() {
+    if(!analysisReady){hablar('Primero pulsa hacer análisis');return}
     if(historyDigits.length < 30){ hablar("Aún no hay suficientes datos, espera unos segundos"); return; }
     const full=historyDigits.slice(), w=full.slice(-20), total=full.length;
     const modo=document.getElementById('modeSel').value;
-    let score=Array(10).fill(0);
+    let score=Array(10).fill(0), global=Array(10).fill(0);
+    full.forEach(d=>global[d]++);
     const recent=full.slice(-200);
-    recent.forEach((d,i)=>score[d]+=0.25*((i+1)/recent.length));
+    recent.forEach((d,i)=>score[d]+=0.20*((i+1)/recent.length));
+    global.forEach((n,d)=>score[d]+=0.10*(n/total));
     const p3=w.slice(-3),p2=w.slice(-2);
-    for(let i=0;i<full.length-3;i++) if(full[i]===p3[0]&&full[i+1]===p3[1]&&full[i+2]===p3[2]) score[full[i+3]]+=0.35;
-    for(let i=0;i<full.length-2;i++) if(full[i]===p2[0]&&full[i+1]===p2[1]) score[full[i+2]]+=0.25;
-    const delta=(w[19]-w[18]+10)%10;
-    for(let i=1;i<full.length-1;i++) if((full[i]-full[i-1]+10)%10===delta) score[full[i+1]]+=0.15;
+    for(let i=0;i<full.length-3;i++) if(full[i]===p3[0]&&full[i+1]===p3[1]&&full[i+2]===p3[2]) score[full[i+3]]+=0.30;
+    for(let i=0;i<full.length-2;i++) if(full[i]===p2[0]&&full[i+1]===p2[1]) score[full[i+2]]+=0.20;
+    const delta=(w[19]-w[18]+10)%10, reverse=(w[18]-w[19]+10)%10;
+    for(let i=1;i<full.length-1;i++){const jump=(full[i]-full[i-1]+10)%10;if(jump===delta)score[full[i+1]]+=0.12;if(jump===reverse)score[full[i+1]]+=0.06;}
+    // Distancia circular 0-9: premia candidatos cercanos al salto reciente
+    for(let d=0;d<10;d++){const dist=Math.min((d-w[19]+10)%10,(w[19]-d+10)%10);score[d]+=0.02*(1-dist/5);}
     let candidates=[...Array(10).keys()];
     if(modo==='even') candidates=candidates.filter(d=>d%2===0);
     if(modo==='odd') candidates=candidates.filter(d=>d%2!==0);
@@ -625,7 +634,7 @@ function analizarYMostrar() {
     const good=strength>=18;
     const caja=document.getElementById('resultBox'); caja.style.display='block'; caja.classList.toggle('danger',!good);
     const main=document.getElementById('resMain'),prec=document.getElementById('resPrec'),text=document.getElementById('resText');
-    if(good){main.textContent=`SEÑAL: ${best}`;main.className='res-main ok';prec.textContent=`Fuerza matemática: ${strength.toFixed(1)}%`;text.innerHTML=`Dígito candidato: ${best}.<br>Base: últimos 20, frecuencia reciente, secuencias de 2 y 3 dígitos, y saltos.<br>Puede aparecer; no es garantía.`;hablar(`Análisis listo. El dígito candidato es el ${best}. Fuerza matemática ${strength.toFixed(0)} por ciento. Tienes 10 segundos para decidir.`);document.getElementById('timerBox').style.display='block';predictionWindow=true;let seg=10;countdownSecond=10;document.getElementById('timerNum').textContent=seg;if(timerInterval)clearInterval(timerInterval);timerInterval=setInterval(()=>{seg--;countdownSecond=seg;document.getElementById('timerNum').textContent=seg;if(voiceEnabled)hablar(String(seg));if(seg<=0){clearInterval(timerInterval);predictionWindow=false;countdownSecond=0;document.getElementById('timerBox').style.display='none';hablar('Tiempo terminado.');}},1000)}
+    if(good){main.textContent=`SEÑAL: ${best}`;main.className='res-main ok';prec.textContent=`Fuerza matemática: ${strength.toFixed(1)}%`;text.innerHTML=`Dígito candidato: ${best}.<br>Base: últimos 20, frecuencia reciente e histórica, secuencias de 2 y 3 dígitos, saltos, dirección y distancia circular.<br>Puede aparecer; no es garantía.`;hablar(`Análisis listo. El dígito candidato es el ${best}. Fuerza matemática ${strength.toFixed(0)} por ciento. Tienes 10 segundos para decidir.`);document.getElementById('timerBox').style.display='block';predictionWindow=true;let seg=10;countdownSecond=10;document.getElementById('timerNum').textContent=seg;if(timerInterval)clearInterval(timerInterval);timerInterval=setInterval(()=>{seg--;countdownSecond=seg;document.getElementById('timerNum').textContent=seg;if(voiceEnabled)hablar(String(seg));if(seg<=0){clearInterval(timerInterval);predictionWindow=false;countdownSecond=0;document.getElementById('timerBox').style.display='none';hablar('Tiempo terminado.');}},1000)}
     else{main.textContent='ESPERAR — NO ENTRAR';main.className='res-main warn';prec.textContent=`Fuerza baja: ${strength.toFixed(1)}%`;text.innerHTML='No hay suficiente ventaja matemática. Puede perder si entras ahora.';document.getElementById('timerBox').style.display='none';predictionWindow=false;hablar('Esperar. No entrar. La señal tiene poca fuerza.');}
 }
 
@@ -644,6 +653,7 @@ document.getElementById('modeSel').addEventListener('change', e=>{
     document.getElementById('resultBox').style.display='none';
 });
 
+document.getElementById('btnAnalyze').addEventListener('click', prepararAnalisis);
 document.getElementById('btnPredict').addEventListener('click', ()=>{
     hablar("Analizando datos del mercado…");
     analizarYMostrar();
