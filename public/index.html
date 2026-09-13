@@ -521,7 +521,7 @@ function predecir(){
     }
 
     // Cuenta regresiva 10s
-    ventanaActiva = true; entradaDetectada=false; coincidencias=[]; $('reloj10').classList.add('activo'); $('relojNumero').textContent='10'; $('relojEstado').textContent='PREDICCIÓN ACTIVA · ENTRADA MANUAL'; hablar('Comienza la cuenta regresiva. Diez segundos para entrar manualmente.');
+    ventanaActiva = true; segundos = 10; entradaDetectada=false; coincidencias=[]; $('reloj10').classList.add('activo'); $('relojNumero').textContent='10'; $('relojEstado').textContent='PREDICCIÓN ACTIVA · ENTRADA MANUAL'; hablar('Comienza la cuenta regresiva. Diez segundos para entrar manualmente.');
     clearInterval(temporizador);
     temporizador = setInterval(()=>{
         segundos--; $('relojNumero').textContent=Math.max(segundos,0); if(segundos>0){const palabras=['cero','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez']; hablar(palabras[segundos]+' segundos');}
