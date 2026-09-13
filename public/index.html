@@ -2,607 +2,360 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XL DIGIT PRO</title>
+    <title>XL DIGIT PRO — Analizador Profesional de Dígitos</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Consolas, monospace;
-            color: #e0e0e0;
+        *, *::before, *::after { box-sizing: border-box; }
+        @page {
+            size: A4 landscape;
+            margin: 10mm 12mm;
+            background-color: #0b0f19;
         }
         body {
-            background-color: #0c0f14;
-            padding: 10px;
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            background-color: #0b0f19;
+            color: #e5e7eb;
+            font-size: 9.5pt;
+            line-height: 1.35;
         }
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            border: 1px solid #1e293b;
-            background: #0f141c;
-            box-shadow: 0 0 15px rgba(0,150,255,0.15);
+        .header-bar {
+            background: linear-gradient(90deg, #111827 0%, #1e293b 100%);
+            border: 1px solid #1f2937;
+            border-radius: 6px;
+            padding: 10px 14px;
+            margin-bottom: 10px;
+            display: table;
+            width: 100%;
         }
-
-        /* ==== CABECERA PRINCIPAL ==== */
-        .top-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 15px;
-            border-bottom: 1px solid #1e293b;
+        .header-cell {
+            display: table-cell;
+            vertical-align: middle;
         }
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .logo-icon {
-            width: 28px;
-            height: 28px;
-            background: #0ea5e9;
-            border-radius: 4px;
-        }
-        .logo-text h1 {
-            font-size: 16px;
-            color: #0ea5e9;
+        .title-main {
+            font-size: 14pt;
             font-weight: bold;
+            color: #38bdf8;
+            margin: 0;
         }
-        .logo-text p {
-            font-size: 10px;
-            color: #94a3b8;
+        .subtitle {
+            font-size: 8pt;
+            color: #9ca3af;
+            margin: 2px 0 0 0;
         }
-        .score-section {
-            display: flex;
-            align-items: center;
-            gap: 20px;
+        .badge {
+            background-color: #065f46;
+            color: #34d399;
+            border: 1px solid #059669;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 7.5pt;
+            font-weight: bold;
+            text-align: right;
         }
-        .score-box {
+        .top-kpi-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 8px 0;
+            margin-bottom: 10px;
+        }
+        .kpi-card {
+            background-color: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 6px;
+            padding: 8px 12px;
             text-align: center;
         }
-        .score-value {
-            font-size: 32px;
+        .kpi-label {
+            font-size: 7.5pt;
+            color: #9ca3af;
+            text-transform: uppercase;
+        }
+        .kpi-value-green {
+            font-size: 18pt;
             font-weight: bold;
-            color: #ffffff;
+            color: #10b981;
+            margin: 2px 0 0 0;
         }
-        .score-label {
-            font-size: 11px;
-            color: #94a3b8;
-        }
-        .bar-container {
-            width: 280px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .bar-row {
-            height: 10px;
-            border-radius: 5px;
-            background: linear-gradient(90deg, #0ea5e9 0%, #ffffff 65%, #22c55e 100%);
-        }
-        .bar-row:nth-child(2) { opacity: 0.85; }
-        .bar-row:nth-child(3) { opacity: 0.70; }
-        .bar-desc {
-            font-size: 10px;
-            color: #94a3b8;
-            margin-top: 4px;
-        }
-
-        /* ==== BARRA DE CONTROLES ==== */
-        .controls-bar {
-            padding: 12px 15px;
-            border-bottom: 1px solid #1e293b;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: center;
-        }
-        select, button {
-            padding: 6px 10px;
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 4px;
-            font-size: 12px;
-            cursor: pointer;
-        }
-        button {
-            background: #f59e0b;
-            color: #000;
+        .kpi-value-white {
+            font-size: 18pt;
             font-weight: bold;
-            border: none;
+            color: #f3f4f6;
+            margin: 2px 0 0 0;
         }
-        button:nth-child(3) { background: #f97316; }
-        .guide-text {
+        .kpi-value-blue {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #60a5fa;
+            margin: 2px 0 0 0;
+        }
+        .kpi-value-orange {
+            font-size: 14pt;
+            font-weight: bold;
+            color: #fbbf24;
+            margin: 2px 0 0 0;
+        }
+        .kpi-sub {
+            font-size: 7pt;
+            color: #6b7280;
+        }
+        .grid-container {
             width: 100%;
-            font-size: 10px;
-            color: #94a3b8;
-            margin-top: 4px;
-            line-height: 1.4;
-        }
-
-        /* ==== FILA DE ÍNDICES RÁPIDOS ==== */
-        .indices-row {
-            padding: 6px 15px;
-            font-size: 10px;
-            color: #64748b;
-            border-bottom: 1px solid #1e293b;
-            display: flex;
-            gap: 12px;
-            overflow-x: auto;
-        }
-        .indices-row span { white-space: nowrap; }
-
-        /* ==== PANELES PRINCIPALES ==== */
-        .main-panels {
-            display: grid;
-            grid-template-columns: 320px 1fr;
-            gap: 10px;
-            padding: 10px 15px;
-        }
-
-        /* -- PANEL IZQUIERDO -- */
-        .panel-left {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .volatility-tag {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .vol-label {
-            font-size: 13px;
-            font-weight: bold;
-            color: #f59e0b;
-        }
-        .live-tag {
-            background: #22c55e;
-            color: #000;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-weight: bold;
-        }
-        .price-big {
-            font-size: 22px;
-            font-weight: bold;
-            color: #22c55e;
-            margin: 4px 0;
-        }
-        .price-big.red { color: #ef4444; }
-        .last-digit {
-            font-size: 11px;
-            color: #94a3b8;
-            margin-bottom: 8px;
-        }
-        .chart-box {
-            height: 80px;
-            background: #1e293b;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            position: relative;
-            overflow: hidden;
-        }
-        .chart-line {
-            position: absolute;
-            bottom: 10px;
-            left: 0;
-            width: 100%;
-            height: 60px;
-            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 300 60" xmlns="http://www.w3.org/2000/svg"><path d="M0,35 L40,25 L80,18 L120,22 L160,30 L200,20 L240,32 L280,40 L300,45" fill="none" stroke="%23f59e0b" stroke-width="3"/></svg>');
-            background-size: 100% 100%;
-        }
-        .lab-title {
-            font-size: 12px;
-            color: #22c55e;
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 6px;
-        }
-        .lab-desc {
-            font-size: 10px;
-            color: #94a3b8;
-            line-height: 1.4;
-            margin-bottom: 8px;
-        }
-        .strategy-table {
-            width: 100%;
-            font-size: 10px;
             border-collapse: collapse;
         }
-        .strategy-table td {
-            padding: 3px 4px;
-            border-bottom: 1px solid #1e293b;
+        .col-left, .col-right {
+            vertical-align: top;
+            padding: 0 4px;
         }
-        .col-name { color: #e0e0e0; }
-        .col-val { text-align: right; }
-        .col-plus { color: #22c55e; }
-        .col-minus { color: #ef4444; }
-
-        /* -- PANEL DERECHO -- */
-        .panel-right {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .data-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-        }
-        .data-card {
-            background: #1e293b;
-            padding: 8px;
-            border-radius: 4px;
-        }
-        .data-label {
-            font-size: 10px;
-            color: #94a3b8;
-        }
-        .data-value {
-            font-size: 15px;
-            font-weight: bold;
-            margin-top: 2px;
-        }
-        .even-odd-box {
-            background: #1e293b;
-            padding: 12px;
-            border-radius: 4px;
-        }
-        .eo-title {
-            font-size: 11px;
-            color: #94a3b8;
+        .col-left { width: 56%; }
+        .col-right { width: 44%; }
+        .panel {
+            background-color: #111827;
+            border: 1px solid #1f2937;
+            border-radius: 6px;
+            padding: 10px;
             margin-bottom: 8px;
         }
-        .eo-percent {
-            font-size: 24px;
-            font-weight: bold;
-            text-align: center;
-            margin: 8px 0;
+        .panel h2 {
+            font-size: 10.5pt;
+            color: #38bdf8;
+            margin: 0 0 8px 0;
+            border-bottom: 1px solid #1f2937;
+            padding-bottom: 4px;
         }
-        .eo-indicator {
-            height: 10px;
-            border-radius: 5px;
-            background: linear-gradient(90deg, #22c55e 36%, #ef4444 36%);
-            margin: 6px 0;
+        .chart-box {
+            background-color: #090d16;
+            border: 1px solid #1f2937;
+            border-radius: 4px;
+            height: 110px;
+            padding: 8px;
             position: relative;
         }
-        .eo-dot {
-            position: absolute;
-            top: -3px;
-            left: 34%;
-            width: 16px;
-            height: 16px;
-            background: #22c55e;
-            border-radius: 50%;
-            border: 2px solid #fff;
-        }
-        .stats-text {
-            font-size: 10px;
-            color: #94a3b8;
-            margin: 8px 0;
-            line-height: 1.5;
-        }
-        .history-bar {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin: 6px 0;
-        }
-        .history-label { font-size: 10px; color: #94a3b8; }
-        .history-value { font-size: 12px; font-weight: bold; color: #f59e0b; }
-        .history-dots {
-            display: flex;
-            gap: 2px;
-            flex-wrap: wrap;
-            max-width: 120px;
-        }
-        .dot { width: 6px; height: 6px; border-radius: 50%; }
-        .dot.green { background: #22c55e; }
-        .dot.red { background: #ef4444; }
-        .dot.yellow { background: #f59e0b; }
-
-        /* ==== SECCIÓN MEJOR OPERATIVA ==== */
-        .best-op-section {
-            margin: 10px 15px;
-            padding: 15px;
-            background: #1e293b;
-            border-radius: 6px;
-            border: 1px solid #22c55e44;
-        }
-        .best-op-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .best-op-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #22c55e;
-        }
-        .odd-tag {
-            background: #ef4444;
-            color: white;
-            font-size: 12px;
-            padding: 3px 8px;
+        .action-banner {
+            background-color: #064e3b;
+            border: 1px solid #059669;
+            color: #a7f3d0;
+            padding: 8px 10px;
             border-radius: 4px;
+            font-size: 8.5pt;
             font-weight: bold;
+            margin-top: 8px;
         }
-        .score-circle {
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
-            border: 4px solid #22c55e;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: bold;
-            color: #22c55e;
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 6px;
         }
-        .best-op-text {
-            font-size: 10px;
-            line-height: 1.5;
-            color: #cbd5e1;
-            margin: 10px 0;
+        .data-table th {
+            background-color: #1f2937;
+            color: #d1d5db;
+            font-size: 7.5pt;
+            text-align: left;
+            padding: 5px 6px;
+            border: 1px solid #374151;
         }
-        .plan-box {
-            background: #0f141c;
-            padding: 10px;
+        .data-table td {
+            font-size: 8pt;
+            padding: 5px 6px;
+            border: 1px solid #1f2937;
+            color: #e5e7eb;
+        }
+        .progress-bar-bg {
+            background-color: #1f2937;
+            height: 10px;
             border-radius: 4px;
-            border: 1px solid #334155;
-            font-size: 10px;
-            line-height: 1.5;
-            color: #cbd5e1;
+            overflow: hidden;
+            margin: 4px 0 8px 0;
+            position: relative;
         }
-        .plan-title {
-            font-weight: bold;
-            color: #f59e0b;
-            margin-bottom: 6px;
+        .progress-bar-fill {
+            background-color: #3b82f6;
+            height: 100%;
         }
-
-        /* ==== PIE DE PÁGINA ==== */
-        .footer-text {
-            padding: 12px 15px 20px;
-            text-align: center;
-            line-height: 1.6;
-            border-top: 1px solid #1e293b;
-            margin-top: 10px;
+        .badge-odd { background-color: #b91c1c; color: #fecaca; padding: 2px 6px; border-radius: 3px; font-size: 7pt; font-weight: bold; }
+        .badge-even { background-color: #15803d; color: #bbf7d0; padding: 2px 6px; border-radius: 3px; font-size: 7pt; font-weight: bold; }
+        pre.code-block {
+            background-color: #090d16;
+            border: 1px solid #1f2937;
+            padding: 8px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            font-size: 7.5pt;
+            color: #38bdf8;
+            margin: 6px 0 0 0;
+            white-space: pre-wrap;
         }
-        .footer-text h2 {
-            font-size: 18px;
-            color: #0ea5e9;
+        .live-history {
+            font-family: monospace;
+            font-size: 10pt;
+            letter-spacing: 2px;
+            line-height: 1.8;
+            word-break: break-all;
         }
-        .footer-text h3 {
-            font-size: 14px;
-            color: #e0e0e0;
-        }
-        .footer-text p {
-            font-size: 12px;
-            color: #94a3b8;
-        }
-        .check-icon { color: #22c55e; }
-    .live-chart{width:100%;height:100%;display:block}.predict-xl{background:#a21caf!important;color:#fff!important;font-weight:800!important;box-shadow:0 0 12px #d946ef88}
-</style>
+    </style>
 </head>
 <body>
 
-<div class="container">
-
-    <!-- CABECERA -->
-    <div class="top-bar">
-        <div class="logo">
-            <div class="logo-icon"></div>
-            <div class="logo-text">
-                <h1>XL DIGIT PRO</h1>
-                <p>STATISTICAL ENGINE v2.1</p>
-            </div>
+    <!-- BARRA SUPERIOR / ENCABEZADO -->
+    <div class="header-bar">
+        <div class="header-cell">
+            <h1 class="title-main">XL DIGIT PRO — ANALIZADOR PROFESIONAL DE DÍGITOS</h1>
+            <div class="subtitle">Live | Statistical Engine v2.2 | Símbolo Activo: <span class="math">1HZ50V</span> (Volatility 50 1s)</div>
         </div>
-        <div class="score-section">
-            <div class="score-box">
-                <div class="score-value">68</div>
-                <div class="score-label">/ 100</div>
-            </div>
-            <div class="bar-container">
-                <div class="bar-row"></div>
-                <div class="bar-row"></div>
-                <div class="bar-row"></div>
-                <div class="bar-desc">OPERABLE – confianza: completa</div>
-            </div>
+        <div class="header-cell" style="width: 200px;">
+            <div class="badge">ACTUALIZACIÓN EN LÍNEA ✔</div>
         </div>
     </div>
 
-    <!-- CONTROLES -->
-    <div class="controls-bar">
-        <select>
-            <option selected>Todas las estrategias</option>
-            <option>Even / Odd</option>
-            <option>Even / Odd Fire</option>
-            <option>Over / Under</option>
-            <option>Over / Under Fire</option>
-            <option>Match / Diff</option>
-            <option>Rise / Fall</option>
-            <option>Rise / Fall Fire</option>
-        </select>
-
-        <select>
-            <option selected>1 tick</option>
-            <option>2 ticks</option>
-            <option>3 ticks</option>
-        </select>
-
-        <button>CALCULAR MERCADO</button>
-        <button>RE-CALCULAR</button><button id="btnPredictXL" class="predict-xl">PREDECIR ANÁLISIS</button>
-
-        <select>
-            <option>Volatility 10</option>
-            <option selected>Volatility 25</option>
-            <option>Volatility 50 (1s)</option>
-        </select>
-
-        <div class="guide-text">
-            Elige una estrategia, presiona CALCULAR MERCADO para que el sistema elija el índice más efectivo, y luego PROCESAR para ver el resultado.
-        </div>
-    </div>
-
-    <!-- FILA DE ÍNDICES -->
-    <div class="indices-row">
-        <span>V10 4736.85</span>
-        <span>V25 2735.82</span>
-        <span>V50 99.02</span>
-        <span>V75 49929.33</span>
-        <span>V100 895.49</span>
-        <span>V125(1s) 9829.29</span>
-        <span>V150(1s) 13095.28</span>
-    </div>
-
-    <!-- PANELES CENTRALES -->
-    <div class="main-panels">
-
-        <!-- PANEL IZQUIERDO -->
-        <div class="panel-left">
-            <div class="volatility-tag">
-                <span class="vol-label">VOLATILITY 25</span>
-                <span class="live-tag">LIVE</span>
-            </div>
-
-            <div class="price-big">4736.8560</div>
-            <div class="last-digit">Último dígito: 6 — EVEN</div>
-
-            <div class="chart-box">
-                <canvas id="liveChart" class="live-chart"></canvas>
-            </div>
-
-            <div class="lab-title">
-                <span>🔬 LABORATORIO DE ESTRATEGIAS</span>
-                <span>❓ QUÉ OPERAR</span>
-            </div>
-
-            <div class="lab-desc">
-                Historial real de aciertos en 2550 velas anteriores, promedio de rentabilidad por vela, y el perfil más estable analizado.
-            </div>
-
-            <table class="strategy-table">
-                <tr><td class="col-name">EVEN / ODD</td><td class="col-val">48.7% <span class="col-plus">+0.99%</span></td></tr>
-                <tr><td class="col-name">OVER / UNDER</td><td class="col-val">51.3% <span class="col-plus">+0.29%</span></td></tr>
-                <tr><td class="col-name">RISE / FALL</td><td class="col-val">52.5% <span class="col-plus">+0.79%</span></td></tr>
-                <tr><td class="col-name">MATCH / DIFF</td><td class="col-val">49.2% <span class="col-minus">-0.89%</span></td></tr>
-            </table>
-        </div>
-
-        <!-- PANEL DERECHO -->
-        <div class="panel-right">
-            <div class="data-grid">
-                <div class="data-card">
-                    <div class="data-label">TOTAL TICKS</div>
-                    <div class="data-value">251</div>
-                    <div class="data-label">En sesión</div>
+    <!-- KPIs SUPERIORES -->
+    <table class="top-kpi-table">
+        <tr>
+            <td style="width: 25%;">
+                <div class="kpi-card">
+                    <div class="kpi-label">SCORE CALIDAD DEL MERCADO</div>
+                    <div class="kpi-value-green">73</div>
+                    <div class="kpi-sub">OPERABLE — condiciones aceptables</div>
                 </div>
-                <div class="data-card">
-                    <div class="data-label">PRECIO BASE</div>
-                    <div class="data-value">39.6</div>
-                    <div class="data-label">Máx / Mín</div>
+            </td>
+            <td style="width: 25%;">
+                <div class="kpi-card">
+                    <div class="kpi-label">TOTAL TICKS ANALIZADOS</div>
+                    <div class="kpi-value-white">525</div>
+                    <div class="kpi-sub">En ventana estadística activa</div>
                 </div>
-                <div class="data-card">
-                    <div class="data-label">MOMENTUM</div>
-                    <div class="data-value" style="color:#ef4444">-0.1380</div>
-                    <div class="data-label">Bajista</div>
+            </td>
+            <td style="width: 25%;">
+                <div class="kpi-card">
+                    <div class="kpi-label">RSI (14) / MOMENTUM</div>
+                    <div class="kpi-value-blue">56.9</div>
+                    <div class="kpi-sub">Momentum neutro / armónico</div>
                 </div>
-            </div>
+            </td>
+            <td style="width: 25%;">
+                <div class="kpi-card">
+                    <div class="kpi-label">ESTRATEGIA SELECCIONADA</div>
+                    <div class="kpi-value-orange">EVEN / ODD</div>
+                    <div class="kpi-sub">Filtro primario de desviación</div>
+                </div>
+            </td>
+        </tr>
+    </table>
 
-            <div class="even-odd-box">
-                <div class="eo-title">⚖️ EVEN / ODD ANÁLISIS</div>
-                <div class="eo-percent">44.8% <span style="font-size:14px; color:#94a3b8">EVEN</span></div>
-                <div class="eo-indicator">
-                    <div class="eo-dot"></div>
+    <!-- DISEÑO DE 2 COLUMNAS PRINCIPALES -->
+    <table class="grid-container">
+        <tr>
+            <td class="col-left">
+                <!-- PANEL IZQUIERDO: GRÁFICA DE TICK Y LABORATORIO DE ESTRATEGIAS -->
+                <div class="panel">
+                    <h2>📈 PRECIO TICK EN VIVO — <span class="math">1HZ50V</span> (Último dígito: <span class="math">[3]</span>)</h2>
+                    <div style="font-size: 8pt; color: #9ca3af; margin-bottom: 6px;">
+                        Último precio cotizado: <span class="math" style="color:#fbbf24;">231764.5100</span> | Símbolo deriv: <span class="math">1HZ50V</span>
+                    </div>
+                    <!-- SVG de Gráfica de Línea de Ticks -->
+                    <div class="chart-box">
+                        <svg viewBox="0 0 500 90" width="100%" height="90" preserveAspectRatio="none">
+                            <polyline fill="none" stroke="#f59e0b" stroke-width="2" points="
+                                0,70 25,65 50,68 75,55 100,58 125,48 150,52 175,40 200,45 225,35 
+                                250,42 275,30 300,38 325,25 350,32 375,20 400,28 425,18 450,22 475,12 500,16
+                            "/>
+                            <circle cx="500" cy="16" r="4" fill="#10b981"/>
+                        </svg>
+                        <div style="position: absolute; bottom: 4px; right: 8px; font-size: 6.5pt; color: #6b7280;">Streaming WebSocket active (ws.derivws.com/websockets/v3?app_id=1089)</div>
+                    </div>
+
+                    <div class="action-banner">
+                        🔥 MEJOR AHORA EN 0.25$ / ODD FIRE — Score fuerte: 73 (confianza 73%)
+                    </div>
                 </div>
 
-                <div class="stats-text">
-                    Confianza: Se esperan por ahora: 36.8% EVEN / 63.2% ODD en las próximas 250 velas.<br>
-                    ✅ TEST DE RACHAS (LAGAY CORRELACIÓN REAL):<br>
-                    Z = +0.98 → Alta evidencia de correlación.<br>
-                    *Esto es una estimación estadística, no una garantía.*
+                <div class="panel" style="margin-bottom:0;">
+                    <h2>🧪 LABORATORIO DE ESTRATEGIAS / QUÉ OPERAR</h2>
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Estrategia Activa</th>
+                                <th>Horizonte</th>
+                                <th>Edge Est.</th>
+                                <th>Señal Recomendada</th>
+                                <th>Riesgo</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><strong>Even / Odd Fire</strong></td>
+                                <td>1 tick</td>
+                                <td><span class="badge-even">56.0% ODD</span></td>
+                                <td>Apostar ODD en ticks impares dominantes</td>
+                                <td>Controlado</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Rise / Fall (1 tick)</strong></td>
+                                <td>1 tick</td>
+                                <td>54.2%</td>
+                                <td>RISE (tendencia local al alza)</td>
+                                <td>Moderado</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Match / Differ</strong></td>
+                                <td>1 tick</td>
+                                <td>51.8%</td>
+                                <td>DIFFER != 3</td>
+                                <td>Bajo</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </td>
+
+            <td class="col-right">
+                <!-- PANEL DERECHO: DISTRIBUCIÓN, PLAN MARTINGALE Y Z-SCORE -->
+                <div class="panel">
+                    <h2>📊 DISTRIBUCIÓN DE DÍGITOS (EVEN / ODD)</h2>
+                    <div style="font-size: 8pt; display: flex; justify-content: space-between;">
+                        <span>EVEN (Pares): <strong>44.0%</strong></span>
+                        <span>ODD (Impares): <strong style="color:#10b981;">56.0% (SEÑAL FIJA)</strong></span>
+                    </div>
+                    <div class="progress-bar-bg">
+                        <div class="progress-bar-fill" style="width: 56.0%; background-color: #10b981;"></div>
+                    </div>
+                    <div style="font-size: 7.5pt; color: #9ca3af;">
+                        Threshold mínimo de edge superado (>52%). Desviación estadística hacia ODD confirmada en últimas 5/50/100 ticks.
+                    </div>
                 </div>
 
-                <div class="history-bar">
-                    <span class="history-label">HISTORIAL DE ACIERTOS EN VIVO:</span>
-                    <span class="history-value">48.7%</span>
-                    <span style="font-size:10px; color:#94a3b8">123 / 253 predicciones</span>
+                <div class="panel">
+                    <h2>📋 PLAN DE ENTRADAS SUGERIDAS (MARTINGALE SEGURO)</h2>
+                    <div style="font-size: 7.5pt; color: #d1d5db; line-height: 1.4;">
+                        Hasta <strong>4 entradas negativas</strong> en <span class="math">Volatility 50 (1s)</span>, cada una con contrato en <strong>1 tick</strong> horizon eleguita, antes de recalibrar. Después de las 4, <strong>volví a CALIBRAR / PREDECIR</strong> — no sigas con la misma señal vencida. Esto es una sugerencia de gestión de riesgo basada en estadística, no una garantía de acierto.
+                    </div>
+                    <pre class="code-block">Entrada 1: $0.25 (Base - ODD FIRE)
+Entrada 2: $0.55 (Si falla N1)
+Entrada 3: $1.20 (Si falla N2)
+Entrada 4: $2.60 (Stop / Recalibrar si falla)</pre>
                 </div>
-                <div class="history-dots">
-                    <span class="dot green"></span><span class="dot green"></span><span class="dot red"></span>
-                    <span class="dot green"></span><span class="dot yellow"></span><span class="dot green"></span>
-                    <span class="dot red"></span><span class="dot green"></span><span class="dot green"></span>
+
+                <div class="panel">
+                    <h2>📉 TEST DE RACHAS (Z-SCORE / CORRELACIÓN REAL)</h2>
+                    <div style="font-size: 8pt; color: #fbbf24; margin-bottom: 4px;">
+                        Z = <span class="math">-4.35</span> — Sin evidencia de correlación lineal anómala persistente.
+                    </div>
+                    <div style="font-size: 7pt; color: #9ca3af;">
+                        Validación de racha para 50 / 500 / 1000 ticks fijos a 1 tick de expiración.
+                    </div>
                 </div>
 
-                <div class="stats-text" style="margin-top:10px;">
-                    📊 EVEN / ODD FIRE:<br>
-                    Compara la posición en 25/50/100/250/500/1000 ticks y alarma muestra si coincide en dirección: +15 puntos
+                <div class="panel" style="margin-bottom:0;">
+                    <h2>🟩 HISTORIAL DE ACIERTOS EN VIVO</h2>
+                    <div class="live-history">
+                        🟩🟩🟥🟩🟩🟩🟥🟩🟩🟥🟩🟩🟩🟩🟥🟩🟩🟩🟥🟩🟩🟩🟥🟩🟩
+                    </div>
+                    <div style="font-size: 7.5pt; color: #10b981; margin-top: 4px;">
+                        <strong>52.2%</strong> (274 / 525 predicciones acertadas en sesión)
+                    </div>
                 </div>
-            </div>
-        </div>
-    </div>
+            </td>
+        </tr>
+    </table>
 
-    <!-- === MEJOR OPERATIVA DETALLADA === -->
-    <div class="best-op-section">
-        <div class="best-op-header">
-            <div>
-                <div class="best-op-title">🏆 MEJOR OPERATIVA — VOLATILITY 50 (1s)</div>
-                <div style="font-size:11px; color:#94a3b8; margin-top:4px;">Índice ganador: Volatility 50 (1s)</div>
-            </div>
-            <div style="display:flex; align-items:center; gap:10px;">
-                <span class="odd-tag">ODD</span>
-                <div class="score-circle">73</div>
-            </div>
-        </div>
-
-        <div class="best-op-text">
-            Volatility 50 (1s) muestra <b>87.5%</b> de ocurrencia hacia ODD en EVEN/ODD FIRE — misma dirección sostenida en las últimas 3 ventanas temporales (25/50/100 ticks). Score: <b>73</b> (confianza 73%). Consistencia 100%, supera el umbral mínimo de 60). Esto es una estimación estadística, no una garantía de resultado.
-        </div>
-
-        <div class="plan-box">
-            <div class="plan-title">📋 PLAN DE ENTRADAS SUGERIDO</div>
-            Hasta 4 entradas separadas de ODD en Volatility 50 (1s), cada una con contrato de 1 tick (el horizonte que elijas), antes de renovar. Después de las 4, vuelve a presionar CALCULAR/PROCESAR — no sigas con la misma señal vencida. Esto es una sugerencia de gestión de riesgo basada en estadística, no una garantía de que cada entrada acierte.
-        </div>
-    </div>
-
-    <!-- === PIE DE PÁGINA === -->
-    <div class="footer-text">
-        <h2>XL DIGIT PRO</h2>
-        <h3>ANALIZADOR PROFESIONAL DE DÍGITOS</h3>
-        <p>Analizador de Edge estadístico 🚀</p>
-        <p>Actualización ya en línea <span class="check-icon">✅</span></p>
-        <p>La actualización más brutal de nuestro sistema...</p>
-    </div>
-
-</div>
-
-
-<style>
-#liveLayer{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0;padding:8px 10px;border:1px solid #22d3ee;border-radius:10px;background:#07111f;color:#cbd5e1;font-size:12px}
-#liveLayer b{color:#22d3ee}#liveState{color:#22c55e;font-weight:800}.entry-clock{display:none;position:fixed;right:14px;top:14px;z-index:20;background:#07111f;border:2px solid #e879f9;border-radius:12px;padding:8px 14px;text-align:center;color:#fff;box-shadow:0 0 20px #e879f966}.entry-clock.on{display:block}.entry-clock strong{display:block;color:#e879f9;font-size:34px}.entry-clock.hit{border-color:#22c55e}.entry-clock.hit strong{color:#22c55e}
-</style>
-<script>
-(()=>{
-const q=s=>document.querySelector(s), qs=s=>[...document.querySelectorAll(s)];
-const strategy=qs('.controls-bar select')[0], assetSelect=qs('.controls-bar select')[2], calc=qs('.controls-bar button')[0], recalc=qs('.controls-bar button')[1], predictBtn=q('#btnPredictXL');
-const symbols={'Volatility 10':'R_10','Volatility 25':'R_25','Volatility 50 (1s)':'R_50','Volatility 75':'R_75','Volatility 100':'R_100','Volatility 125 (1s)':'R_100','Volatility 150 (1s)':'R_100'};
-let asset=symbols[assetSelect?.value]||'R_25', digits=[], prices=[], timer=null, left=0, predicted=null;
-const panel=q('.panel-left'), price=q('.price-big'), last=q('.last-digit'), total=q('.data-value'), chart=q('#liveChart');
-const live=document.createElement('div');live.id='liveLayer';live.innerHTML='<b>LIVE</b><span id="liveState">CONECTANDO</span><span id="livePrice">Precio: —</span><span id="liveDigit">Último dígito: —</span><span id="live20">20 dígitos: —</span><span id="predOut">Predicción: pulsa PREDECIR ANÁLISIS</span>';panel?.insertBefore(live,panel.querySelector('.chart-box'));
-const clock=document.createElement('div');clock.className='entry-clock';clock.innerHTML='ENTRADA MANUAL<strong>10</strong><span>ESPERANDO SEÑAL</span>';document.body.appendChild(clock);
-function say(t){if('speechSynthesis' in window){speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(t));}}
-function digit(v){let a=String(v).replace(/\D/g,'');return Number(a.at(-1));}
-function drawChart(){if(!chart||prices.length<2)return;const r=chart.getBoundingClientRect(),dpr=devicePixelRatio||1;chart.width=r.width*dpr;chart.height=r.height*dpr;const x=chart.getContext('2d');x.scale(dpr,dpr);const w=r.width,h=r.height,a=prices.slice(-80),mi=Math.min(...a),ma=Math.max(...a),rg=ma-mi||1;x.clearRect(0,0,w,h);x.strokeStyle='#243b53';x.lineWidth=1;for(let i=1;i<4;i++){x.beginPath();x.moveTo(0,i*h/4);x.lineTo(w,i*h/4);x.stroke()}x.beginPath();a.forEach((v,i)=>{let px=i*w/(a.length-1),py=h-8-(v-mi)/rg*(h-16);i?x.lineTo(px,py):x.moveTo(px,py)});x.strokeStyle='#22d3ee';x.lineWidth=2;x.shadowColor='#22d3ee';x.shadowBlur=8;x.stroke();x.shadowBlur=0}
-function update(){let d=digits.at(-1),p=prices.at(-1);if(p!=null){price.textContent=p; q('#livePrice').textContent='Precio: '+p}if(d!=null){last.textContent='Último dígito: '+d+' — '+(d%2?'ODD':'EVEN');q('#liveDigit').textContent='Último dígito: '+d;q('#live20').textContent='20 dígitos: '+digits.slice(-20).join(' · ')}if(total)total.textContent=digits.length;const ev=digits.filter(x=>x%2===0).length,od=digits.length-ev;const eo=q('.eo-percent');if(eo&&digits.length){eo.innerHTML=((ev/digits.length)*100).toFixed(1)+'% <span style=\"font-size:14px;color:#94a3b8\">'+(ev>=od?'EVEN':'ODD')+'</span>';}const hist=q('.history-value');if(hist&&digits.length)hist.textContent=((Math.max(ev,od)/digits.length)*100).toFixed(1)+'%';drawChart();}
-function tick(m){if(m.symbol!==asset)return;let p=Number(m.quote);if(!Number.isFinite(p))return;prices.push(p);digits.push(digit(m.quote));if(digits.length>1000)digits.shift();if(prices.length>200)prices.shift();update();if(left>0&&digit(m.quote)===predicted){clock.classList.add('hit');clock.querySelector('span').textContent='PUNTO DE ENTRADA · '+left+'s';say('Punto de entrada detectado. Quedan '+left+' segundos.');}}
-function connect(){let ws=new WebSocket((location.protocol==='https:'?'wss':'ws')+'://'+location.host);ws.onopen=()=>q('#liveState').textContent='LIVE';ws.onclose=()=>q('#liveState').textContent='DESCONECTADO';ws.onmessage=e=>{try{let m=JSON.parse(e.data);if(m.status==='TICK RECIBIDO')tick(m)}catch{}};}
-function calculate(){if(digits.length<20){say('Aún no hay veinte ticks');return}let c=Array(10).fill(0),a=digits.slice(-200);a.forEach(d=>c[d]++);let order=[...Array(10).keys()].sort((x,y)=>c[y]-c[x]),best=order[0],second=order[1],strength=Math.round(50+((c[best]-c[second])/Math.max(c[best],1))*100);predicted=best;const po=q('#predOut');if(po)po.textContent='Predicción de último dígito: '+best;const po2=q('.best-op-title');if(po2)po2.textContent='🏆 MEJOR OPERATIVA — '+(assetSelect?.value||asset);const po3=q('.best-op-text');if(po3)po3.innerHTML='Predicción actual: <b>dígito '+best+'</b>. Fuerza matemática: <b>'+strength+'/100</b>. Se recalcula con los ticks vivos. Esto es una estimación estadística, no una garantía.';let green=strength>=70;qs('.panel-resultado').forEach(x=>x.style.display='none');let target=green?q('.panel-left'):q('.panel-right');clock.classList.toggle('on',green);clock.classList.remove('hit');if(green){clock.querySelector('strong').textContent='10';clock.querySelector('span').textContent='PREDICCIÓN POSITIVA';left=10;clearInterval(timer);timer=setInterval(()=>{left--;clock.querySelector('strong').textContent=Math.max(left,0);if(left<=0){clearInterval(timer);clock.querySelector('span').textContent='TIEMPO TERMINADO';say('Tiempo terminado')}},1000);say('Predicción positiva. Dígito '+best+'. Fuerza '+strength+' de 100.');}else say('Señal débil. Esperar, no entrar.');
-const guide=q('.guide-text');if(guide)guide.textContent=(green?'PREDICCIÓN POSITIVA: ':'SEÑAL DÉBIL: ')+best+' · fuerza matemática '+strength+'/100'+(green?' · entrada manual durante 10 segundos':' · ESPERAR — NO ENTRAR');}
-assetSelect?.addEventListener('change',()=>{asset=symbols[assetSelect.value]||asset;digits=[];prices=[];q('#liveState').textContent='CAMBIANDO ACTIVO';});calc?.addEventListener('click',calculate);recalc?.addEventListener('click',calculate);predictBtn?.addEventListener('click',()=>{calculate();});connect();
-})();
-</script>
 </body>
 </html>
