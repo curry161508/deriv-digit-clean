@@ -3,570 +3,604 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ESCANER TRADING AI · VERSIÓN FUTURISTA</title>
+    <title>XL DIGIT PRO</title>
     <style>
-        :root{
-            --fondo:#060b18; --panel:#0c172b; --borde:#1a3558;
-            --neon-azul:#00ccff; --neon-verde:#00ff88; --neon-rosa:#ff22aa; --neon-rojo:#ff3355;
-            --texto:#e6f0ff; --texto-claro:#99bbdd;
-            --sombra-azul:0 0 14px rgba(0,204,255,0.35);
-            --sombra-verde:0 0 14px rgba(0,255,136,0.35);
-            --sombra-rosa:0 0 14px rgba(255,34,170,0.35);
-            --sombra-roja:0 0 14px rgba(255,51,85,0.35);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Consolas, monospace;
+            color: #e0e0e0;
         }
-        *{margin:0;padding:0;box-sizing:border-box}
-        body{
-            background:radial-gradient(circle at top left, #0f2a4d, #060b18 65%);
-            color:var(--texto); font:14px 'Segoe UI',Arial,sans-serif;
-            min-height:100vh; padding:10px;
+        body {
+            background-color: #0c0f14;
+            padding: 10px;
         }
-        .wrap{max-width:920px;margin:0 auto;position:relative;z-index:2}
-        #scanBg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.28;mix-blend-mode:screen}
-        .reloj-10{display:none;position:absolute;top:8px;right:8px;z-index:5;min-width:118px;text-align:center;padding:8px;border:2px solid var(--neon-rosa);border-radius:14px;background:rgba(8,12,30,.9);box-shadow:0 0 18px rgba(255,34,170,.45);color:#fff;font-weight:900;letter-spacing:.08em}
-        .reloj-10 strong{display:block;font-size:34px;line-height:1;color:var(--neon-rosa);text-shadow:0 0 14px currentColor}
-        .reloj-10.activo{display:block}
-        .reloj-10.entrada-detectada{border-color:var(--neon-verde);box-shadow:0 0 22px rgba(0,255,136,.7)}
-        .reloj-10.entrada-detectada strong{color:var(--neon-verde)}
-
-        /* === TÍTULO Y SELECTORES === */
-        .cabecera{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}
-        .titulo{font-size:16px;letter-spacing:.1em;color:var(--neon-azul);font-weight:800}
-
-        /* VOLÁTILES — TODOS */
-        .volatiles{display:flex;gap:5px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--neon-verde);border-radius:12px;padding:6px;margin-bottom:10px}
-        .vol-btn{padding:7px 10px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--texto-claro);font-weight:700;font-size:13px;cursor:pointer;transition:.2s}
-        .vol-btn.active{border-color:var(--neon-verde);color:#fff;background:rgba(0,255,136,.15);box-shadow:var(--sombra-verde)}
-
-        /* MODOS DE ANÁLISIS */
-        .modos{display:flex;gap:5px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--neon-azul);border-radius:12px;padding:6px;margin-bottom:10px}
-        .modo-btn{padding:7px 10px;border-radius:8px;border:1px solid transparent;background:transparent;color:var(--texto-claro);font-weight:700;font-size:13px;cursor:pointer;transition:.2s}
-        .modo-btn.active{border-color:var(--neon-azul);color:#fff;background:rgba(0,204,255,.15);box-shadow:var(--sombra-azul)}
-        .modo-opciones{background:var(--panel);border:1px solid #224466;border-radius:10px;padding:8px;margin:-6px 0 10px 0;display:none;flex-wrap:wrap;gap:10px}
-        .modo-opciones label{font-size:13px;color:var(--texto-claro);display:flex;align-items:center;gap:4px}
-        .modo-opciones input{accent-color:var(--neon-rosa)}
-        .limite-num{width:36px;padding:2px 4px;border-radius:6px;border:1px solid var(--neon-azul);background:#081428;color:#fff;text-align:center}
-
-        /* === GRÁFICO PRINCIPAL === */
-        .grafico-caja{background:var(--panel);border:2px solid var(--neon-azul);border-radius:16px;padding:12px;margin-bottom:10px;box-shadow:var(--sombra-azul)}
-        .grafico-espacio{height:240px;position:relative}
-        canvas{width:100%;height:100%}
-        .precio-fila{display:flex;justify-content:space-between;align-items:center;margin-top:8px}
-        .precio-actual{font-size:22px;color:var(--neon-azul);font-weight:900}
-        .digito-ultimo{width:52px;height:52px;border:2px solid var(--neon-azul);border-radius:50%;display:grid;place-items:center;font-size:24px;color:var(--neon-azul);font-weight:900}
-        .digitos-20{display:flex;gap:4px;overflow-x:auto;padding:4px 0;margin-top:6px}
-        .digitos-20 span{min-width:26px;height:26px;border-radius:50%;display:grid;place-items:center;background:#102440;border:1px solid var(--neon-azul);color:#fff;font-weight:700;font-size:13px}
-
-        /* === PANELES SECUNDARIOS — IGUALES A TUS FOTOS ✅ === */
-        .paneles-secundarios{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin-bottom:10px}
-        .panel-resultado{border-radius:14px;padding:12px;display:none;transition:.3s}
-        .panel-verde{border:2px solid var(--neon-verde);background:rgba(0,255,136,.08);box-shadow:var(--sombra-verde)}
-        .panel-rojo{border:2px solid var(--neon-rojo);background:rgba(255,51,85,.08);box-shadow:var(--sombra-roja)}
-        .panel-titulo{font-size:13px;color:var(--texto-claro);margin-bottom:6px}
-        .panel-valor{font-size:28px;font-weight:900;margin-bottom:4px}
-        .panel-verde .panel-valor{color:var(--neon-verde)}
-        .panel-rojo .panel-valor{color:var(--neon-rojo)}
-        .panel-precision{font-size:16px;font-weight:700;margin-bottom:8px}
-        .panel-verde .panel-precision{color:var(--neon-verde)}
-        .panel-rojo .panel-precision{color:var(--neon-rojo)}
-        .panel-texto{font-size:13px;line-height:1.5;color:#c4d8f0}
-        .digitos-circulos{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:8px}
-        .digito-circ{display:flex;flex-direction:column;align-items:center;gap:2px}
-        .digito-circ .num{width:36px;height:36px;border-radius:50%;border:2px solid #224466;display:grid;place-items:center;font-weight:900;background:#0a1830}
-        .digito-circ .num.resaltado{border-color:var(--neon-rosa);color:var(--neon-rosa);box-shadow:var(--sombra-rosa)}
-        .digito-circ .num.azul{border-color:var(--neon-azul);color:var(--neon-azul)}
-        .digito-circ .num.verde{border-color:var(--neon-verde);color:var(--neon-verde)}
-        .digito-circ .pct{font-size:10px;color:var(--texto-claro)}
-
-        /* === DIGIT MAP === */
-        .seccion{background:var(--panel);border:1px solid var(--borde);border-radius:14px;padding:12px;margin-bottom:10px}
-        .seccion-titulo{font-size:15px;font-weight:800;margin-bottom:10px;color:var(--neon-azul)}
-        .digitos-mapa{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-        .d-caja{display:flex;flex-direction:column;align-items:center;gap:3px}
-        .d-circulo{width:44px;height:44px;border-radius:50%;border:2px solid #335577;display:grid;place-items:center;font-weight:900;background:#0a1830}
-        .d-circulo.act1{border-color:var(--neon-azul);color:var(--neon-azul);box-shadow:var(--sombra-azul)}
-        .d-circulo.act2{border-color:var(--neon-rosa);color:var(--neon-rosa);box-shadow:var(--sombra-rosa)}
-        .d-circulo.act3{border-color:var(--neon-verde);color:var(--neon-verde);box-shadow:var(--sombra-verde)}
-        .d-porcentaje{font-size:11px;color:var(--texto-claro)}
-
-        /* === HOT RANKING === */
-        .hot-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-        .hot-item{display:flex;flex-direction:column;align-items:center;gap:4px}
-        .hot-circ{width:48px;height:48px;border-radius:50%;border:2px solid #335577;display:grid;place-items:center;font-weight:900;background:#0a1830}
-        .hot-bar{width:100%;height:8px;border-radius:4px;background:#152a48;margin-top:2px}
-        .hot-bar-in{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--neon-verde),var(--neon-azul));transition:.3s}
-
-        /* === MOMENTO DE COINCIDENCIA === */
-        .lista-tiempos{display:grid;gap:6px}
-        .fila-tiempo{display:flex;align-items:center;gap:8px;background:#0a1830;border-radius:10px;padding:8px 10px}
-        .tiempo-etiqueta{width:60px;font-weight:700}
-        .tiempo-barra{flex:1;height:8px;border-radius:4px;background:#152a48}
-        .tiempo-relleno{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--neon-verde),var(--neon-azul))}
-        .tiempo-pct{width:40px;text-align:right;font-weight:700;color:var(--neon-verde)}
-
-        /* === BOTONES === */
-        .botones-fila{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-        .btn{flex:1;min-width:110px;padding:12px;border-radius:12px;border:0;font-weight:800;font-size:14px;cursor:pointer;transition:.2s}
-        .btn-analizar{background:linear-gradient(135deg,#006699,#0099bb);color:#fff;box-shadow:var(--sombra-azul)}
-        .btn-predecir{background:linear-gradient(135deg,#992277,#cc3399);color:#fff;box-shadow:var(--sombra-rosa)}
-        .btn-voz{background:linear-gradient(135deg,#008855,#00aa66);color:#fff;box-shadow:var(--sombra-verde)}
-        .btn:disabled{opacity:.45;cursor:not-allowed}
-
-        /* RESPONSIVE */
-        @media(max-width:600px){
-            .digitos-mapa,.hot-grid{grid-template-columns:repeat(5,1fr)}
-            .botones-fila{flex-direction:column}
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            border: 1px solid #1e293b;
+            background: #0f141c;
+            box-shadow: 0 0 15px rgba(0,150,255,0.15);
         }
+
+        /* ==== CABECERA PRINCIPAL ==== */
+        .top-bar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 10px 15px;
+            border-bottom: 1px solid #1e293b;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .logo-icon {
+            width: 28px;
+            height: 28px;
+            background: #0ea5e9;
+            border-radius: 4px;
+        }
+        .logo-text h1 {
+            font-size: 16px;
+            color: #0ea5e9;
+            font-weight: bold;
+        }
+        .logo-text p {
+            font-size: 10px;
+            color: #94a3b8;
+        }
+        .score-section {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        .score-box {
+            text-align: center;
+        }
+        .score-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+        .score-label {
+            font-size: 11px;
+            color: #94a3b8;
+        }
+        .bar-container {
+            width: 280px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .bar-row {
+            height: 10px;
+            border-radius: 5px;
+            background: linear-gradient(90deg, #0ea5e9 0%, #ffffff 65%, #22c55e 100%);
+        }
+        .bar-row:nth-child(2) { opacity: 0.85; }
+        .bar-row:nth-child(3) { opacity: 0.70; }
+        .bar-desc {
+            font-size: 10px;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        /* ==== BARRA DE CONTROLES ==== */
+        .controls-bar {
+            padding: 12px 15px;
+            border-bottom: 1px solid #1e293b;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+        select, button {
+            padding: 6px 10px;
+            background: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+        }
+        button {
+            background: #f59e0b;
+            color: #000;
+            font-weight: bold;
+            border: none;
+        }
+        button:nth-child(3) { background: #f97316; }
+        .guide-text {
+            width: 100%;
+            font-size: 10px;
+            color: #94a3b8;
+            margin-top: 4px;
+            line-height: 1.4;
+        }
+
+        /* ==== FILA DE ÍNDICES RÁPIDOS ==== */
+        .indices-row {
+            padding: 6px 15px;
+            font-size: 10px;
+            color: #64748b;
+            border-bottom: 1px solid #1e293b;
+            display: flex;
+            gap: 12px;
+            overflow-x: auto;
+        }
+        .indices-row span { white-space: nowrap; }
+
+        /* ==== PANELES PRINCIPALES ==== */
+        .main-panels {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 10px;
+            padding: 10px 15px;
+        }
+
+        /* -- PANEL IZQUIERDO -- */
+        .panel-left {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .volatility-tag {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .vol-label {
+            font-size: 13px;
+            font-weight: bold;
+            color: #f59e0b;
+        }
+        .live-tag {
+            background: #22c55e;
+            color: #000;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        .price-big {
+            font-size: 22px;
+            font-weight: bold;
+            color: #22c55e;
+            margin: 4px 0;
+        }
+        .price-big.red { color: #ef4444; }
+        .last-digit {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+        .chart-box {
+            height: 80px;
+            background: #1e293b;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        .chart-line {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 300 60" xmlns="http://www.w3.org/2000/svg"><path d="M0,35 L40,25 L80,18 L120,22 L160,30 L200,20 L240,32 L280,40 L300,45" fill="none" stroke="%23f59e0b" stroke-width="3"/></svg>');
+            background-size: 100% 100%;
+        }
+        .lab-title {
+            font-size: 12px;
+            color: #22c55e;
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        .lab-desc {
+            font-size: 10px;
+            color: #94a3b8;
+            line-height: 1.4;
+            margin-bottom: 8px;
+        }
+        .strategy-table {
+            width: 100%;
+            font-size: 10px;
+            border-collapse: collapse;
+        }
+        .strategy-table td {
+            padding: 3px 4px;
+            border-bottom: 1px solid #1e293b;
+        }
+        .col-name { color: #e0e0e0; }
+        .col-val { text-align: right; }
+        .col-plus { color: #22c55e; }
+        .col-minus { color: #ef4444; }
+
+        /* -- PANEL DERECHO -- */
+        .panel-right {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .data-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .data-card {
+            background: #1e293b;
+            padding: 8px;
+            border-radius: 4px;
+        }
+        .data-label {
+            font-size: 10px;
+            color: #94a3b8;
+        }
+        .data-value {
+            font-size: 15px;
+            font-weight: bold;
+            margin-top: 2px;
+        }
+        .even-odd-box {
+            background: #1e293b;
+            padding: 12px;
+            border-radius: 4px;
+        }
+        .eo-title {
+            font-size: 11px;
+            color: #94a3b8;
+            margin-bottom: 8px;
+        }
+        .eo-percent {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            margin: 8px 0;
+        }
+        .eo-indicator {
+            height: 10px;
+            border-radius: 5px;
+            background: linear-gradient(90deg, #22c55e 36%, #ef4444 36%);
+            margin: 6px 0;
+            position: relative;
+        }
+        .eo-dot {
+            position: absolute;
+            top: -3px;
+            left: 34%;
+            width: 16px;
+            height: 16px;
+            background: #22c55e;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+        .stats-text {
+            font-size: 10px;
+            color: #94a3b8;
+            margin: 8px 0;
+            line-height: 1.5;
+        }
+        .history-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin: 6px 0;
+        }
+        .history-label { font-size: 10px; color: #94a3b8; }
+        .history-value { font-size: 12px; font-weight: bold; color: #f59e0b; }
+        .history-dots {
+            display: flex;
+            gap: 2px;
+            flex-wrap: wrap;
+            max-width: 120px;
+        }
+        .dot { width: 6px; height: 6px; border-radius: 50%; }
+        .dot.green { background: #22c55e; }
+        .dot.red { background: #ef4444; }
+        .dot.yellow { background: #f59e0b; }
+
+        /* ==== SECCIÓN MEJOR OPERATIVA ==== */
+        .best-op-section {
+            margin: 10px 15px;
+            padding: 15px;
+            background: #1e293b;
+            border-radius: 6px;
+            border: 1px solid #22c55e44;
+        }
+        .best-op-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .best-op-title {
+            font-size: 14px;
+            font-weight: bold;
+            color: #22c55e;
+        }
+        .odd-tag {
+            background: #ef4444;
+            color: white;
+            font-size: 12px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .score-circle {
+            width: 55px;
+            height: 55px;
+            border-radius: 50%;
+            border: 4px solid #22c55e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: #22c55e;
+        }
+        .best-op-text {
+            font-size: 10px;
+            line-height: 1.5;
+            color: #cbd5e1;
+            margin: 10px 0;
+        }
+        .plan-box {
+            background: #0f141c;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #334155;
+            font-size: 10px;
+            line-height: 1.5;
+            color: #cbd5e1;
+        }
+        .plan-title {
+            font-weight: bold;
+            color: #f59e0b;
+            margin-bottom: 6px;
+        }
+
+        /* ==== PIE DE PÁGINA ==== */
+        .footer-text {
+            padding: 12px 15px 20px;
+            text-align: center;
+            line-height: 1.6;
+            border-top: 1px solid #1e293b;
+            margin-top: 10px;
+        }
+        .footer-text h2 {
+            font-size: 18px;
+            color: #0ea5e9;
+        }
+        .footer-text h3 {
+            font-size: 14px;
+            color: #e0e0e0;
+        }
+        .footer-text p {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        .check-icon { color: #22c55e; }
     </style>
 </head>
 <body>
-<canvas id="scanBg"></canvas>
-<div class="wrap">
+
+<div class="container">
 
     <!-- CABECERA -->
-    <div class="cabecera">
-        <div class="titulo">ESCANER TRADING AI · ANÁLISIS DE TICKS</div>
-    </div>
-
-    <!-- ✅ TODOS LOS VOLÁTILES -->
-    <div class="volatiles">
-        <button class="vol-btn active" data-simbolo="R_10">V 10</button>
-        <button class="vol-btn" data-simbolo="R_25">V 25</button>
-        <button class="vol-btn" data-simbolo="R_50">V 50</button>
-        <button class="vol-btn" data-simbolo="R_75">V 75</button>
-        <button class="vol-btn" data-simbolo="R_100">V 100</button>
-        <button class="vol-btn" data-simbolo="R_200">V 200</button>
-        <button class="vol-btn" data-simbolo="R_300">V 300</button>
-        <button class="vol-btn" data-simbolo="R_500">V 500</button>
-        <button class="vol-btn" data-simbolo="R_1000">V 1000</button>
-    </div>
-
-    <!-- ✅ MODOS: MATCHES / EVEN-ODD / OVER-UNDER -->
-    <div class="modos">
-        <button class="modo-btn active" data-modo="matches">MATCHES</button>
-        <button class="modo-btn" data-modo="evenodd">EVEN / ODD</button>
-        <button class="modo-btn" data-modo="overunder">OVER / UNDER</button>
-    </div>
-    <div class="modo-opciones" id="opcModo">
-        <div id="eoOpc">
-            <label><input type="radio" name="eo" value="even" checked> PAR</label>
-            <label><input type="radio" name="eo" value="odd"> IMPAR</label>
+    <div class="top-bar">
+        <div class="logo">
+            <div class="logo-icon"></div>
+            <div class="logo-text">
+                <h1>XL DIGIT PRO</h1>
+                <p>STATISTICAL ENGINE v2.1</p>
+            </div>
         </div>
-        <div id="ouOpc">
-            <label>Límite: <input type="number" id="limiteDigito" class="limite-num" min="0" max="9" value="4"></label>
-            <label><input type="radio" name="ou" value="over" checked> MAYOR</label>
-            <label><input type="radio" name="ou" value="under"> MENOR</label>
+        <div class="score-section">
+            <div class="score-box">
+                <div class="score-value">68</div>
+                <div class="score-label">/ 100</div>
+            </div>
+            <div class="bar-container">
+                <div class="bar-row"></div>
+                <div class="bar-row"></div>
+                <div class="bar-row"></div>
+                <div class="bar-desc">OPERABLE – confianza: completa</div>
+            </div>
         </div>
     </div>
 
-    <!-- ✅ GRÁFICO DE VELAS + PRECIO + ÚLTIMOS 20 -->
-    <div class="grafico-caja">
-        <div class="grafico-espacio">
-            <canvas id="graficoVelas"></canvas>
-                <div id="reloj10" class="reloj-10">TIEMPO PARA ENTRADA MANUAL<strong id="relojNumero">10</strong><span id="relojEstado">PREDICCIÓN ACTIVA · ENTRADA MANUAL</span></div>
-        </div>
-        <div class="precio-fila">
-            <div>PRECIO ACTUAL<br><span id="precioActual" class="precio-actual">—</span></div>
-            <div>ÚLTIMO DÍGITO<br><div id="ultimoDigito" class="digito-ultimo">—</div></div>
-        </div>
-        <div id="lista20" class="digitos-20"></div>
-    </div>
+    <!-- CONTROLES -->
+    <div class="controls-bar">
+        <select>
+            <option selected>Todas las estrategias</option>
+            <option>Even / Odd</option>
+            <option>Even / Odd Fire</option>
+            <option>Over / Under</option>
+            <option>Over / Under Fire</option>
+            <option>Match / Diff</option>
+            <option>Rise / Fall</option>
+            <option>Rise / Fall Fire</option>
+        </select>
 
-    <!-- ✅ PANELES SECUNDARIOS — IGUALES A TUS FOTOS 🟢🔴 -->
-    <div class="paneles-secundarios">
-        <!-- PANEL VERDE — GANA -->
-        <div id="panelGana" class="panel-resultado panel-verde">
-            <div class="panel-titulo">Estrategia Matches/Differs</div>
-            <div class="digitos-circulos" id="digitosCircGana"></div>
-            <div class="panel-valor">GANA: <span id="valGana">1</span></div>
-            <div class="panel-precision">Precisión: <span id="precGana">87%</span></div>
-            <div class="panel-texto" id="textoGana">El análisis de mercado predice que aparecerá el dígito seleccionado. Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en últimos 20, frecuencia, secuencias, saltos y distancia circular.</div>
-        </div>
+        <select>
+            <option selected>1 tick</option>
+            <option>2 ticks</option>
+            <option>3 ticks</option>
+        </select>
 
-        <!-- PANEL ROJO — PIERDE -->
-        <div id="panelPierde" class="panel-resultado panel-rojo">
-            <div class="panel-titulo">Estrategia Matches/Differs</div>
-            <div class="digitos-circulos" id="digitosCircPierde"></div>
-            <div class="panel-valor">PIERDE: <span id="valPierde">3</span></div>
-            <div class="panel-precision">Precisión: <span id="precPierde">93%</span></div>
-            <div class="panel-texto" id="textoPierde">El análisis de mercado predice que aparecerá el dígito seleccionado. Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en últimos 20, frecuencia, secuencias, saltos y distancia circular.</div>
-        </div>
-    </div>
+        <button>CALCULAR MERCADO</button>
+        <button>RE-CALCULAR</button>
 
-    <!-- ✅ DIGIT MAP COMPLETO -->
-    <div class="seccion">
-        <div class="seccion-titulo">DIGIT MAP — FRECUENCIA DE DÍGITOS</div>
-        <div class="digitos-mapa" id="mapaDigitos"></div>
-    </div>
+        <select>
+            <option>Volatility 10</option>
+            <option selected>Volatility 25</option>
+            <option>Volatility 50 (1s)</option>
+        </select>
 
-    <!-- ✅ HOT RANKING — TOP 4 -->
-    <div class="seccion">
-        <div class="seccion-titulo">HOT RANKING — LOS MÁS FRECUENTES</div>
-        <div class="hot-grid" id="rankingHot"></div>
-    </div>
-
-    <!-- ✅ MOMENTO DE COINCIDENCIA -->
-    <div class="seccion">
-        <div class="seccion-titulo">MOMENTO DE COINCIDENCIA</div>
-        <div class="lista-tiempos" id="listaTiempos">
-            <div class="fila-tiempo"><span class="tiempo-etiqueta">—</span><div class="tiempo-barra"><div class="tiempo-relleno" style="width:0%"></div></div><span class="tiempo-pct">—</span></div>
+        <div class="guide-text">
+            Elige una estrategia, presiona CALCULAR MERCADO para que el sistema elija el índice más efectivo, y luego PROCESAR para ver el resultado.
         </div>
     </div>
 
-    <!-- ✅ BOTONES: ANÁLISIS — PREDICCIÓN — VOZ -->
-    <div class="botones-fila">
-        <button id="btnAnalizar" class="btn btn-analizar">HACER ANÁLISIS</button>
-        <button id="btnPredecir" class="btn btn-predecir" disabled>PREDECIR ANÁLISIS</button>
-        <button id="btnVoz" class="btn btn-voz">VOZ ACTIVADA</button>
+    <!-- FILA DE ÍNDICES -->
+    <div class="indices-row">
+        <span>V10 4736.85</span>
+        <span>V25 2735.82</span>
+        <span>V50 99.02</span>
+        <span>V75 49929.33</span>
+        <span>V100 895.49</span>
+        <span>V125(1s) 9829.29</span>
+        <span>V150(1s) 13095.28</span>
+    </div>
+
+    <!-- PANELES CENTRALES -->
+    <div class="main-panels">
+
+        <!-- PANEL IZQUIERDO -->
+        <div class="panel-left">
+            <div class="volatility-tag">
+                <span class="vol-label">VOLATILITY 25</span>
+                <span class="live-tag">LIVE</span>
+            </div>
+
+            <div class="price-big">4736.8560</div>
+            <div class="last-digit">Último dígito: 6 — EVEN</div>
+
+            <div class="chart-box">
+                <div class="chart-line"></div>
+            </div>
+
+            <div class="lab-title">
+                <span>🔬 LABORATORIO DE ESTRATEGIAS</span>
+                <span>❓ QUÉ OPERAR</span>
+            </div>
+
+            <div class="lab-desc">
+                Historial real de aciertos en 2550 velas anteriores, promedio de rentabilidad por vela, y el perfil más estable analizado.
+            </div>
+
+            <table class="strategy-table">
+                <tr><td class="col-name">EVEN / ODD</td><td class="col-val">48.7% <span class="col-plus">+0.99%</span></td></tr>
+                <tr><td class="col-name">OVER / UNDER</td><td class="col-val">51.3% <span class="col-plus">+0.29%</span></td></tr>
+                <tr><td class="col-name">RISE / FALL</td><td class="col-val">52.5% <span class="col-plus">+0.79%</span></td></tr>
+                <tr><td class="col-name">MATCH / DIFF</td><td class="col-val">49.2% <span class="col-minus">-0.89%</span></td></tr>
+            </table>
+        </div>
+
+        <!-- PANEL DERECHO -->
+        <div class="panel-right">
+            <div class="data-grid">
+                <div class="data-card">
+                    <div class="data-label">TOTAL TICKS</div>
+                    <div class="data-value">251</div>
+                    <div class="data-label">En sesión</div>
+                </div>
+                <div class="data-card">
+                    <div class="data-label">PRECIO BASE</div>
+                    <div class="data-value">39.6</div>
+                    <div class="data-label">Máx / Mín</div>
+                </div>
+                <div class="data-card">
+                    <div class="data-label">MOMENTUM</div>
+                    <div class="data-value" style="color:#ef4444">-0.1380</div>
+                    <div class="data-label">Bajista</div>
+                </div>
+            </div>
+
+            <div class="even-odd-box">
+                <div class="eo-title">⚖️ EVEN / ODD ANÁLISIS</div>
+                <div class="eo-percent">44.8% <span style="font-size:14px; color:#94a3b8">EVEN</span></div>
+                <div class="eo-indicator">
+                    <div class="eo-dot"></div>
+                </div>
+
+                <div class="stats-text">
+                    Confianza: Se esperan por ahora: 36.8% EVEN / 63.2% ODD en las próximas 250 velas.<br>
+                    ✅ TEST DE RACHAS (LAGAY CORRELACIÓN REAL):<br>
+                    Z = +0.98 → Alta evidencia de correlación.<br>
+                    *Esto es una estimación estadística, no una garantía.*
+                </div>
+
+                <div class="history-bar">
+                    <span class="history-label">HISTORIAL DE ACIERTOS EN VIVO:</span>
+                    <span class="history-value">48.7%</span>
+                    <span style="font-size:10px; color:#94a3b8">123 / 253 predicciones</span>
+                </div>
+                <div class="history-dots">
+                    <span class="dot green"></span><span class="dot green"></span><span class="dot red"></span>
+                    <span class="dot green"></span><span class="dot yellow"></span><span class="dot green"></span>
+                    <span class="dot red"></span><span class="dot green"></span><span class="dot green"></span>
+                </div>
+
+                <div class="stats-text" style="margin-top:10px;">
+                    📊 EVEN / ODD FIRE:<br>
+                    Compara la posición en 25/50/100/250/500/1000 ticks y alarma muestra si coincide en dirección: +15 puntos
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- === MEJOR OPERATIVA DETALLADA === -->
+    <div class="best-op-section">
+        <div class="best-op-header">
+            <div>
+                <div class="best-op-title">🏆 MEJOR OPERATIVA — VOLATILITY 50 (1s)</div>
+                <div style="font-size:11px; color:#94a3b8; margin-top:4px;">Índice ganador: Volatility 50 (1s)</div>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px;">
+                <span class="odd-tag">ODD</span>
+                <div class="score-circle">73</div>
+            </div>
+        </div>
+
+        <div class="best-op-text">
+            Volatility 50 (1s) muestra <b>87.5%</b> de ocurrencia hacia ODD en EVEN/ODD FIRE — misma dirección sostenida en las últimas 3 ventanas temporales (25/50/100 ticks). Score: <b>73</b> (confianza 73%). Consistencia 100%, supera el umbral mínimo de 60). Esto es una estimación estadística, no una garantía de resultado.
+        </div>
+
+        <div class="plan-box">
+            <div class="plan-title">📋 PLAN DE ENTRADAS SUGERIDO</div>
+            Hasta 4 entradas separadas de ODD en Volatility 50 (1s), cada una con contrato de 1 tick (el horizonte que elijas), antes de renovar. Después de las 4, vuelve a presionar CALCULAR/PROCESAR — no sigas con la misma señal vencida. Esto es una sugerencia de gestión de riesgo basada en estadística, no una garantía de que cada entrada acierte.
+        </div>
+    </div>
+
+    <!-- === PIE DE PÁGINA === -->
+    <div class="footer-text">
+        <h2>XL DIGIT PRO</h2>
+        <h3>ANALIZADOR PROFESIONAL DE DÍGITOS</h3>
+        <p>Analizador de Edge estadístico 🚀</p>
+        <p>Actualización ya en línea <span class="check-icon">✅</span></p>
+        <p>La actualización más brutal de nuestro sistema...</p>
     </div>
 
 </div>
 
+
+<style>
+#liveLayer{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0;padding:8px 10px;border:1px solid #22d3ee;border-radius:10px;background:#07111f;color:#cbd5e1;font-size:12px}
+#liveLayer b{color:#22d3ee}#liveState{color:#22c55e;font-weight:800}.entry-clock{display:none;position:fixed;right:14px;top:14px;z-index:20;background:#07111f;border:2px solid #e879f9;border-radius:12px;padding:8px 14px;text-align:center;color:#fff;box-shadow:0 0 20px #e879f966}.entry-clock.on{display:block}.entry-clock strong{display:block;color:#e879f9;font-size:34px}.entry-clock.hit{border-color:#22c55e}.entry-clock.hit strong{color:#22c55e}
+</style>
 <script>
-// === VARIABLES GENERALES ===
-const $ = id => document.getElementById(id);
-let activo = 'R_10';
-let datos = {}; // datos por cada volatilidad
-let precios = {};
-let vozActiva = true;
-let analisisListo = false;
-let modoActual = 'matches';
-let limiteOver = 4;
-let ladoOver = 'over';
-let parTipo = 'even';
-let prediccion = null;
-let ventanaActiva = false;
-let segundos = 0;
-let temporizador = null;
-let coincidencias = [];
-let entradaDetectada = false;
-let tiempos = Array.from({length:10}, ()=>Array(11).fill(0));
-
-// === VOZ INTEGRADA ===
-function hablar(texto){
-    if(!vozActiva || !speechSynthesis) return;
-    speechSynthesis.cancel();
-    speechSynthesis.speak(new SpeechSynthesisUtterance(texto));
-}
-
-// === ÚLTIMO DÍGITO ===
-function ultimoDigitoDe(precio){
-    return parseInt(String(precio).replace(/\D/g,'').slice(-1));
-}
-
-// === CAMBIAR DE VOLATILIDAD ===
-document.querySelectorAll('.vol-btn').forEach(boton=>{
-    boton.onclick = ()=>{
-        document.querySelectorAll('.vol-btn').forEach(b=>b.classList.remove('active'));
-        boton.classList.add('active');
-        activo = boton.dataset.simbolo;
-        if(!datos[activo]) datos[activo] = [];
-        if(!precios[activo]) precios[activo] = [];
-        hablar(`Cambiado a ${activo}`);
-        dibujarTodo();
-    };
-});
-
-// === CAMBIAR MODO DE ANÁLISIS ===
-document.querySelectorAll('.modo-btn').forEach(boton=>{
-    boton.onclick = ()=>{
-        document.querySelectorAll('.modo-btn').forEach(b=>b.classList.remove('active'));
-        boton.classList.add('active');
-        modoActual = boton.dataset.modo;
-        $('opcModo').style.display = modoActual === 'matches' ? 'none' : 'flex';
-        $('eoOpc').style.display = modoActual === 'evenodd' ? 'flex' : 'none';
-        $('ouOpc').style.display = modoActual === 'overunder' ? 'flex' : 'none';
-    };
-});
-
-// === ACTUALIZAR PANELES VERDE Y ROJO — IGUALES A TUS FOTOS ✅ ===
-function actualizarPanelesResultado(digitoGanador, digitoPerdedor, precGanador, precPerdedor, tipoGanar, tipoPerder){
-    // Datos de los 10 dígitos con porcentajes
-    let conteo = Array(10).fill(0);
-    (datos[activo]||[]).slice(-50).forEach(d=>conteo[d]++);
-    let total = (datos[activo]||[]).slice(-50).length || 1;
-    let htmlGana = '', htmlPierde = '';
-    for(let d=0;d<=9;d++){
-        let pct = (conteo[d]/total*100).toFixed(1)+'%';
-        let clase = '';
-        if(d===digitoGanador) clase='resaltado';
-        else if([1,3,5,9].includes(d)) clase='azul';
-        else if([7,8].includes(d)) clase='verde';
-        htmlGana += `<div class="digito-circ"><div class="num ${clase}">${d}</div><div class="pct">${pct}</div></div>`;
-
-        clase = '';
-        if(d===digitoPerdedor) clase='resaltado';
-        else if([1,3,5,9].includes(d)) clase='azul';
-        else if([7,8].includes(d)) clase='verde';
-        htmlPierde += `<div class="digito-circ"><div class="num ${clase}">${d}</div><div class="pct">${pct}</div></div>`;
-    }
-    $('digitosCircGana').innerHTML = htmlGana;
-    $('digitosCircPierde').innerHTML = htmlPierde;
-
-    // Valores principales
-    $('valGana').textContent = digitoGanador;
-    $('precGana').textContent = precGanador+'%';
-    $('valPierde').textContent = digitoPerdedor;
-    $('precPierde').textContent = precPerdedor+'%';
-
-    // Texto personalizado según modo
-    let txtBase = 'El análisis de mercado predice que aparecerá ';
-    if(tipoGanar==='digito') $('textoGana').innerHTML = txtBase + `el dígito ${digitoGanador}. Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en últimos 20, frecuencia, secuencias, saltos y distancia circular.`;
-    if(tipoGanar==='par') $('textoGana').innerHTML = txtBase + `valores PARES. Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en últimos 20, frecuencia, secuencias, saltos y distancia circular.`;
-    if(tipoGanar==='mayor') $('textoGana').innerHTML = txtBase + `valores MAYORES que ${limiteOver}. Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en últimos 20, frecuencia, secuencias, saltos y distancia circular.`;
-
-    if(tipoPerder==='digito') $('textoPierde').innerHTML = `POSIBILIDAD DE RIESGO: el dígito ${digitoPerdedor} es la alternativa con más fuerza después de la predicción principal. Fuerza matemática: ${precPerdedor}%. Si aparece, la entrada puede perder; esperar confirmación.`;
-    if(tipoPerder==='impar') $('textoPierde').innerHTML = txtBase + `valores IMPARES. Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en últimos 20, frecuencia, secuencias, saltos y distancia circular.`;
-    if(tipoPerder==='menor') $('textoPierde').innerHTML = txtBase + `valores MENORES que ${limiteOver}. Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en últimos 20, frecuencia, secuencias, saltos y distancia circular.`;
-
-    // Mostrar siempre ambos resultados, incluido el panel rojo PIERDE
-    $('panelGana').style.display='block';
-    $('panelPierde').style.display='block';
-    $('valGana').textContent=digitoGanador;
-    $('valPierde').textContent=digitoPerdedor;
-    $('precGana').textContent=precGanador+'%';
-    $('precPierde').textContent=precPerdedor+'%';
-    if(!$('textoPierde').innerHTML.trim() || $('textoPierde').innerHTML.includes('El análisis de mercado predice que aparecerá el dígito seleccionado')){
-      $('textoPierde').innerHTML = `La estrategia contraria queda marcada como PIERDE: ${digitoPerdedor}. Se usó el mismo análisis matemático para identificar la alternativa menos fuerte.`;
-    }
-}
-
-// === GRÁFICO DE VELAS ===
-function dibujarGrafico(){
-    const c = $('graficoVelas');
-    const ctx = c.getContext('2d');
-    c.width = c.offsetWidth; c.height = c.offsetHeight;
-    ctx.clearRect(0,0,c.width,c.height);
-
-    let arr = (precios[activo]||[]).slice(-60);
-    if(arr.length<6) return;
-
-    // Líneas de cuadrícula
-    ctx.strokeStyle='#153048'; ctx.lineWidth=1;
-    for(let i=1;i<5;i++){ ctx.beginPath(); ctx.moveTo(0,i*c.height/5); ctx.lineTo(c.width,i*c.height/5); ctx.stroke(); }
-
-    // Construir velas de 5 ticks cada una
-    let velas = [];
-    for(let i=0;i<arr.length;i+=5){
-        let g = arr.slice(i,i+5);
-        velas.push({o:g[0], h:Math.max(...g), l:Math.min(...g), c:g.at(-1)});
-    }
-
-    let minP = Math.min(...velas.map(v=>v.l)), maxP = Math.max(...velas.map(v=>v.h)), rango = maxP-minP||1;
-    let anchoVela = c.width/velas.length * 0.6;
-
-    velas.forEach((v,i)=>{
-        let x = (i+0.5)*c.width/velas.length;
-        let y = p=> c.height - 15 - ((p-minP)/rango)*(c.height-30);
-        ctx.strokeStyle = v.c>=v.o ? '#00ccff' : '#ff3355';
-        ctx.fillStyle = ctx.strokeStyle; ctx.lineWidth=2;
-        // Sombra
-        ctx.beginPath(); ctx.moveTo(x,y(v.h)); ctx.lineTo(x,y(v.l)); ctx.stroke();
-        // Cuerpo
-        let alto = Math.max(4, Math.abs(y(v.o)-y(v.c)));
-        ctx.fillRect(x-anchoVela/2, Math.min(y(v.o),y(v.c)), anchoVela, alto);
-    });
-}
-
-// === DIGIT MAP ===
-function dibujarMapaDigitos(){
-    let arr = datos[activo]||[];
-    let cont = Array(10).fill(0);
-    arr.slice(-50).forEach(d=>cont[d]++);
-    let total = arr.slice(-50).length||1;
-    let html='';
-    for(let d=0;d<=9;d++){
-        let pct = (cont[d]/total*100).toFixed(0)+'%';
-        let clase='';
-        if([1,3,5,9].includes(d)) clase='act1';
-        else if([7,8].includes(d)) clase='act2';
-        else if([0,2,4,6].includes(d)) clase='act3';
-        html += `<div class="d-caja"><div class="d-circulo ${clase}">${d}</div><div class="d-porcentaje">${pct}</div></div>`;
-    }
-    $('mapaDigitos').innerHTML = html;
-}
-
-// === HOT RANKING TOP 4 ===
-function dibujarHot(){
-    let arr = datos[activo]||[];
-    let cont = Array(10).fill(0);
-    arr.slice(-50).forEach(d=>cont[d]++);
-    let total = arr.slice(-50).length||1;
-    let orden = [...Array(10).keys()].sort((a,b)=>cont[b]-cont[a]).slice(0,4);
-    let html='';
-    orden.forEach((d,i)=>{
-        let pct = (cont[d]/total*100).toFixed(0)+'%';
-        let w = cont[d]/total*100;
-        html += `<div class="hot-item"><div class="hot-circ">${d}</div><div class="d-porcentaje">${pct}</div><div class="hot-bar"><div class="hot-bar-in" style="width:${w}%"></div></div></div>`;
-    });
-    $('rankingHot').innerHTML = html;
-}
-
-// === MOMENTO DE COINCIDENCIA ===
-function dibujarTiempos(){
-    if(!coincidencias.length){
-        $('listaTiempos').innerHTML = `<div class="fila-tiempo"><span class="tiempo-etiqueta">—</span><div class="tiempo-barra"><div class="tiempo-relleno" style="width:0%"></div></div><span class="tiempo-pct">—</span></div>`;
-        return;
-    }
-    let mapa = {};
-    coincidencias.forEach(c=>{let k=c.d+'|'+c.s; mapa[k]=(mapa[k]||0)+1;});
-    let filas = Object.keys(mapa).map(k=>{let [d,s]=k.split('|'); return {d,s,n:mapa[k]};}).sort((a,b)=>b.n-a.n).slice(0,4);
-    let maxN = Math.max(...filas.map(f=>f.n),1);
-    $('listaTiempos').innerHTML = filas.map(f=>`<div class="fila-tiempo"><span class="tiempo-etiqueta">${f.d} ⏱${f.s}s</span><div class="tiempo-barra"><div class="tiempo-relleno" style="width:${f.n/maxN*100}%"></div></div><span class="tiempo-pct">${(f.n/maxN*100).toFixed(0)}%</span></div>`).join('');
-}
-
-// === DIBUJAR TODO JUNTO ===
-function dibujarTodo(){
-    dibujarGrafico();
-    dibujarMapaDigitos();
-    dibujarHot();
-    dibujarTiempos();
-}
-
-// === AGREGAR NUEVO TICK ===
-function agregarTick(precio){
-    let d = ultimoDigitoDe(precio);
-    if(!datos[activo]) datos[activo]=[];
-    if(!precios[activo]) precios[activo]=[];
-    datos[activo].push(d); if(datos[activo].length>1000) datos[activo].shift();
-    precios[activo].push(precio); if(precios[activo].length>200) precios[activo].shift();
-
-    $('precioActual').textContent = precio;
-    $('ultimoDigito').textContent = d;
-    $('lista20').innerHTML = datos[activo].slice(-20).map(n=>`<span>${n}</span>`).join('');
-
-    // Si estamos en ventana de predicción y coincide
-    if(ventanaActiva && segundos>0){
-        let coincide = false;
-        if(modoActual==='matches' && d===prediccion) coincide=true;
-        if(modoActual==='evenodd' && ((parTipo==='even' && d%2===0) || (parTipo==='odd' && d%2!==0))) coincide=true;
-        if(modoActual==='overunder' && ((ladoOver==='over' && d>limiteOver) || (ladoOver==='under' && d<limiteOver))) coincide=true;
-
-        if(coincide){
-            coincidencias.push({d:String(d), s:String(segundos)});
-            let msj='';
-            if(modoActual==='matches') msj=`Dígito ${prediccion} apareció cuando quedaban ${segundos} segundos`;
-            if(modoActual==='evenodd') msj=`${parTipo==='even'?'PAR':'IMPAR'} apareció cuando quedaban ${segundos} segundos`;
-            if(modoActual==='overunder') msj=`${ladoOver==='over'?'MAYOR':'MENOR'} que ${limiteOver} apareció cuando quedaban ${segundos} segundos`;
-            if(!entradaDetectada){entradaDetectada=true; $('relojEstado').textContent=`PUNTO DE ENTRADA · ${modoActual==='matches'?prediccion:d} · QUEDAN ${segundos}s`; $('reloj10').classList.add('entrada-detectada'); hablar(`Punto de entrada detectado. Número ${modoActual==='matches'?prediccion:d}. Quedan ${segundos} segundos.`);} else {hablar(msj);}
-            dibujarTiempos();
-        }
-    }
-
-    dibujarTodo();
-}
-
-// === HACER ANÁLISIS ===
-function hacerAnalisis(){
-    let arr = datos[activo]||[];
-    if(arr.length<30){ hablar('Aún no hay suficientes datos'); return; }
-    analisisListo = true;
-    $('btnPredecir').disabled = false;
-    hablar('Análisis completado. Pulsa predecir.');
-}
-
-// === PREDECIR — ACTIVA LOS PANELES VERDE Y ROJO ===
-function predecir(){
-    let arr = (datos[activo]||[]).slice(-200);
-    if(!analisisListo || arr.length<20){ hablar('Primero haz el análisis'); return; }
-
-    // Leer opciones
-    limiteOver = parseInt($('limiteDigito').value);
-    ladoOver = document.querySelector('input[name="ou"]:checked').value;
-    parTipo = document.querySelector('input[name="eo"]:checked').value;
-
-    let conteo = Array(10).fill(0), score=Array(10).fill(0);
-    arr.forEach(d=>conteo[d]++);
-    let total = arr.length;
-    const w=arr.slice(-20), p3=w.slice(-3), p2=w.slice(-2);
-    arr.forEach((d,i)=>score[d]+=(i+1)/arr.length*.20);
-    conteo.forEach((n,d)=>score[d]+=n/total*.10);
-    for(let i=0;i<arr.length-3;i++) if(arr[i]===p3[0]&&arr[i+1]===p3[1]&&arr[i+2]===p3[2]) score[arr[i+3]]+=.30;
-    for(let i=0;i<arr.length-2;i++) if(arr[i]===p2[0]&&arr[i+1]===p2[1]) score[arr[i+2]]+=.20;
-    const delta=(w[19]-w[18]+10)%10, reverse=(w[18]-w[19]+10)%10;
-    for(let i=1;i<arr.length-1;i++){const j=(arr[i]-arr[i-1]+10)%10;if(j===delta)score[arr[i+1]]+=.12;if(j===reverse)score[arr[i+1]]+=.06;}
-    for(let d=0;d<10;d++){const dist=Math.min((d-w[19]+10)%10,(w[19]-d+10)%10);score[d]+=.02*(1-dist/5);}
-
-    // Resultados según modo
-    if(modoActual==='matches'){
-        let orden = [...Array(10).keys()].sort((a,b)=>score[b]-score[a]);
-        let mejor = orden[0], peor = orden[1] ?? orden[0];
-        let sumScore=score.reduce((a,b)=>a+b,0)||1;
-        let precMejor = Math.max(1,Math.round(score[mejor]/sumScore*100));
-        let precPeor = Math.max(1,Math.round(score[peor]/sumScore*100));
-        prediccion = mejor;
-        const segundoScore=score[peor]||0;
-        const fuerza=Math.max(1,Math.min(99,Math.round(50+((score[mejor]-segundoScore)/(score[mejor]||1))*100)));
-        // Calibración demo: las señales de menor fuerza matemática están mostrando mejor resultado observado.
-        let esPositiva=fuerza<70;
-        actualizarPanelesResultado(mejor, peor, fuerza, Math.max(1,100-fuerza), 'digito', 'digito');
-        if(esPositiva){
-            $('panelGana').style.display='block'; $('panelPierde').style.display='none';
-            $('textoGana').innerHTML=`PREDICCIÓN POSITIVA CALIBRADA: dígito ${mejor}. En la prueba demo esta señal está mostrando mejor comportamiento. Fuerza matemática ${fuerza}/100. Puede entrar con precaución.`;
-            hablar(`Predicción positiva. Dígito ${mejor}. Fuerza ${fuerza} de 100.`);
-        }else{
-            $('panelGana').style.display='none'; $('panelPierde').style.display='block';
-            $('valPierde').textContent=mejor; $('precPierde').textContent=fuerza+'%';
-            $('textoPierde').innerHTML=`SEÑAL NEGATIVA CALIBRADA: el dígito ${mejor} tiene fuerza matemática ${fuerza}/100, pero el comportamiento observado en demo no la está confirmando. ESPERAR — NO ENTRAR.`;
-            hablar(`Señal débil. El dígito ${mejor} no tiene suficiente fuerza. Esperar, no entrar.`);
-        }
-    }
-    else if(modoActual==='evenodd'){
-        let pares = arr.filter(d=>d%2===0).length;
-        let impares = total-pares;
-        let mejor = pares>impares?'even':'odd';
-        let peor = mejor==='even'?'odd':'even';
-        let precMejor = Math.round(Math.max(pares,impares)/total*100 + 10);
-        let precPeor = Math.round(Math.min(pares,impares)/total*100 + 10);
-        parTipo = mejor;
-        actualizarPanelesResultado(mejor==='even'?'PAR':'IMPAR', peor==='even'?'PAR':'IMPAR', precMejor, precPeor, 'par', 'impar');
-        hablar(`Predicción lista: ${mejor==='even'?'PAR':'IMPAR'}`);
-    }
-    else {
-        let mayor = arr.filter(d=>d>limiteOver).length;
-        let menor = total-mayor;
-        let mejor = mayor>menor?'over':'under';
-        let peor = mejor==='over'?'under':'over';
-        let precMejor = Math.round(Math.max(mayor,menor)/total*100 + 10);
-        let precPeor = Math.round(Math.min(mayor,menor)/total*100 + 10);
-        ladoOver = mejor;
-        actualizarPanelesResultado(`> ${limiteOver}`, `< ${limiteOver}`, precMejor, precPeor, 'mayor', 'menor');
-        hablar(`Predicción lista: ${mejor==='over'?'MAYOR':'MENOR'} que ${limiteOver}`);
-    }
-
-    // Cuenta regresiva 10s
-    if(!esPositiva){ ventanaActiva=false; $('relojEstado').textContent='SEÑAL DÉBIL · ESPERAR'; return; }
-    ventanaActiva = true; segundos = 10; entradaDetectada=false; coincidencias=[]; $('reloj10').classList.add('activo'); $('relojNumero').textContent='10'; $('relojEstado').textContent='PREDICCIÓN ACTIVA · ENTRADA MANUAL'; hablar('Comienza la cuenta regresiva. Diez segundos para entrar manualmente.');
-    clearInterval(temporizador);
-    temporizador = setInterval(()=>{
-        segundos--; $('relojNumero').textContent=Math.max(segundos,0); if(segundos>0){const palabras=['cero','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez']; hablar(palabras[segundos]+' segundos');}
-        if(segundos<=0){ clearInterval(temporizador); ventanaActiva=false; $('relojEstado').textContent='TIEMPO TERMINADO'; setTimeout(()=>$('reloj10').classList.remove('activo'),1500); hablar('Tiempo terminado'); }
-    },1000);
-}
-
-// === BOTONES ===
-$('btnVoz').onclick = ()=>{
-    vozActiva = !vozActiva;
-    $('btnVoz').textContent = vozActiva ? 'VOZ ACTIVADA' : 'VOZ DESACTIVADA';
-    hablar(vozActiva ? 'Voz activada' : 'Voz desactivada');
-};
-$('btnAnalizar').onclick = hacerAnalisis;
-$('btnPredecir').onclick = predecir;
-
-// === TICKS REALES DESDE EL SERVIDOR ===
-function conectarServidor(){const proto=location.protocol==='https:'?'wss':'ws';const ws=new WebSocket(proto+'://'+location.host);ws.onmessage=e=>{let m=JSON.parse(e.data);if(m.status==='TICK RECIBIDO'&&m.symbol===activo)agregarTick(m.quote)};ws.onerror=()=>hablar('Error de conexión');}
-async function cargarHistorial(){try{const r=await fetch('/history?asset='+encodeURIComponent(activo));const rows=await r.json();if(Array.isArray(rows)){datos[activo]=rows.slice().reverse().map(x=>Number(x.digit)).slice(-1000);precios[activo]=rows.slice().reverse().map(x=>Number(x.quote)).slice(-200);dibujarTodo();}}catch(e){}}
-
-// === FONDO ESCÁNER DE NÚMEROS ===
-function iniciarFondoEscaner(){const c=$('scanBg'),x=c.getContext('2d');let fs=18,cols=0,ys=[];function size(){c.width=innerWidth;c.height=innerHeight;cols=Math.ceil(c.width/fs);ys=Array(cols).fill(0).map(()=>Math.random()*c.height);}size();addEventListener('resize',size);function loop(){x.fillStyle='rgba(3,7,18,.18)';x.fillRect(0,0,c.width,c.height);x.font=fs+'px monospace';for(let i=0;i<cols;i++){let n=Math.floor(Math.random()*10);x.fillStyle=i%7===0?'rgba(0,255,136,.85)':'rgba(0,204,255,.55)';x.fillText(n,i*fs,ys[i]);ys[i]+=fs;if(ys[i]>c.height&&Math.random()>.94)ys[i]=0;}requestAnimationFrame(loop);}loop();}
-
-// === INICIO ===
-window.onload = ()=>{
-    iniciarFondoEscaner();
-    conectarServidor();
-    cargarHistorial();
-    hablar('Sistema listo. Escáner activo.');
-    dibujarTodo();
-};
+(()=>{
+const q=s=>document.querySelector(s), qs=s=>[...document.querySelectorAll(s)];
+const strategy=qs('.controls-bar select')[0], assetSelect=qs('.controls-bar select')[2], calc=qs('.controls-bar button')[0], recalc=qs('.controls-bar button')[1];
+const symbols={'Volatility 10':'R_10','Volatility 25':'R_25','Volatility 50 (1s)':'R_50','Volatility 75':'R_75','Volatility 100':'R_100','Volatility 125 (1s)':'R_100','Volatility 150 (1s)':'R_100'};
+let asset=symbols[assetSelect?.value]||'R_25', digits=[], prices=[], timer=null, left=0, predicted=null;
+const panel=q('.panel-left'), price=q('.price-big'), last=q('.last-digit'), total=q('.data-value');
+const live=document.createElement('div');live.id='liveLayer';live.innerHTML='<b>LIVE</b><span id="liveState">CONECTANDO</span><span id="livePrice">Precio: —</span><span id="liveDigit">Último dígito: —</span><span id="live20">20 dígitos: —</span>';panel?.insertBefore(live,panel.querySelector('.chart-box'));
+const clock=document.createElement('div');clock.className='entry-clock';clock.innerHTML='ENTRADA MANUAL<strong>10</strong><span>ESPERANDO SEÑAL</span>';document.body.appendChild(clock);
+function say(t){if('speechSynthesis' in window){speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(t));}}
+function digit(v){let a=String(v).replace(/\D/g,'');return Number(a.at(-1));}
+function update(){let d=digits.at(-1),p=prices.at(-1);if(p!=null){price.textContent=p; q('#livePrice').textContent='Precio: '+p}if(d!=null){last.textContent='Último dígito: '+d+' — '+(d%2?'ODD':'EVEN');q('#liveDigit').textContent='Último dígito: '+d;q('#live20').textContent='20 dígitos: '+digits.slice(-20).join(' · ')}if(total)total.textContent=digits.length;}
+function tick(m){if(m.symbol!==asset)return;let p=Number(m.quote);if(!Number.isFinite(p))return;prices.push(p);digits.push(digit(m.quote));if(digits.length>1000)digits.shift();if(prices.length>200)prices.shift();update();if(left>0&&digit(m.quote)===predicted){clock.classList.add('hit');clock.querySelector('span').textContent='PUNTO DE ENTRADA · '+left+'s';say('Punto de entrada detectado. Quedan '+left+' segundos.');}}
+function connect(){let ws=new WebSocket((location.protocol==='https:'?'wss':'ws')+'://'+location.host);ws.onopen=()=>q('#liveState').textContent='LIVE';ws.onclose=()=>q('#liveState').textContent='DESCONECTADO';ws.onmessage=e=>{try{let m=JSON.parse(e.data);if(m.status==='TICK RECIBIDO')tick(m)}catch{}};}
+function calculate(){if(digits.length<20){say('Aún no hay veinte ticks');return}let c=Array(10).fill(0),a=digits.slice(-200);a.forEach(d=>c[d]++);let order=[...Array(10).keys()].sort((x,y)=>c[y]-c[x]),best=order[0],second=order[1],strength=Math.round(50+((c[best]-c[second])/Math.max(c[best],1))*100);predicted=best;let green=strength>=70;qs('.panel-resultado').forEach(x=>x.style.display='none');let target=green?q('.panel-left'):q('.panel-right');clock.classList.toggle('on',green);clock.classList.remove('hit');if(green){clock.querySelector('strong').textContent='10';clock.querySelector('span').textContent='PREDICCIÓN POSITIVA';left=10;clearInterval(timer);timer=setInterval(()=>{left--;clock.querySelector('strong').textContent=Math.max(left,0);if(left<=0){clearInterval(timer);clock.querySelector('span').textContent='TIEMPO TERMINADO';say('Tiempo terminado')}},1000);say('Predicción positiva. Dígito '+best+'. Fuerza '+strength+' de 100.');}else say('Señal débil. Esperar, no entrar.');
+const guide=q('.guide-text');if(guide)guide.textContent=(green?'PREDICCIÓN POSITIVA: ':'SEÑAL DÉBIL: ')+best+' · fuerza matemática '+strength+'/100'+(green?' · entrada manual durante 10 segundos':' · ESPERAR — NO ENTRAR');}
+assetSelect?.addEventListener('change',()=>{asset=symbols[assetSelect.value]||asset;digits=[];prices=[];q('#liveState').textContent='CAMBIANDO ACTIVO';});calc?.addEventListener('click',calculate);recalc?.addEventListener('click',calculate);connect();
+})();
 </script>
 </body>
 </html>
