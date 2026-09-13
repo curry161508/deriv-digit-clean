@@ -22,8 +22,8 @@
         }
         .wrap{max-width:920px;margin:0 auto;position:relative;z-index:2}
         #scanBg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.28;mix-blend-mode:screen}
-        .reloj-10{display:none;text-align:center;margin-top:10px;padding:10px;border:2px solid var(--neon-rosa);border-radius:14px;background:rgba(8,12,30,.9);box-shadow:0 0 18px rgba(255,34,170,.45);color:#fff;font-weight:900;letter-spacing:.08em}
-        .reloj-10 strong{display:block;font-size:42px;line-height:1;color:var(--neon-rosa);text-shadow:0 0 14px currentColor}
+        .reloj-10{display:none;position:absolute;top:8px;right:8px;z-index:5;min-width:118px;text-align:center;padding:8px;border:2px solid var(--neon-rosa);border-radius:14px;background:rgba(8,12,30,.9);box-shadow:0 0 18px rgba(255,34,170,.45);color:#fff;font-weight:900;letter-spacing:.08em}
+        .reloj-10 strong{display:block;font-size:34px;line-height:1;color:var(--neon-rosa);text-shadow:0 0 14px currentColor}
         .reloj-10.activo{display:block}
 
         /* === TÍTULO Y SELECTORES === */
@@ -160,6 +160,7 @@
     <div class="grafico-caja">
         <div class="grafico-espacio">
             <canvas id="graficoVelas"></canvas>
+                <div id="reloj10" class="reloj-10">TIEMPO PARA ENTRADA MANUAL<strong id="relojNumero">10</strong><span id="relojEstado">PREDICCIÓN ACTIVA · ENTRADA MANUAL</span></div>
         </div>
         <div class="precio-fila">
             <div>PRECIO ACTUAL<br><span id="precioActual" class="precio-actual">—</span></div>
@@ -214,7 +215,6 @@
         <button id="btnAnalizar" class="btn btn-analizar">HACER ANÁLISIS</button>
         <button id="btnPredecir" class="btn btn-predecir" disabled>PREDECIR ANÁLISIS</button>
         <button id="btnVoz" class="btn btn-voz">VOZ ACTIVADA</button>
-        <div id="reloj10" class="reloj-10">TIEMPO PARA ENTRADA MANUAL<strong id="relojNumero">10</strong><span id="relojEstado">PREDICCIÓN ACTIVA</span></div>
     </div>
 
 </div>
@@ -518,10 +518,10 @@ function predecir(){
     }
 
     // Cuenta regresiva 10s
-    ventanaActiva = true; segundos = 10; $('reloj10').classList.add('activo'); $('relojNumero').textContent='10'; $('relojEstado').textContent='PREDICCIÓN ACTIVA · ENTRADA MANUAL';
+    ventanaActiva = true; segundos = 10; $('reloj10').classList.add('activo'); $('relojNumero').textContent='10'; $('relojEstado').textContent='PREDICCIÓN ACTIVA · ENTRADA MANUAL'; hablar('Comienza la cuenta regresiva. Diez segundos para entrar manualmente.');
     clearInterval(temporizador);
     temporizador = setInterval(()=>{
-        segundos--; $('relojNumero').textContent=Math.max(segundos,0);
+        segundos--; $('relojNumero').textContent=Math.max(segundos,0); if(segundos>0){const palabras=['cero','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez']; hablar(palabras[segundos]+' segundos');}
         if(segundos<=0){ clearInterval(temporizador); ventanaActiva=false; $('relojEstado').textContent='TIEMPO TERMINADO'; setTimeout(()=>$('reloj10').classList.remove('activo'),1500); hablar('Tiempo terminado'); }
     },1000);
 }
