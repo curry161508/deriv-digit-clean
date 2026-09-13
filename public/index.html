@@ -314,7 +314,7 @@ function actualizarPanelesResultado(digitoGanador, digitoPerdedor, precGanador, 
     if(tipoGanar==='par') $('textoGana').innerHTML = txtBase + `valores PARES. Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en últimos 20, frecuencia, secuencias, saltos y distancia circular.`;
     if(tipoGanar==='mayor') $('textoGana').innerHTML = txtBase + `valores MAYORES que ${limiteOver}. Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en últimos 20, frecuencia, secuencias, saltos y distancia circular.`;
 
-    if(tipoPerder==='digito') $('textoPierde').innerHTML = txtBase + `el dígito ${digitoPerdedor}. Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en últimos 20, frecuencia, secuencias, saltos y distancia circular.`;
+    if(tipoPerder==='digito') $('textoPierde').innerHTML = `POSIBILIDAD DE RIESGO: el dígito ${digitoPerdedor} es la alternativa con más fuerza después de la predicción principal. Fuerza matemática: ${precPerdedor}%. Si aparece, la entrada puede perder; esperar confirmación.`;
     if(tipoPerder==='impar') $('textoPierde').innerHTML = txtBase + `valores IMPARES. Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en últimos 20, frecuencia, secuencias, saltos y distancia circular.`;
     if(tipoPerder==='menor') $('textoPierde').innerHTML = txtBase + `valores MENORES que ${limiteOver}. Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en últimos 20, frecuencia, secuencias, saltos y distancia circular.`;
 
@@ -489,13 +489,25 @@ function predecir(){
     // Resultados según modo
     if(modoActual==='matches'){
         let orden = [...Array(10).keys()].sort((a,b)=>score[b]-score[a]);
-        let mejor = orden[0], peor = orden.at(-1);
+        let mejor = orden[0], peor = orden[1] ?? orden[0];
         let sumScore=score.reduce((a,b)=>a+b,0)||1;
-        let precMejor = Math.round(score[mejor]/sumScore*100);
-        let precPeor = Math.round(score[peor]/sumScore*100);
+        let precMejor = Math.max(1,Math.round(score[mejor]/sumScore*100));
+        let precPeor = Math.max(1,Math.round(score[peor]/sumScore*100));
         prediccion = mejor;
-        actualizarPanelesResultado(mejor, peor, precMejor, precPeor, 'digito', 'digito');
-        hablar(`Predicción lista: dígito ${mejor}`);
+        const segundoScore=score[peor]||0;
+        const fuerza=Math.max(1,Math.min(99,Math.round(50+((score[mejor]-segundoScore)/(score[mejor]||1))*100)));
+        let esPositiva=fuerza>=70;
+        actualizarPanelesResultado(mejor, peor, fuerza, Math.max(1,100-fuerza), 'digito', 'digito');
+        if(esPositiva){
+            $('panelGana').style.display='block'; $('panelPierde').style.display='none';
+            $('textoGana').innerHTML=`PREDICCIÓN POSITIVA: dígito ${mejor}. Fuerza matemática ${fuerza}/100. Puede entrar con precaución.`;
+            hablar(`Predicción positiva. Dígito ${mejor}. Fuerza ${fuerza} de 100.`);
+        }else{
+            $('panelGana').style.display='none'; $('panelPierde').style.display='block';
+            $('valPierde').textContent=mejor; $('precPierde').textContent=fuerza+'%';
+            $('textoPierde').innerHTML=`SEÑAL DÉBIL: el dígito ${mejor} es la predicción, pero su fuerza matemática es solo ${fuerza}/100. ESPERAR — NO ENTRAR.`;
+            hablar(`Señal débil. El dígito ${mejor} no tiene suficiente fuerza. Esperar, no entrar.`);
+        }
     }
     else if(modoActual==='evenodd'){
         let pares = arr.filter(d=>d%2===0).length;
@@ -521,6 +533,7 @@ function predecir(){
     }
 
     // Cuenta regresiva 10s
+    if(!esPositiva){ ventanaActiva=false; $('relojEstado').textContent='SEÑAL DÉBIL · ESPERAR'; return; }
     ventanaActiva = true; segundos = 10; entradaDetectada=false; coincidencias=[]; $('reloj10').classList.add('activo'); $('relojNumero').textContent='10'; $('relojEstado').textContent='PREDICCIÓN ACTIVA · ENTRADA MANUAL'; hablar('Comienza la cuenta regresiva. Diez segundos para entrar manualmente.');
     clearInterval(temporizador);
     temporizador = setInterval(()=>{
