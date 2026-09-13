@@ -4,57 +4,348 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analizador Binario - Deriv</title>
+    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.min.js"></script>
     <style>
         * { margin:0; padding:0; box-sizing:border-box; font-family:Arial, sans-serif; }
-        body { background:#0f1419; color:#fff; padding:10px; }
-        .container { max-width:420px; margin:0 auto; }
+        body {
+            background:
+                radial-gradient(circle at top left, rgba(0,255,128,0.14), transparent 35%),
+                linear-gradient(135deg, #050a07 0%, #0f1a0f 45%, #050a07 100%);
+            color:#fff;
+            padding:18px;
+            min-height:100vh;
+        }
 
-        /* Selectores */
-        .box { background:#1e2732; border-radius:12px; padding:12px; margin-bottom:12px; }
-        select, button { width:100%; padding:10px; border-radius:8px; border:none; font-size:16px; margin-top:6px; }
-        button { background:#e91e63; color:#fff; font-weight:bold; cursor:pointer; }
-        button:disabled { background:#555; cursor:not-allowed; }
-        .btn-sec { background:#2196f3; }
+        .container {
+            max-width:400px;
+            margin:0 auto;
+            background:rgba(10,15,10,0.92);
+            border-radius:22px;
+            padding:18px;
+            border:1px solid rgba(0,255,128,0.16);
+            box-shadow:
+                0 0 35px rgba(0,255,128,0.12),
+                inset 0 0 12px rgba(0,255,128,0.04);
+        }
 
-        /* Dígitos 0-9 */
-        .digits-grid { display:grid; grid-template-columns:repeat(5, 1fr); gap:8px; margin:10px 0; }
-        .digit-circle { aspect-ratio:1; border-radius:50%; display:flex; flex-direction:column; align-items:center; justify-content:center; border:3px solid #2196f3; background:#151a22; }
-        .digit-circle.hot { border-color:#e91e63; background:#2c1626; box-shadow:0 0 12px #e91e6380; }
-        .digit-num { font-size:20px; font-weight:bold; }
-        .digit-pct { font-size:11px; color:#ccc; }
+        h2 {
+            text-align:center;
+            margin-bottom:12px;
+            color:#00ff88;
+            font-size:20px;
+            letter-spacing:1px;
+            text-shadow:0 0 8px rgba(0,255,136,0.65);
+        }
 
-        /* Caja de resultado — SOLO APARECE AL PREDECIR */
-        .result-box { display:none; background:#1e2732; border:2px solid #4caf50; border-radius:12px; padding:14px; margin:12px 0; }
-        .result-box.danger { border-color:#ff9800; }
-        .result-title { color:#4cc9f0; font-weight:bold; font-size:18px; margin-bottom:8px; }
-        .res-main { font-size:26px; font-weight:bold; margin:6px 0; }
-        .res-main.ok { color:#4caf50; }
-        .res-main.warn { color:#ffb74d; }
-        .res-prec { font-size:15px; color:#aed581; margin-bottom:8px; }
-        .res-text { font-size:14px; line-height:1.4; color:#e0e0e0; }
+        /* === GRÁFICO DE VELAS ESTILO NEON HACKER === */
+        #chart-container {
+            background:
+                linear-gradient(180deg, rgba(10,15,20,0.96) 0%, rgba(5,10,15,0.98) 100%);
+            border-radius:18px;
+            padding:14px;
+            margin-bottom:18px;
+            height:240px;
+            border:1px solid rgba(0,255,128,0.22);
+            box-shadow:
+                inset 0 0 18px rgba(0,255,128,0.08),
+                0 0 22px rgba(0,255,128,0.14);
+            position:relative;
+            overflow:hidden;
+        }
 
-        /* Reloj */
-        .timer-box { display:none; text-align:center; margin:10px 0; }
-        .timer-num { font-size:42px; font-weight:bold; color:#ffeb3b; }
+        #chart-container::before {
+            content:"";
+            position:absolute;
+            inset:0;
+            background:
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0,255,128,0.035) 2px,
+                    rgba(0,255,128,0.035) 4px
+                );
+            pointer-events:none;
+        }
 
-        /* Secciones de datos */
-        .row { display:flex; justify-content:space-between; margin:4px 0; font-size:14px; }
-        .label { color:#90caf9; }
-        .value { font-weight:bold; }
+        #chart { width:100%; height:100%; }
 
-        /* Interruptor voz */
-        .toggle-row { display:flex; align-items:center; justify-content:space-between; margin-top:8px; }
-        .toggle { width:44px; height:24px; background:#555; border-radius:12px; position:relative; cursor:pointer; }
-        .toggle.on { background:#4caf50; }
-        .toggle::after { content:''; position:absolute; top:2px; left:2px; width:20px; height:20px; background:#fff; border-radius:50%; transition:0.2s; }
-        .toggle.on::after { left:22px; }
+        .box {
+            background:rgba(25,35,25,0.88);
+            border-radius:18px;
+            padding:14px;
+            margin-bottom:14px;
+            border:1px solid rgba(0,255,128,0.18);
+            box-shadow:0 0 18px rgba(0,255,128,0.12);
+        }
+
+        h3 {
+            color:#00ff88;
+            margin-bottom:10px;
+            font-size:15px;
+            letter-spacing:0.5px;
+            text-shadow:0 0 6px rgba(0,255,136,0.55);
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        .tag-top {
+            font-size:12px;
+            background:rgba(0,255,128,0.15);
+            color:#00ff88;
+            padding:2px 8px;
+            border-radius:10px;
+            border:1px solid rgba(0,255,128,0.35);
+        }
+
+        select, button {
+            width:100%;
+            padding:11px;
+            border-radius:12px;
+            border:none;
+            font-size:16px;
+            margin-top:8px;
+        }
+
+        select {
+            background:rgba(20,30,20,0.9);
+            color:#00ff88;
+            border:1px solid rgba(0,255,128,0.22);
+        }
+
+        button {
+            background:
+                linear-gradient(135deg, #ff0066, #ff4081);
+            color:#fff;
+            font-weight:bold;
+            cursor:pointer;
+            font-size:17px;
+            padding:13px;
+            border:1px solid rgba(255,0,102,0.5);
+            box-shadow:0 0 18px rgba(255,0,102,0.45);
+        }
+
+        button:disabled {
+            background:#555;
+            cursor:not-allowed;
+            border-color:#777;
+            box-shadow:none;
+        }
+
+        /* Dígitos 0–9 — COLORES POR NIVEL IGUAL A TU FOTO */
+        .digits-grid {
+            display:grid;
+            grid-template-columns:repeat(5, 1fr);
+            gap:10px;
+            margin:12px 0;
+            min-height:90px;
+        }
+
+        .digit-circle {
+            aspect-ratio:1;
+            border-radius:50%;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            border:2px solid rgba(0,255,128,0.75);
+            background:rgba(10,20,10,0.9);
+            box-shadow:0 0 12px rgba(0,255,128,0.25);
+            transition: all 0.3s ease;
+        }
+
+        /* Nivel 1 — MÁS FUERTE: ROSA NEÓN */
+        .digit-circle.rank-1 {
+            border-color:#ff00cc;
+            background:rgba(255,0,204,0.18);
+            box-shadow:0 0 18px rgba(255,0,204,0.6);
+        }
+        .digit-circle.rank-1 .digit-num {
+            color:#ff00cc;
+            text-shadow:0 0 10px rgba(255,0,204,0.8);
+        }
+
+        /* Nivel 2 — AZUL NEÓN */
+        .digit-circle.rank-2 {
+            border-color:#00ccff;
+            background:rgba(0,204,255,0.12);
+            box-shadow:0 0 14px rgba(0,204,255,0.45);
+        }
+        .digit-circle.rank-2 .digit-num {
+            color:#00ccff;
+            text-shadow:0 0 8px rgba(0,204,255,0.6);
+        }
+
+        /* Nivel 3 — AMARILLO/VERDE NEÓN */
+        .digit-circle.rank-3 {
+            border-color:#ccff00;
+            background:rgba(204,255,0,0.10);
+            box-shadow:0 0 12px rgba(204,255,0,0.35);
+        }
+        .digit-circle.rank-3 .digit-num {
+            color:#ccff00;
+            text-shadow:0 0 6px rgba(204,255,0,0.5);
+        }
+
+        /* Nivel 4 — VERDE CLARO */
+        .digit-circle.rank-4 {
+            border-color:#00ff88;
+            background:rgba(0,255,136,0.08);
+            box-shadow:0 0 10px rgba(0,255,136,0.25);
+        }
+        .digit-circle.rank-4 .digit-num {
+            color:#00ff88;
+            text-shadow:0 0 5px rgba(0,255,136,0.4);
+        }
+
+        .digit-num {
+            font-size:21px;
+            font-weight:bold;
+            color:#00ff88;
+            text-shadow:0 0 8px rgba(0,255,136,0.65);
+        }
+
+        .digit-pct {
+            font-size:11px;
+            color:#ccc;
+            margin-top:2px;
+        }
+
+        /* CAJA DE RESULTADO — SOLO APARECE AL PREDECIR */
+        .result-box {
+            display:none;
+            background:rgba(25,35,25,0.92);
+            border:1px solid #00ff88;
+            border-radius:18px;
+            padding:16px;
+            margin:14px 0;
+            box-shadow:0 0 22px rgba(0,255,128,0.35);
+        }
+
+        .result-box.danger {
+            border-color:#ffcc00;
+            box-shadow:0 0 22px rgba(255,204,0,0.35);
+        }
+
+        .result-title {
+            color:#00ff88;
+            font-weight:bold;
+            font-size:18px;
+            margin-bottom:10px;
+            text-shadow:0 0 8px rgba(0,255,136,0.55);
+        }
+
+        .res-main {
+            font-size:28px;
+            font-weight:bold;
+            margin:8px 0;
+        }
+
+        .res-main.ok {
+            color:#00ff88;
+            text-shadow:0 0 10px rgba(0,255,136,0.65);
+        }
+
+        .res-main.warn {
+            color:#ffcc00;
+            text-shadow:0 0 10px rgba(255,204,0,0.65);
+        }
+
+        .res-prec {
+            font-size:15px;
+            color:#aed581;
+            margin-bottom:10px;
+        }
+
+        .res-text {
+            font-size:14px;
+            line-height:1.5;
+            color:#e0e0e0;
+        }
+
+        /* RELOJ */
+        .timer-box {
+            display:none;
+            text-align:center;
+            margin:12px 0 0 0;
+        }
+
+        .timer-num {
+            font-size:48px;
+            font-weight:bold;
+            color:#ffcc00;
+            text-shadow:0 0 12px rgba(255,204,0,0.75);
+        }
+
+        /* Filas de datos */
+        .row {
+            display:flex;
+            justify-content:space-between;
+            margin:5px 0;
+            font-size:14px;
+        }
+
+        .label {
+            color:#90caf9;
+        }
+
+        .value {
+            font-weight:bold;
+            color:#00ff88;
+        }
+
+        /* Interruptor de voz */
+        .toggle-row {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            margin-top:10px;
+        }
+
+        .toggle {
+            width:46px;
+            height:26px;
+            background:#555;
+            border-radius:13px;
+            position:relative;
+            cursor:pointer;
+            border:1px solid #888;
+        }
+
+        .toggle.on {
+            background:#00ff88;
+            border-color:#00ff88;
+            box-shadow:0 0 12px rgba(0,255,136,0.65);
+        }
+
+        .toggle::after {
+            content:'';
+            position:absolute;
+            top:3px;
+            left:3px;
+            width:20px;
+            height:20px;
+            background:#fff;
+            border-radius:50%;
+            transition:0.2s;
+        }
+
+        .toggle.on::after {
+            left:23px;
+        }
     </style>
 </head>
 <body>
 <div class="container">
-    <h2 style="text-align:center; margin-bottom:10px;">📊 ANALIZADOR DERIV</h2>
+    <h2>📊 ANALIZADOR DERIV</h2>
 
-    <!-- VOLATILIDAD -->
+    <!-- GRÁFICO DE VELAS NEÓN -->
+    <div id="chart-container">
+        <div id="chart"></div>
+    </div>
+
+    <!-- SELECCIÓN DE ACTIVO -->
     <div class="box">
         <label>Activo / Volatilidad:</label>
         <select id="symbolSel">
@@ -66,7 +357,7 @@
         </select>
     </div>
 
-    <!-- MODO DE OPERACIÓN -->
+    <!-- SELECCIÓN DE MODO -->
     <div class="box">
         <label>Modo de análisis:</label>
         <select id="modeSel">
@@ -78,20 +369,26 @@
         </select>
     </div>
 
-    <!-- ESTADÍSTICAS PERMANENTES -->
+    <!-- DIGIT MAP — COLORES POR RANGO -->
     <div class="box">
-        <h3 style="color:#4cc9f0; margin-bottom:6px;">DIGIT MAP — Frecuencia</h3>
+        <h3>DIGIT MAP — Frecuencia</h3>
         <div class="digits-grid" id="digitMap"></div>
     </div>
 
+    <!-- HOT RANKING — AHORA TOP 4 ✅ -->
     <div class="box">
-        <h3 style="color:#4cc9f0; margin-bottom:6px;">HOT RANKING — Más frecuentes</h3>
-        <div id="hotList"></div>
+        <h3>HOT RANKING — Más frecuentes <span class="tag-top">TOP 4</span></h3>
+        <div id="hotList">
+            <div class="row"><span class="label">#1 — Esperando datos…</span><span class="value">-</span></div>
+        </div>
     </div>
 
+    <!-- MOMENTO DE COINCIDENCIA -->
     <div class="box">
-        <h3 style="color:#4cc9f0; margin-bottom:6px;">MOMENTO DE COINCIDENCIA</h3>
-        <div id="momentList"></div>
+        <h3>MOMENTO DE COINCIDENCIA <span class="tag-top">TOP 4</span></h3>
+        <div id="momentList">
+            <div class="row"><span class="label">Más frecuente:</span><span class="value">—</span></div>
+        </div>
     </div>
 
     <!-- CONTROLES -->
@@ -100,19 +397,18 @@
             <span>🔊 Voz activada:</span>
             <div class="toggle on" id="voiceToggle" onclick="toggleVoice()"></div>
         </div>
-        <button id="btnPredict" style="margin-top:12px; font-size:18px; padding:12px;">🔴 PREDECIR</button>
+        <button id="btnPredict" style="margin-top:12px;">🔴 PREDECIR</button>
     </div>
 
-    <!-- ===== CAJA QUE SOLO APARECE AL DAR PREDECIR ===== -->
+    <!-- CAJA DE RESULTADO — SOLO AL DAR PREDECIR -->
     <div class="result-box" id="resultBox">
         <div class="result-title">Estrategia Matches/Differs</div>
         <div class="res-main" id="resMain"></div>
         <div class="res-prec" id="resPrec"></div>
         <div class="res-text" id="resText"></div>
 
-        <!-- RELOJ DE 10 SEGUNDOS -->
         <div class="timer-box" id="timerBox">
-            <div style="font-size:14px; color:#ffeb3b;">⏱️ TIEMPO PARA OPERAR:</div>
+            <div style="font-size:14px; color:#ffcc00;">⏱️ TIEMPO PARA OPERAR:</div>
             <div class="timer-num" id="timerNum">10</div>
         </div>
     </div>
@@ -120,17 +416,80 @@
 </div>
 
 <script>
-// ==========================================
-// CONFIGURACIÓN GENERAL
-// ==========================================
 let voiceEnabled = true;
 let ws = null;
 let historyDigits = [];
 let historyTicks = [];
 let timerInterval = null;
+let predictionWindow = false;
+let countdownSecond = 0;
+let timingCounts = Array.from({length:10},()=>Array(11).fill(0));
+let timingTotal = 0;
 const MAX_HISTORY = 1000;
 
-// --- SÍNTESIS DE VOZ ---
+let chart = null;
+let candleSeries = null;
+let candles = [];
+const CANDLE_INTERVAL = 60000;
+let lastCandleTime = null;
+
+function inicializarGrafico() {
+    const container = document.getElementById('chart');
+    chart = LightweightCharts.createChart(container, {
+        layout: {
+            background: { type: 'solid', color: '#0a0f14' },
+            textColor: '#00ff88',
+        },
+        grid: {
+            vertLines: { color: 'rgba(0,255,128,0.08)' },
+            horzLines: { color: 'rgba(0,255,128,0.08)' },
+        },
+        crosshair: {
+            mode: LightweightCharts.CrosshairMode.Normal,
+        },
+        priceScale: {
+            borderColor: 'rgba(0,255,128,0.18)',
+        },
+        timeScale: {
+            borderColor: 'rgba(0,255,128,0.18)',
+            timeVisible: true,
+            secondsVisible: false,
+        },
+    });
+
+    candleSeries = chart.addCandlestickSeries({
+        upColor: '#00ff88',
+        downColor: '#ff0066',
+        borderVisible: false,
+        wickUpColor: '#00ff88',
+        wickDownColor: '#ff0066',
+    });
+}
+
+function agregarPrecioAlGrafico(precio) {
+    const ahora = Math.floor(Date.now() / CANDLE_INTERVAL) * CANDLE_INTERVAL / 1000;
+
+    if (!lastCandleTime || ahora !== lastCandleTime) {
+        candles.push({
+            time: ahora,
+            open: precio,
+            high: precio,
+            low: precio,
+            close: precio
+        });
+        lastCandleTime = ahora;
+    } else {
+        const ult = candles[candles.length - 1];
+        ult.high = Math.max(ult.high, precio);
+        ult.low = Math.min(ult.low, precio);
+        ult.close = precio;
+    }
+
+    if (candles.length > 100) candles.shift();
+    candleSeries.setData(candles);
+    chart.timeScale().fitContent();
+}
+
 function hablar(texto) {
     if (!voiceEnabled) return;
     window.speechSynthesis.cancel();
@@ -146,43 +505,63 @@ function toggleVoice() {
     hablar(voiceEnabled ? "Voz activada" : "Voz desactivada");
 }
 
-// --- EXTRAER ÚLTIMO DÍGITO ---
 function ultimoDigito(precio) {
     return parseInt(precio.toFixed(2).slice(-1));
 }
 
-// --- ACTUALIZAR PANELES ESTADÍSTICOS ---
+function inicializarDigitMap() {
+    let html = '';
+    for(let d=0;d<=9;d++){
+        html += `<div class="digit-circle">
+                    <div class="digit-num">${d}</div>
+                    <div class="digit-pct">0.0%</div>
+                 </div>`;
+    }
+    document.getElementById('digitMap').innerHTML = html;
+}
+
 function actualizarEstadisticas() {
     const conteo = Array(10).fill(0);
     historyDigits.forEach(d => conteo[d]++);
     const total = historyDigits.length || 1;
 
-    // Digit Map
+    // Digit Map con colores según posición TOP ✅
+    const orden = [...Array(10).keys()].sort((a,b)=>conteo[b]-conteo[a]);
     let html = '';
     for(let d=0;d<=9;d++){
         const pct = ((conteo[d]/total)*100).toFixed(1);
-        const isHot = conteo[d] === Math.max(...conteo) && historyDigits.length>20;
-        html += `<div class="digit-circle ${isHot?'hot':''}">
+        let claseRango = '';
+        const pos = orden.indexOf(d) + 1; // posición 1..10
+        if(pos === 1) claseRango = 'rank-1';
+        else if(pos === 2) claseRango = 'rank-2';
+        else if(pos === 3) claseRango = 'rank-3';
+        else if(pos === 4) claseRango = 'rank-4';
+
+        html += `<div class="digit-circle ${claseRango}">
                     <div class="digit-num">${d}</div>
                     <div class="digit-pct">${pct}%</div>
                  </div>`;
     }
     document.getElementById('digitMap').innerHTML = html;
 
-    // Hot Ranking
-    const orden = [...Array(10).keys()].sort((a,b)=>conteo[b]-conteo[a]).slice(0,3);
+    // HOT RANKING — AHORA TOP 4 ✅
+    const top4 = orden.slice(0,4);
     let hotHtml = '';
-    orden.forEach((d,i)=>{
+    top4.forEach((d,i)=>{
         hotHtml += `<div class="row"><span class="label">#${i+1} — Dígito ${d}</span><span class="value">${((conteo[d]/total)*100).toFixed(1)}%</span></div>`;
     });
     document.getElementById('hotList').innerHTML = hotHtml;
 
-    // Momento de coincidencia — simulado por frecuencia
-    let momHtml = `<div class="row"><span class="label">Más frecuente:</span><span class="value">Sin datos reales todavía</span></div>`;
-    document.getElementById('momentList').innerHTML = momHtml;
+    // Momento real: una sola línea por dígito y sus segundos
+    let momHtml = '';
+    for(let d=0; d<10; d++){
+        const n = timingCounts[d].reduce((a,b)=>a+b,0);
+        const momentos = timingCounts[d].map((v,sec)=>v && sec ? `${sec}s×${v}` : '').filter(Boolean).join(' · ');
+        if(n) momHtml += `<div class="row"><span class="label">${d} · ${momentos}</span><span class="value">${n} · ${(timingTotal ? n/timingTotal*100 : 0).toFixed(1)}%</span></div>`;
+    }
+    document.getElementById('momentList').innerHTML = momHtml || '<div class="row"><span class="label">Sin apariciones registradas</span><span class="value">—</span></div>';
 }
 
-// --- CONEXIÓN DERIV WEBSOCKET ---
 function conectarDeriv(simbolo) {
     if(ws) ws.close();
     ws = new WebSocket("wss://ws.derivws.com/websockets/v3?app_id=1089");
@@ -195,7 +574,14 @@ function conectarDeriv(simbolo) {
     ws.onmessage = (evt) => {
         const data = JSON.parse(evt.data);
         if(data.tick) {
-            const dig = ultimoDigito(parseFloat(data.tick.quote));
+            const precio = parseFloat(data.tick.quote);
+            agregarPrecioAlGrafico(precio);
+            const dig = ultimoDigito(precio);
+            if(predictionWindow && countdownSecond > 0){
+                timingCounts[dig][countdownSecond]++;
+                timingTotal++;
+                localStorage.setItem('timingCounts', JSON.stringify({counts:timingCounts,total:timingTotal}));
+            }
             historyDigits.push(dig);
             if(historyDigits.length > MAX_HISTORY) historyDigits.shift();
             historyTicks.push(data.tick);
@@ -207,7 +593,6 @@ function conectarDeriv(simbolo) {
     ws.onerror = () => hablar("Error de conexión, revisa tu red");
 }
 
-// --- LÓGICA PRINCIPAL AL PULSAR PREDECIR ---
 function analizarYMostrar() {
     if(historyDigits.length < 30) {
         hablar("Aún no hay suficientes datos, espera unos segundos");
@@ -222,12 +607,10 @@ function analizarYMostrar() {
     const pctMejor = (conteo[mejor]/total)*100;
     const modo = document.getElementById('modeSel').value;
 
-    // ========== REGLAS DE SEÑAL ==========
     let recomendacion = '';
     let nivelFuerza = 'buena';
     let digitoObjetivo = mejor;
 
-    // Ajustar según modo
     if(modo === 'over') {
         const mayores = historyDigits.filter(d=>d>4).length;
         digitoObjetivo = 5;
@@ -248,12 +631,11 @@ function analizarYMostrar() {
         digitoObjetivo = 7;
         recomendacion = impares/total >= 0.55 ? 'OK' : 'DEBIL';
         nivelFuerza = recomendacion === 'OK' ? 'buena' : 'baja';
-    } else { // MATCHES
+    } else {
         recomendacion = pctMejor >= 18 ? 'OK' : 'DEBIL';
         nivelFuerza = recomendacion === 'OK' ? 'buena' : 'baja';
     }
 
-    // ========== MOSTRAR SOLO AHORA LA CAJA ==========
     const caja = document.getElementById('resultBox');
     caja.style.display = 'block';
     caja.classList.toggle('danger', nivelFuerza==='baja');
@@ -265,52 +647,50 @@ function analizarYMostrar() {
     if(nivelFuerza === 'buena') {
         resMain.textContent = `GANA: ${digitoObjetivo}`;
         resMain.className = 'res-main ok';
-        resPrec.textContent = `Precisión: ${Math.round(pctMejor + 70)}%`;
-        resText.innerHTML = `El análisis de mercado predice que aparecerá el dígito ${digitoObjetivo}.<br>Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en la frecuencia observada; todavía no hay suficiente historial temporal.`;
+        resPrec.textContent = `Frecuencia observada: ${pctMejor.toFixed(1)}%`;
+        resText.innerHTML = `El análisis de mercado predice que aparecerá el dígito ${digitoObjetivo}.<br>Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en los datos observados; la frecuencia no garantiza el resultado.`;
 
-        // --- VOZ ---
-        hablar(`Análisis listo. Dígito más probable: ${digitoObjetivo}. Precisión aproximada: ${Math.round(pctMejor + 70)} por ciento. Tienes 10 segundos para tomar la operación.`);
+        hablar(`Análisis listo. Dígito más probable: ${digitoObjetivo}. Frecuencia observada: ${pctMejor.toFixed(0)} por ciento. Tienes 10 segundos para tomar la operación.`);
 
-        // --- INICIAR RELOJ DE 10 SEGUNDOS ---
         document.getElementById('timerBox').style.display = 'block';
+        predictionWindow = true;
         let seg = 10;
+        countdownSecond = 10;
         document.getElementById('timerNum').textContent = seg;
         if(timerInterval) clearInterval(timerInterval);
 
         timerInterval = setInterval(()=>{
             seg--;
+            countdownSecond = seg;
             document.getElementById('timerNum').textContent = seg;
             if(voiceEnabled) hablar(seg.toString());
 
             if(seg <= 0) {
                 clearInterval(timerInterval);
+                predictionWindow = false;
+                countdownSecond = 0;
                 document.getElementById('timerBox').style.display = 'none';
                 hablar("Tiempo terminado. ¿Quieres tomar otra operación?");
             }
         }, 1000);
 
     } else {
-        // --- SEÑAL DÉBIL / NO ENTRAR ---
         resMain.textContent = `⚠️ ESPERA — NO RECOMENDABLE`;
         resMain.className = 'res-main warn';
         resPrec.textContent = `Fuerza baja — riesgo alto`;
         resText.innerHTML = `La señal tiene poca consistencia.<br>Mejor espera más datos o cambia de activo.<br>Puede perder si entras ahora.`;
 
-        // --- VOZ ---
         hablar("No es recomendable entrar ahora. La señal tiene menos fuerza, puede perder. Espérate mejor. ¿Quieres tomar otra operación?");
-        // NO ARRANCA RELOJ
         document.getElementById('timerBox').style.display = 'none';
     }
 }
 
-// ==========================================
-// EVENTOS — CADA CAMBIO HABLA
-// ==========================================
 document.getElementById('symbolSel').addEventListener('change', e=>{
     const nom = e.target.options[e.target.selectedIndex].text;
     hablar(`Seleccionado: ${nom}`);
     conectarDeriv(e.target.value);
-    historyDigits = []; historyTicks = [];
+    historyDigits = []; historyTicks = []; candles = []; lastCandleTime = null;
+    inicializarDigitMap();
     document.getElementById('resultBox').style.display='none';
 });
 
@@ -324,10 +704,10 @@ document.getElementById('btnPredict').addEventListener('click', ()=>{
     analizarYMostrar();
 });
 
-// ==========================================
-// INICIO AUTOMÁTICO
-// ==========================================
 window.onload = () => {
+    try{ const saved=JSON.parse(localStorage.getItem('timingCounts')||'null'); if(saved){timingCounts=saved.counts;timingTotal=saved.total;} }catch(e){}
+    inicializarGrafico();
+    inicializarDigitMap();
     hablar("Sistema listo. Conectando a Deriv…");
     conectarDeriv(document.getElementById('symbolSel').value);
 };
