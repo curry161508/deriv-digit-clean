@@ -2,360 +2,294 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <title>XL DIGIT PRO — Analizador Profesional de Dígitos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ANALIZADOR DE DÍGITOS PROFESIONAL — XL DIGIT PRO</title>
     <style>
-        *, *::before, *::after { box-sizing: border-box; }
-        @page {
-            size: A4 landscape;
-            margin: 10mm 12mm;
-            background-color: #0b0f19;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Consolas, monospace; color: #e0f7ff; }
         body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background-color: #0b0f19;
-            color: #e5e7eb;
-            font-size: 9.5pt;
-            line-height: 1.35;
-        }
-        .header-bar {
-            background: linear-gradient(90deg, #111827 0%, #1e293b 100%);
-            border: 1px solid #1f2937;
-            border-radius: 6px;
-            padding: 10px 14px;
-            margin-bottom: 10px;
-            display: table;
-            width: 100%;
-        }
-        .header-cell {
-            display: table-cell;
-            vertical-align: middle;
-        }
-        .title-main {
-            font-size: 14pt;
-            font-weight: bold;
-            color: #38bdf8;
-            margin: 0;
-        }
-        .subtitle {
-            font-size: 8pt;
-            color: #9ca3af;
-            margin: 2px 0 0 0;
-        }
-        .badge {
-            background-color: #065f46;
-            color: #34d399;
-            border: 1px solid #059669;
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-size: 7.5pt;
-            font-weight: bold;
-            text-align: right;
-        }
-        .top-kpi-table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 8px 0;
-            margin-bottom: 10px;
-        }
-        .kpi-card {
-            background-color: #111827;
-            border: 1px solid #1f2937;
-            border-radius: 6px;
-            padding: 8px 12px;
-            text-align: center;
-        }
-        .kpi-label {
-            font-size: 7.5pt;
-            color: #9ca3af;
-            text-transform: uppercase;
-        }
-        .kpi-value-green {
-            font-size: 18pt;
-            font-weight: bold;
-            color: #10b981;
-            margin: 2px 0 0 0;
-        }
-        .kpi-value-white {
-            font-size: 18pt;
-            font-weight: bold;
-            color: #f3f4f6;
-            margin: 2px 0 0 0;
-        }
-        .kpi-value-blue {
-            font-size: 14pt;
-            font-weight: bold;
-            color: #60a5fa;
-            margin: 2px 0 0 0;
-        }
-        .kpi-value-orange {
-            font-size: 14pt;
-            font-weight: bold;
-            color: #fbbf24;
-            margin: 2px 0 0 0;
-        }
-        .kpi-sub {
-            font-size: 7pt;
-            color: #6b7280;
-        }
-        .grid-container {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        .col-left, .col-right {
-            vertical-align: top;
-            padding: 0 4px;
-        }
-        .col-left { width: 56%; }
-        .col-right { width: 44%; }
-        .panel {
-            background-color: #111827;
-            border: 1px solid #1f2937;
-            border-radius: 6px;
+            background: linear-gradient(135deg, #020617 0%, #0f172a 50%, #020617 100%);
+            min-height: 100vh;
             padding: 10px;
-            margin-bottom: 8px;
+            overflow-x: hidden;
         }
-        .panel h2 {
-            font-size: 10.5pt;
-            color: #38bdf8;
-            margin: 0 0 8px 0;
-            border-bottom: 1px solid #1f2937;
-            padding-bottom: 4px;
+        /* === FONDO FUTURISTA CON EFECTOS === */
+        .bg-grid {
+            position: fixed; inset: 0;
+            background-image: 
+                linear-gradient(rgba(6, 182, 212, 0.06) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(6, 182, 212, 0.06) 1px, transparent 1px);
+            background-size: 40px 40px;
+            z-index: -2;
         }
-        .chart-box {
-            background-color: #090d16;
-            border: 1px solid #1f2937;
-            border-radius: 4px;
-            height: 110px;
-            padding: 8px;
-            position: relative;
+        .bg-glow {
+            position: fixed; inset: 0;
+            background: radial-gradient(circle at 30% 20%, rgba(6, 182, 212, 0.12), transparent 50%),
+                        radial-gradient(circle at 70% 80%, rgba(59, 130, 246, 0.10), transparent 50%);
+            z-index: -1;
         }
-        .action-banner {
-            background-color: #064e3b;
-            border: 1px solid #059669;
-            color: #a7f3d0;
-            padding: 8px 10px;
-            border-radius: 4px;
-            font-size: 8.5pt;
-            font-weight: bold;
-            margin-top: 8px;
+
+        /* === CONTENEDOR PRINCIPAL === */
+        .container {
+            max-width: 1150px; margin: 0 auto;
+            border: 2px solid rgba(6, 182, 212, 0.4);
+            background: linear-gradient(180deg, rgba(15, 23, 42, 0.95), rgba(15, 23, 42, 0.90));
+            border-radius: 12px;
+            box-shadow: 0 0 25px rgba(6, 182, 212, 0.25), inset 0 0 15px rgba(6, 182, 212, 0.08);
+            position: relative; overflow: hidden;
         }
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 6px;
+        .container::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, #06b6d4, #3b82f6, #06b6d4);
+            animation: barraLuz 3s linear infinite;
         }
-        .data-table th {
-            background-color: #1f2937;
-            color: #d1d5db;
-            font-size: 7.5pt;
-            text-align: left;
-            padding: 5px 6px;
-            border: 1px solid #374151;
+        @keyframes barraLuz { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+
+        /* === CABECERA === */
+        .header-top {
+            padding: 12px 20px;
+            border-bottom: 1px solid rgba(6, 182, 212, 0.35);
+            display: flex; align-items: center; justify-content: space-between;
+            background: linear-gradient(90deg, rgba(6, 182, 212, 0.10), transparent 60%);
         }
-        .data-table td {
-            font-size: 8pt;
-            padding: 5px 6px;
-            border: 1px solid #1f2937;
-            color: #e5e7eb;
+        .title-main { font-size: 22px; font-weight: bold; color: #06e0ff; text-shadow: 0 0 8px rgba(6, 224, 255, 0.5); letter-spacing: 1px; }
+        .sub-title { font-size: 11px; color: #93c5fd; }
+        .key-hint { font-size: 12px; color: #67e8f9; padding: 6px 20px; border-bottom: 1px solid rgba(6, 182, 212, 0.25); background: rgba(6, 182, 212, 0.05); }
+
+        /* === PANEL PRINCIPAL — OCULTO AL INICIO === */
+        .main-panel { display: none; }
+        .main-panel.show { display: block; animation: aparecer 0.4s ease-out; }
+        @keyframes aparecer { from { opacity:0; transform: translateY(10px); } to { opacity:1; transform: translateY(0); } }
+
+        /* === ESTILO DE CADA PASO === */
+        .step-row {
+            display: grid; grid-template-columns: 140px 1fr 340px;
+            gap: 12px; padding: 14px 20px;
+            border-bottom: 1px solid rgba(6, 182, 212, 0.20);
+            align-items: flex-start;
         }
-        .progress-bar-bg {
-            background-color: #1f2937;
-            height: 10px;
-            border-radius: 4px;
-            overflow: hidden;
-            margin: 4px 0 8px 0;
-            position: relative;
+        .step-number {
+            font-size: 38px; font-weight: bold; color: #06e0ff; text-shadow: 0 0 10px rgba(6, 224, 255, 0.6);
+            display: flex; align-items: center; justify-content: center;
+            border: 2px solid rgba(6, 182, 212, 0.4); border-radius: 8px;
+            height: 70px; background: rgba(6, 182, 212, 0.08);
         }
-        .progress-bar-fill {
-            background-color: #3b82f6;
-            height: 100%;
+        .step-text { font-size: 13px; line-height: 1.6; color: #cffafe; }
+        .step-text strong { color: #86efac; }
+        .step-arrow { font-size: 24px; color: #06e0ff; text-align: center; padding-top: 20px; }
+
+        /* === CAJA DE PANEL LATERAL DERECHO === */
+        .side-box {
+            border: 1px solid rgba(6, 182, 212, 0.40); border-radius: 8px;
+            background: rgba(15, 23, 42, 0.85);
+            padding: 10px 12px;
+            box-shadow: inset 0 0 10px rgba(6, 182, 212, 0.06);
         }
-        .badge-odd { background-color: #b91c1c; color: #fecaca; padding: 2px 6px; border-radius: 3px; font-size: 7pt; font-weight: bold; }
-        .badge-even { background-color: #15803d; color: #bbf7d0; padding: 2px 6px; border-radius: 3px; font-size: 7pt; font-weight: bold; }
-        pre.code-block {
-            background-color: #090d16;
-            border: 1px solid #1f2937;
-            padding: 8px;
-            border-radius: 4px;
-            font-family: 'Courier New', monospace;
-            font-size: 7.5pt;
-            color: #38bdf8;
-            margin: 6px 0 0 0;
-            white-space: pre-wrap;
+        .side-box h3 { font-size: 12px; color: #67e8f9; margin-bottom: 8px; border-bottom: 1px solid rgba(6, 182, 212, 0.25); padding-bottom: 4px; }
+        .row-flex { display: flex; justify-content: space-between; align-items: center; font-size: 11px; margin: 4px 0; }
+        .label { color: #93c5fd; }
+        .value { color: #86efac; font-weight: bold; }
+        .bar-bg { height: 10px; background: #1e293b; border-radius: 5px; margin: 6px 0; overflow: hidden; }
+        .bar-fill { height: 100%; background: linear-gradient(90deg, #06b6d4, #22c55e); border-radius: 5px; width: 75%; animation: carga 2s ease-in-out infinite alternate; }
+        @keyframes carga { 0% { width: 72%; } 100% { width: 78%; } }
+        .btn {
+            padding: 6px 14px; background: linear-gradient(90deg, #16a34a, #22c55e);
+            color: #000; font-weight: bold; border: none; border-radius: 4px;
+            font-size: 12px; cursor: pointer; box-shadow: 0 0 8px rgba(34, 197, 94, 0.4);
         }
-        .live-history {
-            font-family: monospace;
-            font-size: 10pt;
-            letter-spacing: 2px;
-            line-height: 1.8;
-            word-break: break-all;
+        .btn:hover { filter: brightness(1.15); }
+        .btn-blue { background: linear-gradient(90deg, #0891b2, #06b6d4); box-shadow: 0 0 8px rgba(6, 182, 212, 0.4); color: #000; }
+        .btn-orange { background: linear-gradient(90deg, #d97706, #f59e0b); box-shadow: 0 0 8px rgba(245, 158, 11, 0.4); color: #000; }
+
+        /* === LISTAS DE OPCIONES === */
+        .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 10px; }
+        .opt { padding: 3px 6px; background: rgba(30, 41, 59, 0.6); border-radius: 3px; margin: 2px 0; }
+        .opt.green { color: #86efac; }
+
+        /* === CÍRCULO DE ESCANEO === */
+        .scan-circle {
+            width: 110px; height: 110px; margin: 0 auto; position: relative;
         }
+        .ring { position: absolute; inset: 0; border-radius: 50%; border: 2px solid rgba(6, 182, 212, 0.35); }
+        .ring.r1 { animation: expandir 2s linear infinite; }
+        .ring.r2 { animation: expandir 2s linear infinite 0.4s; }
+        .ring.r3 { animation: expandir 2s linear infinite 0.8s; }
+        .center-dot { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 16px; height: 16px; background: #22c55e; border-radius: 50%; box-shadow: 0 0 12px #22c55e; }
+        @keyframes expandir {
+            0% { transform: scale(0.3); opacity: 1; }
+            100% { transform: scale(1); opacity: 0; }
+        }
+
+        /* === GRÁFICO DE RESULTADOS === */
+        .chart-area { height: 80px; background: rgba(30, 41, 59, 0.6); border-radius: 4px; margin-top: 6px; position: relative; overflow: hidden; }
+        .chart-line {
+            position: absolute; bottom: 0; left: 0; width: 100%; height: 100%;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 200 80" xmlns="http://www.w3.org/2000/svg"><path d="M0,70 L20,65 L40,60 L60,50 L80,45 L100,35 L120,25 L140,18 L160,12 L180,8 L200,5" fill="none" stroke="%2322c55e" stroke-width="3"/></svg>');
+            background-size: 100% 100%;
+        }
+        .result-big { font-size: 22px; font-weight: bold; color: #86efac; text-align: center; margin: 6px 0; text-shadow: 0 0 8px rgba(34, 197, 94, 0.5); }
     </style>
 </head>
 <body>
 
-    <!-- BARRA SUPERIOR / ENCABEZADO -->
-    <div class="header-bar">
-        <div class="header-cell">
-            <h1 class="title-main">XL DIGIT PRO — ANALIZADOR PROFESIONAL DE DÍGITOS</h1>
-            <div class="subtitle">Live | Statistical Engine v2.2 | Símbolo Activo: <span class="math">1HZ50V</span> (Volatility 50 1s)</div>
-        </div>
-        <div class="header-cell" style="width: 200px;">
-            <div class="badge">ACTUALIZACIÓN EN LÍNEA ✔</div>
+<div class="bg-grid"></div>
+<div class="bg-glow"></div>
+
+<div class="container">
+    <!-- CABECERA SIEMPRE VISIBLE -->
+    <div class="header-top">
+        <div>
+            <div class="title-main">ANALIZADOR DE DÍGITOS PROFESIONAL</div>
+            <div class="sub-title">XL DIGIT PRO — SISTEMA DE ANÁLISIS AUTOMÁTICO</div>
         </div>
     </div>
 
-    <!-- KPIs SUPERIORES -->
-    <table class="top-kpi-table">
-        <tr>
-            <td style="width: 25%;">
-                <div class="kpi-card">
-                    <div class="kpi-label">SCORE CALIDAD DEL MERCADO</div>
-                    <div class="kpi-value-green">73</div>
-                    <div class="kpi-sub">OPERABLE — condiciones aceptables</div>
-                </div>
-            </td>
-            <td style="width: 25%;">
-                <div class="kpi-card">
-                    <div class="kpi-label">TOTAL TICKS ANALIZADOS</div>
-                    <div class="kpi-value-white">525</div>
-                    <div class="kpi-sub">En ventana estadística activa</div>
-                </div>
-            </td>
-            <td style="width: 25%;">
-                <div class="kpi-card">
-                    <div class="kpi-label">RSI (14) / MOMENTUM</div>
-                    <div class="kpi-value-blue">56.9</div>
-                    <div class="kpi-sub">Momentum neutro / armónico</div>
-                </div>
-            </td>
-            <td style="width: 25%;">
-                <div class="kpi-card">
-                    <div class="kpi-label">ESTRATEGIA SELECCIONADA</div>
-                    <div class="kpi-value-orange">EVEN / ODD</div>
-                    <div class="kpi-sub">Filtro primario de desviación</div>
-                </div>
-            </td>
-        </tr>
-    </table>
+    <div class="key-hint">⌨️ Presiona ESPACIO o ENTER para MOSTRAR / OCULTAR todo el sistema</div>
 
-    <!-- DISEÑO DE 2 COLUMNAS PRINCIPALES -->
-    <table class="grid-container">
-        <tr>
-            <td class="col-left">
-                <!-- PANEL IZQUIERDO: GRÁFICA DE TICK Y LABORATORIO DE ESTRATEGIAS -->
-                <div class="panel">
-                    <h2>📈 PRECIO TICK EN VIVO — <span class="math">1HZ50V</span> (Último dígito: <span class="math">[3]</span>)</h2>
-                    <div style="font-size: 8pt; color: #9ca3af; margin-bottom: 6px;">
-                        Último precio cotizado: <span class="math" style="color:#fbbf24;">231764.5100</span> | Símbolo deriv: <span class="math">1HZ50V</span>
-                    </div>
-                    <!-- SVG de Gráfica de Línea de Ticks -->
-                    <div class="chart-box">
-                        <svg viewBox="0 0 500 90" width="100%" height="90" preserveAspectRatio="none">
-                            <polyline fill="none" stroke="#f59e0b" stroke-width="2" points="
-                                0,70 25,65 50,68 75,55 100,58 125,48 150,52 175,40 200,45 225,35 
-                                250,42 275,30 300,38 325,25 350,32 375,20 400,28 425,18 450,22 475,12 500,16
-                            "/>
-                            <circle cx="500" cy="16" r="4" fill="#10b981"/>
-                        </svg>
-                        <div style="position: absolute; bottom: 4px; right: 8px; font-size: 6.5pt; color: #6b7280;">Streaming WebSocket active (ws.derivws.com/websockets/v3?app_id=1089)</div>
-                    </div>
+    <!-- ✅ TODO EL SISTEMA — OCULTO AL INICIO -->
+    <div class="main-panel" id="sistemaPanel">
 
-                    <div class="action-banner">
-                        🔥 MEJOR AHORA EN 0.25$ / ODD FIRE — Score fuerte: 73 (confianza 73%)
+        <!-- ========== PASO 1 ========== -->
+        <div class="step-row">
+            <div class="step-number">1</div>
+            <div class="step-text">
+                ABRES NUESTRO <strong>ANALIZADOR DE DÍGITOS</strong>,<br>
+                ESPERA QUE RECIBA TODOS LOS DATOS DEL MERCADO DEL PROPIO BROKER DE <strong>D-E-R-I-V</strong>,<br>
+                SELECCIONAS LA ESTRATEGIA.
+            </div>
+            <div class="side-box">
+                <h3>CONECTANDO CON DERIV...</h3>
+                <div class="row-flex"><span class="label">deriv</span><span class="value">CONECTADO ✅</span></div>
+                <div class="bar-bg"><div class="bar-fill"></div></div>
+                <div class="row-flex" style="font-size:10px; margin:8px 0 4px;"><span class="label">ÍNDICES DISPONIBLES:</span></div>
+                <div class="two-col">
+                    <span class="opt green">Volatility 100 Index</span>
+                    <span class="opt green">Volatility 75 Index</span>
+                    <span class="opt green">Volatility 50 Index</span>
+                    <span class="opt green">Boom 1000 Index</span>
+                    <span class="opt green">Crash 1000 Index</span>
+                    <span class="opt green">Jump 10 Index</span>
+                    <span class="opt green">Range Break 100 Index</span>
+                </div>
+                <div class="row-flex" style="font-size:10px; margin:8px 0 4px;"><span class="label">SELECCIONAR ESTRATEGIA:</span></div>
+                <div class="two-col">
+                    <span class="opt green">OVER / UNDER</span>
+                    <span class="opt green">MATCH / DIFFERENCE</span>
+                    <span class="opt green">EVEN / ODD</span>
+                    <span class="opt green">HIGH / LOW</span>
+                    <span class="opt green">DIGIT MATCH</span>
+                    <span class="opt green">OUTSIDER</span>
+                    <span class="opt green">OTRAS ESTRATEGIAS</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== PASO 2 ========== -->
+        <div class="step-row">
+            <div class="step-number">2</div>
+            <div class="step-text">
+                CONFIGURAS EL <strong>ROBOT</strong><br>
+                EN BASE A LA ESTRATEGIA QUE VAS A OPERAR,<br>
+                EL NÚMERO DE TICKS,<br>
+                LA ESTRATEGIA Y EL MONTO.
+            </div>
+            <div class="side-box">
+                <h3>CONFIGURACIÓN DEL ROBOT — XL ULTRA BOT</h3>
+                <div class="row-flex"><span class="label">ESTRATEGIA:</span><span class="value">OVER / UNDER</span></div>
+                <div class="row-flex"><span class="label">NÚMERO DE TICKS:</span><span class="value">25 TICKS</span></div>
+                <div class="row-flex"><span class="label">MONTO POR ENTRADA:</span><span class="value">10.00 USD</span></div>
+                <div style="text-align:center; margin-top:10px;">
+                    <button class="btn">INICIAR ROBOT</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== PASO 3 ========== -->
+        <div class="step-row">
+            <div class="step-number">3</div>
+            <div class="step-text">
+                LE DAS <strong>RECALIBRAR AL MERCADO</strong>,<br>
+                EL MERCADO TE VA A HACER UN ESTUDIO PARA VER LA ESTRATEGIA MÁS EFECTIVA,<br>
+                PARA VER EN QUÉ ÍNDICE LA ESTRATEGIA TIENE EL UMBRAL MÁS POSITIVO,<br>
+                ES COMPLETAMENTE AUTOMÁTICO Y TIENE AUTOCRÍTICA,<br>
+                ALGO QUE NO TIENE NINGÚN OTRO ANALIZADOR.
+            </div>
+            <div class="side-box">
+                <h3>RECALIBRANDO AL MERCADO...</h3>
+                <div class="scan-circle">
+                    <div class="ring r1"></div>
+                    <div class="ring r2"></div>
+                    <div class="ring r3"></div>
+                    <div class="center-dot"></div>
+                </div>
+                <div style="margin-top:10px; font-size:11px; line-height:1.5;">
+                    <div class="row-flex"><span class="label">ANÁLISIS EN CURSO:</span><span class="value">ESTUDIANDO TODOS LOS ÍNDICES</span></div>
+                    <div class="row-flex"><span class="label">ESTRATEGIA ANALIZADA:</span><span class="value">OVER / UNDER ✅</span></div>
+                    <div class="row-flex"><span class="label">ÍNDICE ÓPTIMO:</span><span class="value">VOLATILITY 75 INDEX ✅</span></div>
+                    <div class="row-flex"><span class="label">UMBRAL DE ÉXITO:</span><span class="value">78.45% ✅</span></div>
+                    <div class="row-flex"><span class="label">CONFIANZA:</span><span class="value">ALTA ✅</span></div>
+                    <div class="row-flex"><span class="label">AUTOMÁTICA:</span><span class="value">ACTIVADA ✅</span></div>
+                    <div style="margin-top:6px; color:#86efac; font-weight:bold;">SISTEMA 100% AUTOMÁTICO Y CON AUTOMÁTICA ✅</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ========== PASO 4 ========== -->
+        <div class="step-row">
+            <div class="step-number">4</div>
+            <div class="step-text">
+                ESPERAS LA <strong>SEÑAL</strong>.
+            </div>
+            <div class="side-box">
+                <h3>ESPERANDO SEÑAL ÓPTIMA...</h3>
+                <div class="scan-circle">
+                    <div class="ring r1"></div>
+                    <div class="ring r2"></div>
+                    <div class="ring r3"></div>
+                    <div class="center-dot" style="background:#f59e0b; box-shadow:0 0 12px #f59e0b;"></div>
+                </div>
+                <div style="margin-top:10px; font-size:11px; line-height:1.5;">
+                    <div class="row-flex"><span class="label">ESTRATEGIA:</span><span class="value">OVER / UNDER</span></div>
+                    <div class="row-flex"><span class="label">ÍNDICE:</span><span class="value">VOLATILITY 75 INDEX</span></div>
+                    <div class="row-flex"><span class="label">TICKS:</span><span class="value">25</span></div>
+                    <div class="row-flex"><span class="label">DIRECCIÓN:</span><span class="value">OVER</span></div>
+                    <div class="row-flex"><span class="label">CONFIANZA:</span><span class="value">78.45%</span></div>
+                    <div style="text-align:center; margin-top:8px;">
+                        <button class="btn btn-orange">EJECUTAR OPERACIÓN</button>
                     </div>
                 </div>
+            </div>
+        </div>
 
-                <div class="panel" style="margin-bottom:0;">
-                    <h2>🧪 LABORATORIO DE ESTRATEGIAS / QUÉ OPERAR</h2>
-                    <table class="data-table">
-                        <thead>
-                            <tr>
-                                <th>Estrategia Activa</th>
-                                <th>Horizonte</th>
-                                <th>Edge Est.</th>
-                                <th>Señal Recomendada</th>
-                                <th>Riesgo</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td><strong>Even / Odd Fire</strong></td>
-                                <td>1 tick</td>
-                                <td><span class="badge-even">56.0% ODD</span></td>
-                                <td>Apostar ODD en ticks impares dominantes</td>
-                                <td>Controlado</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Rise / Fall (1 tick)</strong></td>
-                                <td>1 tick</td>
-                                <td>54.2%</td>
-                                <td>RISE (tendencia local al alza)</td>
-                                <td>Moderado</td>
-                            </tr>
-                            <tr>
-                                <td><strong>Match / Differ</strong></td>
-                                <td>1 tick</td>
-                                <td>51.8%</td>
-                                <td>DIFFER != 3</td>
-                                <td>Bajo</td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </td>
+        <!-- ========== PASO 5 ========== -->
+        <div class="step-row">
+            <div class="step-number">5</div>
+            <div class="step-text">
+                DISFRUTA EL <strong>PROFIT</strong> EN TU CUENTA.<br>
+                PUEDES OPERAR DESDE <strong>0.35 CENTAVOS</strong> HASTA ENTRADAS DE MÁS DE 100 DÓLARES.
+            </div>
+            <div class="side-box">
+                <h3>OPERACIÓN EXITOSA</h3>
+                <div class="result-big">+87.60 USD</div>
+                <div style="text-align:center; font-size:13px; color:#86efac; font-weight:bold; margin-bottom:6px;">¡FELICITACIONES!</div>
+                <div class="row-flex"><span class="label">BENEFICIO NETO:</span><span class="value">+87.60 USD</span></div>
+                <div class="chart-area"><div class="chart-line"></div></div>
+                <div class="row-flex" style="font-size:10px; margin-top:4px;"><span class="label">TIEMPO:</span><span class="value">00 — 05 — 10 — 15 — 20 — 25</span></div>
+                <div class="row-flex" style="font-size:10px;"><span class="label">RENDIMIENTO:</span><span class="value">CRECIENDO ✅</span></div>
+            </div>
+        </div>
 
-            <td class="col-right">
-                <!-- PANEL DERECHO: DISTRIBUCIÓN, PLAN MARTINGALE Y Z-SCORE -->
-                <div class="panel">
-                    <h2>📊 DISTRIBUCIÓN DE DÍGITOS (EVEN / ODD)</h2>
-                    <div style="font-size: 8pt; display: flex; justify-content: space-between;">
-                        <span>EVEN (Pares): <strong>44.0%</strong></span>
-                        <span>ODD (Impares): <strong style="color:#10b981;">56.0% (SEÑAL FIJA)</strong></span>
-                    </div>
-                    <div class="progress-bar-bg">
-                        <div class="progress-bar-fill" style="width: 56.0%; background-color: #10b981;"></div>
-                    </div>
-                    <div style="font-size: 7.5pt; color: #9ca3af;">
-                        Threshold mínimo de edge superado (>52%). Desviación estadística hacia ODD confirmada en últimas 5/50/100 ticks.
-                    </div>
-                </div>
+    </div>
+</div>
 
-                <div class="panel">
-                    <h2>📋 PLAN DE ENTRADAS SUGERIDAS (MARTINGALE SEGURO)</h2>
-                    <div style="font-size: 7.5pt; color: #d1d5db; line-height: 1.4;">
-                        Hasta <strong>4 entradas negativas</strong> en <span class="math">Volatility 50 (1s)</span>, cada una con contrato en <strong>1 tick</strong> horizon eleguita, antes de recalibrar. Después de las 4, <strong>volví a CALIBRAR / PREDECIR</strong> — no sigas con la misma señal vencida. Esto es una sugerencia de gestión de riesgo basada en estadística, no una garantía de acierto.
-                    </div>
-                    <pre class="code-block">Entrada 1: $0.25 (Base - ODD FIRE)
-Entrada 2: $0.55 (Si falla N1)
-Entrada 3: $1.20 (Si falla N2)
-Entrada 4: $2.60 (Stop / Recalibrar si falla)</pre>
-                </div>
-
-                <div class="panel">
-                    <h2>📉 TEST DE RACHAS (Z-SCORE / CORRELACIÓN REAL)</h2>
-                    <div style="font-size: 8pt; color: #fbbf24; margin-bottom: 4px;">
-                        Z = <span class="math">-4.35</span> — Sin evidencia de correlación lineal anómala persistente.
-                    </div>
-                    <div style="font-size: 7pt; color: #9ca3af;">
-                        Validación de racha para 50 / 500 / 1000 ticks fijos a 1 tick de expiración.
-                    </div>
-                </div>
-
-                <div class="panel" style="margin-bottom:0;">
-                    <h2>🟩 HISTORIAL DE ACIERTOS EN VIVO</h2>
-                    <div class="live-history">
-                        🟩🟩🟥🟩🟩🟩🟥🟩🟩🟥🟩🟩🟩🟩🟥🟩🟩🟩🟥🟩🟩🟩🟥🟩🟩
-                    </div>
-                    <div style="font-size: 7.5pt; color: #10b981; margin-top: 4px;">
-                        <strong>52.2%</strong> (274 / 525 predicciones acertadas en sesión)
-                    </div>
-                </div>
-            </td>
-        </tr>
-    </table>
+<script>
+// === TECLA PARA ABRIR / CERRAR TODO EL SISTEMA ===
+document.addEventListener('keydown', e => {
+    if(e.code === 'Space' || e.code === 'Enter'){
+        e.preventDefault();
+        document.getElementById('sistemaPanel').classList.toggle('show');
+    }
+});
+</script>
 
 </body>
 </html>
