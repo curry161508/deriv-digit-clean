@@ -149,7 +149,7 @@
             .hot-circle{width:44px;height:44px;font-size:16px}
             .time-filters{justify-content:center}
         }
-    .quote-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:#b9edff}.price-live{font-size:20px;color:var(--cyan);font-weight:900}.last-circle{width:54px;height:54px;border:2px solid var(--cyan);border-radius:50%;display:grid;place-items:center;font-size:28px;color:var(--cyan)}.last20-live{display:flex;gap:5px;overflow-x:auto;padding:5px 2px}.last20-live span{min-width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#12344b;border:1px solid #38e8ff;color:#b9edff;font-weight:900}.result-box{border:2px solid var(--cyan);border-radius:18px;background:#0b1424e8;padding:14px;margin:12px 0}.result-main{font-size:30px;font-weight:900;color:var(--gold);margin:8px 0}.result-text{color:#b9edff;line-height:1.5}.countdown{font-size:42px;color:var(--gold);text-align:center;margin-top:10px}.btn-analyze{flex:1;padding:14px;border-radius:14px;background:#154060;border:2px solid var(--cyan);color:var(--cyan);font-size:15px;font-weight:900}.btn-predict{flex:1;padding:14px;border-radius:14px;background:linear-gradient(135deg,#167fc1,#514fe4);border:0;color:#fff;font-size:15px;font-weight:900}.btn-predict:disabled{opacity:.45}\n    </style>
+    .quote-row{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:#b9edff}.price-live{font-size:20px;color:var(--cyan);font-weight:900}.last-circle{width:54px;height:54px;border:2px solid var(--cyan);border-radius:50%;display:grid;place-items:center;font-size:28px;color:var(--cyan)}.last20-live{display:flex;gap:5px;overflow-x:auto;padding:5px 2px}.last20-live span{min-width:28px;height:28px;border-radius:50%;display:grid;place-items:center;background:#12344b;border:1px solid #38e8ff;color:#b9edff;font-weight:900}.result-box{border:2px solid var(--cyan);border-radius:18px;background:#0b1424e8;padding:14px;margin:12px 0}.result-main{font-size:30px;font-weight:900;color:var(--gold);margin:8px 0}.result-positive{border-color:#00ff88!important;box-shadow:0 0 22px #00ff8866!important}.result-negative{border-color:#ff335f!important;box-shadow:0 0 22px #ff335f66!important}.result-negative .result-main{color:#ff335f!important}.result-positive .result-main{color:#00ff88!important}.result-text{color:#b9edff;line-height:1.5}.countdown{font-size:42px;color:var(--gold);text-align:center;margin-top:10px}.btn-analyze{flex:1;padding:14px;border-radius:14px;background:#154060;border:2px solid var(--cyan);color:var(--cyan);font-size:15px;font-weight:900}.btn-predict{flex:1;padding:14px;border-radius:14px;background:linear-gradient(135deg,#167fc1,#514fe4);border:0;color:#fff;font-size:15px;font-weight:900}.btn-predict:disabled{opacity:.45}\n    </style>
 </head>
 <body>
 <canvas id="matrix" class="matrix"></canvas>
@@ -238,6 +238,7 @@ let analysisReady = false;
 let predictionWindow=false;
 let pred = null, predConfidence = 0;
 let timer = null, sec = 0;
+let firstHit = null;
 let selectedHistory = 10; // filtro activo
 
 let timingCounts = Array.from({length:10}, ()=>Array(11).fill(0));
@@ -296,9 +297,12 @@ function add(q){
     }
 
     if(pred!==null && timer && sec>0 && d===pred){
+        if(firstHit===null){firstHit={d:d,s:sec};}
         hitEvents.push({d:String(d), s:String(sec)});
         localStorage.setItem(`hits_${current}`, JSON.stringify(hitEvents));
-        speak(`El dígito ${d} apareció cuando quedaban ${sec} segundos`);
+        $('resultText').innerHTML=`<b>HUBO COINCIDENCIA</b><br>El dígito ${d} apareció cuando quedaban ${sec} segundos.<br>Predicción aceptada durante la ventana.`;
+        speak(`Hubo coincidencia. El dígito ${d} apareció cuando quedaban ${sec} segundos.`);
+        renderTimingList();
     }
 
     $('last20').innerHTML=(A[current]||[]).slice(-20).map((v,i)=>'<span class=\"'+(v===d?'hot':'')+'\">'+v+'</span>').join('');
@@ -403,7 +407,7 @@ function draw(){
 }
 
 function hacerAnalisis(){let a=A[current]||[];if(a.length<30){speak('Aún no hay suficientes datos');return}analysisReady=true;$('btnPredict').disabled=false;$('resultBox').style.display='block';$('resultMain').textContent='ANÁLISIS COMPLETADO';$('resultText').textContent='Pulsa PREDECIR ANÁLISIS para seleccionar un dígito.';speak('Análisis completado. Pulsa predecir análisis.')}
-function predecir(){let a=(A[current]||[]).slice(-200),w=a.slice(-20);if(!analysisReady||w.length<20){speak('Primero realiza el análisis');return}let score=Array(10).fill(0),global=Array(10).fill(0);a.forEach(d=>global[d]++);global.forEach((n,d)=>score[d]+=n/a.length*.1);a.forEach((d,i)=>score[d]+=(i+1)/a.length*.2);let p3=w.slice(-3),p2=w.slice(-2);for(let i=0;i<a.length-3;i++)if(a[i]===p3[0]&&a[i+1]===p3[1]&&a[i+2]===p3[2])score[a[i+3]]+=.3;for(let i=0;i<a.length-2;i++)if(a[i]===p2[0]&&a[i+1]===p2[1])score[a[i+2]]+=.2;let delta=(w[19]-w[18]+10)%10;for(let i=1;i<a.length-1;i++)if((a[i]-a[i-1]+10)%10===delta)score[a[i+1]]+=.15;let best=score.indexOf(Math.max(...score)),sum=score.reduce((x,y)=>x+y,0)||1,conf=score[best]/sum*100;let strong=conf>=18;$('resultBox').style.display='block';$('resultMain').textContent=strong?'SEÑAL: '+best:'ESPERAR — NO ENTRAR';$('resultText').textContent=strong?'Dígito '+best+' seleccionado. Fuerza matemática '+conf.toFixed(1)+'%. Puede aparecer; no es garantía.':'El dígito '+best+' no tiene suficiente fuerza matemática.';speak(strong?'Dígito seleccionado '+best+'. Tienes 10 segundos para decidir.':'Esperar. No entrar. La señal es débil.');if(strong){predictionWindow=true;let n=10;$('countdown').textContent=n;clearInterval(timer);timer=setInterval(()=>{n--;$('countdown').textContent=n;if(n<=0){clearInterval(timer);predictionWindow=false;$('countdown').textContent='0';speak('Tiempo terminado.');}},1000)}}
+function predecir(){let a=(A[current]||[]).slice(-200),w=a.slice(-20);if(!analysisReady||w.length<20){speak('Primero realiza el análisis');return}let score=Array(10).fill(0),global=Array(10).fill(0);a.forEach(d=>global[d]++);global.forEach((n,d)=>score[d]+=n/a.length*.1);a.forEach((d,i)=>score[d]+=(i+1)/a.length*.2);let p3=w.slice(-3),p2=w.slice(-2);for(let i=0;i<a.length-3;i++)if(a[i]===p3[0]&&a[i+1]===p3[1]&&a[i+2]===p3[2])score[a[i+3]]+=.3;for(let i=0;i<a.length-2;i++)if(a[i]===p2[0]&&a[i+1]===p2[1])score[a[i+2]]+=.2;let delta=(w[19]-w[18]+10)%10;for(let i=1;i<a.length-1;i++)if((a[i]-a[i-1]+10)%10===delta)score[a[i+1]]+=.15;let best=score.indexOf(Math.max(...score)),sum=score.reduce((x,y)=>x+y,0)||1,conf=score[best]/sum*100;pred=best;predConfidence=conf;firstHit=null;let strong=conf>=18;$('resultBox').style.display='block';$('resultBox').classList.toggle('result-positive',strong);$('resultBox').classList.toggle('result-negative',!strong);$('resultMain').textContent=strong?'SEÑAL: '+best:'ESPERAR — NO ENTRAR';$('resultText').textContent=strong?'Dígito '+best+' seleccionado. Fuerza matemática '+conf.toFixed(1)+'%. Puede aparecer; no es garantía.':'Coincidencia '+best+' — NO ENTRAR. No hay suficiente fuerza matemática.';speak(strong?'Dígito seleccionado '+best+'. Tienes 10 segundos para decidir.':'Esperar. No entrar. La señal es débil.');if(strong){predictionWindow=true;sec=10;let n=10;$('countdown').textContent=n;clearInterval(timer);timer=setInterval(()=>{n--;sec=n;$('countdown').textContent=n;if(n<=0){clearInterval(timer);predictionWindow=false;sec=0;$('countdown').textContent='0';speak('Tiempo terminado.');}},1000)}}
 
 // === FILTROS DE TIEMPO ===
 document.querySelectorAll('.filter-btn').forEach(btn=>{
