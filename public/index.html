@@ -25,6 +25,8 @@
         .reloj-10{display:none;position:absolute;top:8px;right:8px;z-index:5;min-width:118px;text-align:center;padding:8px;border:2px solid var(--neon-rosa);border-radius:14px;background:rgba(8,12,30,.9);box-shadow:0 0 18px rgba(255,34,170,.45);color:#fff;font-weight:900;letter-spacing:.08em}
         .reloj-10 strong{display:block;font-size:34px;line-height:1;color:var(--neon-rosa);text-shadow:0 0 14px currentColor}
         .reloj-10.activo{display:block}
+        .reloj-10.entrada-detectada{border-color:var(--neon-verde);box-shadow:0 0 22px rgba(0,255,136,.7)}
+        .reloj-10.entrada-detectada strong{color:var(--neon-verde)}
 
         /* === TÍTULO Y SELECTORES === */
         .cabecera{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}
@@ -236,6 +238,7 @@ let ventanaActiva = false;
 let segundos = 0;
 let temporizador = null;
 let coincidencias = [];
+let entradaDetectada = false;
 let tiempos = Array.from({length:10}, ()=>Array(11).fill(0));
 
 // === VOZ INTEGRADA ===
@@ -444,7 +447,7 @@ function agregarTick(precio){
             if(modoActual==='matches') msj=`Dígito ${prediccion} apareció cuando quedaban ${segundos} segundos`;
             if(modoActual==='evenodd') msj=`${parTipo==='even'?'PAR':'IMPAR'} apareció cuando quedaban ${segundos} segundos`;
             if(modoActual==='overunder') msj=`${ladoOver==='over'?'MAYOR':'MENOR'} que ${limiteOver} apareció cuando quedaban ${segundos} segundos`;
-            hablar(msj);
+            if(!entradaDetectada){entradaDetectada=true; $('relojEstado').textContent=`PUNTO DE ENTRADA · ${modoActual==='matches'?prediccion:d} · QUEDAN ${segundos}s`; $('reloj10').classList.add('entrada-detectada'); hablar(`Punto de entrada detectado. Número ${modoActual==='matches'?prediccion:d}. Quedan ${segundos} segundos.`);} else {hablar(msj);}
             dibujarTiempos();
         }
     }
@@ -518,7 +521,7 @@ function predecir(){
     }
 
     // Cuenta regresiva 10s
-    ventanaActiva = true; segundos = 10; $('reloj10').classList.add('activo'); $('relojNumero').textContent='10'; $('relojEstado').textContent='PREDICCIÓN ACTIVA · ENTRADA MANUAL'; hablar('Comienza la cuenta regresiva. Diez segundos para entrar manualmente.');
+    ventanaActiva = true; entradaDetectada=false; coincidencias=[]; $('reloj10').classList.add('activo'); $('relojNumero').textContent='10'; $('relojEstado').textContent='PREDICCIÓN ACTIVA · ENTRADA MANUAL'; hablar('Comienza la cuenta regresiva. Diez segundos para entrar manualmente.');
     clearInterval(temporizador);
     temporizador = setInterval(()=>{
         segundos--; $('relojNumero').textContent=Math.max(segundos,0); if(segundos>0){const palabras=['cero','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez']; hablar(palabras[segundos]+' segundos');}
