@@ -298,6 +298,7 @@ select{
     box-shadow:0 0 20px rgba(255,0,127,.2);
 }
 
+.prediction.signal-good{border-color:#00ff80;background:rgba(0,255,128,.08)}.prediction.signal-good .pred-digit{color:#00ff80}.prediction.signal-bad{border-color:#ff3355;background:rgba(255,51,85,.08)}.prediction.signal-bad .pred-digit{color:#ff3355}
 .pred-title{
     font-size:10px;
     color:#b8fff1;
@@ -471,7 +472,11 @@ button:active{
     color:var(--yellow);
 }
 </style>
-</head>
+<style>
+/* Mejor legibilidad en celular */
+body{font-size:14px}.panel-title{font-size:14px!important}.prediction.signal-good{border-color:#00ff80;background:rgba(0,255,128,.08)}.prediction.signal-good .pred-digit{color:#00ff80}.prediction.signal-bad{border-color:#ff3355;background:rgba(255,51,85,.08)}.prediction.signal-bad .pred-digit{color:#ff3355}
+.pred-title{font-size:13px!important}.pred-score{font-size:19px!important}.pred-quality,.pred-gap{font-size:12px!important}.timer{font-size:16px!important}.timer strong{font-size:28px!important}.history-digit{font-size:17px!important}.history-rate,.history-count{font-size:10px!important}.small,.toast{font-size:11px!important}#lastTickDisplay{font-size:18px!important;font-weight:900}#voiceButton{background:linear-gradient(90deg,#0066ff,#00ccff)!important}
+</style></head>
 
 <body>
 
@@ -669,6 +674,8 @@ button:active{
         7
     </div>
 
+    <div id="liveMarket" style="margin:8px 0;padding:8px;border:1px solid #00ffcc;border-radius:8px;color:#eaffff;font-weight:900">PRECIO EN VIVO: — &nbsp; | &nbsp; ÚLTIMO DÍGITO: <strong id="liveDigitBig" style="font-size:28px;color:#00ffcc">—</strong></div>
+    <div id="predCurrent" class="pred-gap">ÚLTIMO DÍGITO EN VIVO: —</div>
     <div class="pred-score" id="predScore">
         SCORE 0.0
     </div>
@@ -795,6 +802,7 @@ button:active{
 </div>
 
 
+<button id="voiceButton" style="margin-bottom:8px">🔊 ACTIVAR VOZ</button>
 <button id="predictButton">
     ● EJECUTAR ANÁLISIS MATEMÁTICO
 </button>
@@ -1482,6 +1490,8 @@ const MAX_LOG = 20;
 let recentDigits = [];
 
 let ws = null;
+let voiceEnabled = false;
+function hablar(texto){if(!voiceEnabled || !("speechSynthesis" in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(texto);u.lang="es-CL";u.rate=1;speechSynthesis.speak(u);}
 
 let timerInterval = null;
 
@@ -2581,10 +2591,8 @@ function processTick(
     }
 
 
-    document.getElementById(
-        "lastTickDisplay"
-    ).textContent =
-        `TICK: ${digit}`;
+    document.getElementById("lastTickDisplay").textContent=`TICK: ${digit}`;
+    const currentPred=document.getElementById("predCurrent"); if(currentPred) currentPred.textContent=`ÚLTIMO DÍGITO EN VIVO: ${digit}`; const liveDigitBig=document.getElementById("liveDigitBig"); if(liveDigitBig) liveDigitBig.textContent=digit;
 
 
     updateAnalysis();
@@ -2708,9 +2716,7 @@ function generatePrediction(){
     }
 
 
-    prediction.style.display =
-        "block";
-
+    prediction.style.display="block"; prediction.classList.remove("signal-bad"); prediction.classList.add("signal-good"); document.querySelector(".pred-title").textContent="SEÑAL POSITIVA — CANDIDATO PRINCIPAL";
 
     predDigit.textContent =
         best.digit;
@@ -2809,9 +2815,7 @@ function showNoSignal(
     minimum
 ){
 
-    prediction.style.display =
-        "block";
-
+    prediction.style.display="block"; prediction.classList.remove("signal-good"); prediction.classList.add("signal-bad"); document.querySelector(".pred-title").textContent="SEÑAL DÉBIL — ESPERAR / NO ENTRAR";
 
     predDigit.textContent =
         "—";
@@ -3150,7 +3154,7 @@ function startTimer(){
             ()=>{
 
                 seconds--;
-
+                if(seconds>=0 && voiceEnabled) hablar(`${seconds} segundos`);
 
                 if(
                     seconds>=0
@@ -3278,7 +3282,7 @@ function connectDeriv(symbol){
     const proto=location.protocol==='https:'?'wss':'ws';
     ws=new WebSocket(proto+'://'+location.host);
     ws.onopen=()=>{try{ws.send(JSON.stringify({ticks:symbol,subscribe:1,symbol}))}catch(e){} document.getElementById('statusText').textContent='LIVE';document.getElementById('liveDot').style.background='#00ffcc';systemToast.textContent=`RECIBIENDO TICKS: ${symbol}`;};
-    ws.onmessage=event=>{try{const data=JSON.parse(event.data);if(data.error){systemToast.textContent='DERIV: '+(data.error.message||'ERROR');return;}const tick=data.tick||((data.status==='TICK RECIBIDO')?data:null);if(tick&&tick.quote!==undefined){processTickForCandle(tick);const digit=extractLastDigit(tick);if(digit!==null)processTick(digit);}}catch(error){console.error('Error procesando tick',error)}};
+    ws.onmessage=event=>{try{const data=JSON.parse(event.data);if(data.error){systemToast.textContent='DERIV: '+(data.error.message||'ERROR');return;}const tick=data.tick||((data.status==='TICK RECIBIDO')?data:null);if(tick&&tick.quote!==undefined){processTickForCandle(tick); const liveMarket=document.getElementById("liveMarket"); if(liveMarket) liveMarket.innerHTML=`PRECIO EN VIVO: <strong>${tick.quote}</strong> &nbsp; | &nbsp; ÚLTIMO DÍGITO: <strong id="liveDigitBig" style="font-size:28px;color:#00ffcc">—</strong>`; const digit=extractLastDigit(tick);if(digit!==null)processTick(digit);}}catch(error){console.error('Error procesando tick',error)}};
     ws.onerror=()=>{document.getElementById('statusText').textContent='ERROR';document.getElementById('liveDot').style.background='#ff3355';systemToast.textContent='ERROR DE CONEXIÓN CON EL SERVIDOR';};
     ws.onclose=()=>{document.getElementById('statusText').textContent='DESCONECTADO';document.getElementById('liveDot').style.background='#ff3355';};
 }
@@ -3370,12 +3374,8 @@ document.getElementById(
    BOTÓN
    ========================================================= */
 
-document.getElementById(
-    "predictButton"
-).addEventListener(
-    "click",
-    generatePrediction
-);
+document.getElementById("voiceButton").addEventListener("click",()=>{voiceEnabled=!voiceEnabled;document.getElementById("voiceButton").textContent=voiceEnabled?"🔊 VOZ ACTIVADA":"🔇 VOZ DESACTIVADA";if(voiceEnabled)hablar("Voz activada. Sistema listo.");});
+document.getElementById("predictButton").addEventListener("click",()=>{hablar("Ejecutando análisis matemático");generatePrediction();});
 
 
 /* =========================================================
