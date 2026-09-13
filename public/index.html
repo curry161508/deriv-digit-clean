@@ -20,7 +20,11 @@
             color:var(--texto); font:14px 'Segoe UI',Arial,sans-serif;
             min-height:100vh; padding:10px;
         }
-        .wrap{max-width:920px;margin:0 auto;position:relative}
+        .wrap{max-width:920px;margin:0 auto;position:relative;z-index:2}
+        #scanBg{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;opacity:.28;mix-blend-mode:screen}
+        .reloj-10{display:none;text-align:center;margin-top:10px;padding:10px;border:2px solid var(--neon-rosa);border-radius:14px;background:rgba(8,12,30,.9);box-shadow:0 0 18px rgba(255,34,170,.45);color:#fff;font-weight:900;letter-spacing:.08em}
+        .reloj-10 strong{display:block;font-size:42px;line-height:1;color:var(--neon-rosa);text-shadow:0 0 14px currentColor}
+        .reloj-10.activo{display:block}
 
         /* === TÍTULO Y SELECTORES === */
         .cabecera{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-bottom:10px}
@@ -113,6 +117,7 @@
     </style>
 </head>
 <body>
+<canvas id="scanBg"></canvas>
 <div class="wrap">
 
     <!-- CABECERA -->
@@ -209,6 +214,7 @@
         <button id="btnAnalizar" class="btn btn-analizar">HACER ANÁLISIS</button>
         <button id="btnPredecir" class="btn btn-predecir" disabled>PREDECIR ANÁLISIS</button>
         <button id="btnVoz" class="btn btn-voz">VOZ ACTIVADA</button>
+        <div id="reloj10" class="reloj-10">TIEMPO PARA ENTRADA MANUAL<strong id="relojNumero">10</strong><span id="relojEstado">PREDICCIÓN ACTIVA</span></div>
     </div>
 
 </div>
@@ -309,9 +315,16 @@ function actualizarPanelesResultado(digitoGanador, digitoPerdedor, precGanador, 
     if(tipoPerder==='impar') $('textoPierde').innerHTML = txtBase + `valores IMPARES. Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en últimos 20, frecuencia, secuencias, saltos y distancia circular.`;
     if(tipoPerder==='menor') $('textoPierde').innerHTML = txtBase + `valores MENORES que ${limiteOver}. Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en últimos 20, frecuencia, secuencias, saltos y distancia circular.`;
 
-    // Mostrar paneles
+    // Mostrar siempre ambos resultados, incluido el panel rojo PIERDE
     $('panelGana').style.display='block';
     $('panelPierde').style.display='block';
+    $('valGana').textContent=digitoGanador;
+    $('valPierde').textContent=digitoPerdedor;
+    $('precGana').textContent=precGanador+'%';
+    $('precPierde').textContent=precPerdedor+'%';
+    if(!$('textoPierde').innerHTML.trim() || $('textoPierde').innerHTML.includes('El análisis de mercado predice que aparecerá el dígito seleccionado')){
+      $('textoPierde').innerHTML = `La estrategia contraria queda marcada como PIERDE: ${digitoPerdedor}. Se usó el mismo análisis matemático para identificar la alternativa menos fuerte.`;
+    }
 }
 
 // === GRÁFICO DE VELAS ===
@@ -505,11 +518,11 @@ function predecir(){
     }
 
     // Cuenta regresiva 10s
-    ventanaActiva = true; segundos = 10;
+    ventanaActiva = true; segundos = 10; $('reloj10').classList.add('activo'); $('relojNumero').textContent='10'; $('relojEstado').textContent='PREDICCIÓN ACTIVA · ENTRADA MANUAL';
     clearInterval(temporizador);
     temporizador = setInterval(()=>{
-        segundos--;
-        if(segundos<=0){ clearInterval(temporizador); ventanaActiva=false; hablar('Tiempo terminado'); }
+        segundos--; $('relojNumero').textContent=Math.max(segundos,0);
+        if(segundos<=0){ clearInterval(temporizador); ventanaActiva=false; $('relojEstado').textContent='TIEMPO TERMINADO'; setTimeout(()=>$('reloj10').classList.remove('activo'),1500); hablar('Tiempo terminado'); }
     },1000);
 }
 
@@ -526,8 +539,12 @@ $('btnPredecir').onclick = predecir;
 function conectarServidor(){const proto=location.protocol==='https:'?'wss':'ws';const ws=new WebSocket(proto+'://'+location.host);ws.onmessage=e=>{let m=JSON.parse(e.data);if(m.status==='TICK RECIBIDO'&&m.symbol===activo)agregarTick(m.quote)};ws.onerror=()=>hablar('Error de conexión');}
 async function cargarHistorial(){try{const r=await fetch('/history?asset='+encodeURIComponent(activo));const rows=await r.json();if(Array.isArray(rows)){datos[activo]=rows.slice().reverse().map(x=>Number(x.digit)).slice(-1000);precios[activo]=rows.slice().reverse().map(x=>Number(x.quote)).slice(-200);dibujarTodo();}}catch(e){}}
 
+// === FONDO ESCÁNER DE NÚMEROS ===
+function iniciarFondoEscaner(){const c=$('scanBg'),x=c.getContext('2d');let fs=18,cols=0,ys=[];function size(){c.width=innerWidth;c.height=innerHeight;cols=Math.ceil(c.width/fs);ys=Array(cols).fill(0).map(()=>Math.random()*c.height);}size();addEventListener('resize',size);function loop(){x.fillStyle='rgba(3,7,18,.18)';x.fillRect(0,0,c.width,c.height);x.font=fs+'px monospace';for(let i=0;i<cols;i++){let n=Math.floor(Math.random()*10);x.fillStyle=i%7===0?'rgba(0,255,136,.85)':'rgba(0,204,255,.55)';x.fillText(n,i*fs,ys[i]);ys[i]+=fs;if(ys[i]>c.height&&Math.random()>.94)ys[i]=0;}requestAnimationFrame(loop);}loop();}
+
 // === INICIO ===
 window.onload = ()=>{
+    iniciarFondoEscaner();
     conectarServidor();
     cargarHistorial();
     hablar('Sistema listo. Escáner activo.');
