@@ -384,7 +384,8 @@
             color: #94a3b8;
         }
         .check-icon { color: #22c55e; }
-    </style>
+    .live-chart{width:100%;height:100%;display:block}.predict-xl{background:#a21caf!important;color:#fff!important;font-weight:800!important;box-shadow:0 0 12px #d946ef88}
+</style>
 </head>
 <body>
 
@@ -433,7 +434,7 @@
         </select>
 
         <button>CALCULAR MERCADO</button>
-        <button>RE-CALCULAR</button>
+        <button>RE-CALCULAR</button><button id="btnPredictXL" class="predict-xl">PREDECIR ANÁLISIS</button>
 
         <select>
             <option>Volatility 10</option>
@@ -471,7 +472,7 @@
             <div class="last-digit">Último dígito: 6 — EVEN</div>
 
             <div class="chart-box">
-                <div class="chart-line"></div>
+                <canvas id="liveChart" class="live-chart"></canvas>
             </div>
 
             <div class="lab-title">
@@ -586,20 +587,21 @@
 <script>
 (()=>{
 const q=s=>document.querySelector(s), qs=s=>[...document.querySelectorAll(s)];
-const strategy=qs('.controls-bar select')[0], assetSelect=qs('.controls-bar select')[2], calc=qs('.controls-bar button')[0], recalc=qs('.controls-bar button')[1];
+const strategy=qs('.controls-bar select')[0], assetSelect=qs('.controls-bar select')[2], calc=qs('.controls-bar button')[0], recalc=qs('.controls-bar button')[1], predictBtn=q('#btnPredictXL');
 const symbols={'Volatility 10':'R_10','Volatility 25':'R_25','Volatility 50 (1s)':'R_50','Volatility 75':'R_75','Volatility 100':'R_100','Volatility 125 (1s)':'R_100','Volatility 150 (1s)':'R_100'};
 let asset=symbols[assetSelect?.value]||'R_25', digits=[], prices=[], timer=null, left=0, predicted=null;
-const panel=q('.panel-left'), price=q('.price-big'), last=q('.last-digit'), total=q('.data-value');
-const live=document.createElement('div');live.id='liveLayer';live.innerHTML='<b>LIVE</b><span id="liveState">CONECTANDO</span><span id="livePrice">Precio: —</span><span id="liveDigit">Último dígito: —</span><span id="live20">20 dígitos: —</span>';panel?.insertBefore(live,panel.querySelector('.chart-box'));
+const panel=q('.panel-left'), price=q('.price-big'), last=q('.last-digit'), total=q('.data-value'), chart=q('#liveChart');
+const live=document.createElement('div');live.id='liveLayer';live.innerHTML='<b>LIVE</b><span id="liveState">CONECTANDO</span><span id="livePrice">Precio: —</span><span id="liveDigit">Último dígito: —</span><span id="live20">20 dígitos: —</span><span id="predOut">Predicción: pulsa PREDECIR ANÁLISIS</span>';panel?.insertBefore(live,panel.querySelector('.chart-box'));
 const clock=document.createElement('div');clock.className='entry-clock';clock.innerHTML='ENTRADA MANUAL<strong>10</strong><span>ESPERANDO SEÑAL</span>';document.body.appendChild(clock);
 function say(t){if('speechSynthesis' in window){speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(t));}}
 function digit(v){let a=String(v).replace(/\D/g,'');return Number(a.at(-1));}
-function update(){let d=digits.at(-1),p=prices.at(-1);if(p!=null){price.textContent=p; q('#livePrice').textContent='Precio: '+p}if(d!=null){last.textContent='Último dígito: '+d+' — '+(d%2?'ODD':'EVEN');q('#liveDigit').textContent='Último dígito: '+d;q('#live20').textContent='20 dígitos: '+digits.slice(-20).join(' · ')}if(total)total.textContent=digits.length;}
+function drawChart(){if(!chart||prices.length<2)return;const r=chart.getBoundingClientRect(),dpr=devicePixelRatio||1;chart.width=r.width*dpr;chart.height=r.height*dpr;const x=chart.getContext('2d');x.scale(dpr,dpr);const w=r.width,h=r.height,a=prices.slice(-80),mi=Math.min(...a),ma=Math.max(...a),rg=ma-mi||1;x.clearRect(0,0,w,h);x.strokeStyle='#243b53';x.lineWidth=1;for(let i=1;i<4;i++){x.beginPath();x.moveTo(0,i*h/4);x.lineTo(w,i*h/4);x.stroke()}x.beginPath();a.forEach((v,i)=>{let px=i*w/(a.length-1),py=h-8-(v-mi)/rg*(h-16);i?x.lineTo(px,py):x.moveTo(px,py)});x.strokeStyle='#22d3ee';x.lineWidth=2;x.shadowColor='#22d3ee';x.shadowBlur=8;x.stroke();x.shadowBlur=0}
+function update(){let d=digits.at(-1),p=prices.at(-1);if(p!=null){price.textContent=p; q('#livePrice').textContent='Precio: '+p}if(d!=null){last.textContent='Último dígito: '+d+' — '+(d%2?'ODD':'EVEN');q('#liveDigit').textContent='Último dígito: '+d;q('#live20').textContent='20 dígitos: '+digits.slice(-20).join(' · ')}if(total)total.textContent=digits.length;const ev=digits.filter(x=>x%2===0).length,od=digits.length-ev;const eo=q('.eo-percent');if(eo&&digits.length){eo.innerHTML=((ev/digits.length)*100).toFixed(1)+'% <span style=\"font-size:14px;color:#94a3b8\">'+(ev>=od?'EVEN':'ODD')+'</span>';}const hist=q('.history-value');if(hist&&digits.length)hist.textContent=((Math.max(ev,od)/digits.length)*100).toFixed(1)+'%';drawChart();}
 function tick(m){if(m.symbol!==asset)return;let p=Number(m.quote);if(!Number.isFinite(p))return;prices.push(p);digits.push(digit(m.quote));if(digits.length>1000)digits.shift();if(prices.length>200)prices.shift();update();if(left>0&&digit(m.quote)===predicted){clock.classList.add('hit');clock.querySelector('span').textContent='PUNTO DE ENTRADA · '+left+'s';say('Punto de entrada detectado. Quedan '+left+' segundos.');}}
 function connect(){let ws=new WebSocket((location.protocol==='https:'?'wss':'ws')+'://'+location.host);ws.onopen=()=>q('#liveState').textContent='LIVE';ws.onclose=()=>q('#liveState').textContent='DESCONECTADO';ws.onmessage=e=>{try{let m=JSON.parse(e.data);if(m.status==='TICK RECIBIDO')tick(m)}catch{}};}
-function calculate(){if(digits.length<20){say('Aún no hay veinte ticks');return}let c=Array(10).fill(0),a=digits.slice(-200);a.forEach(d=>c[d]++);let order=[...Array(10).keys()].sort((x,y)=>c[y]-c[x]),best=order[0],second=order[1],strength=Math.round(50+((c[best]-c[second])/Math.max(c[best],1))*100);predicted=best;let green=strength>=70;qs('.panel-resultado').forEach(x=>x.style.display='none');let target=green?q('.panel-left'):q('.panel-right');clock.classList.toggle('on',green);clock.classList.remove('hit');if(green){clock.querySelector('strong').textContent='10';clock.querySelector('span').textContent='PREDICCIÓN POSITIVA';left=10;clearInterval(timer);timer=setInterval(()=>{left--;clock.querySelector('strong').textContent=Math.max(left,0);if(left<=0){clearInterval(timer);clock.querySelector('span').textContent='TIEMPO TERMINADO';say('Tiempo terminado')}},1000);say('Predicción positiva. Dígito '+best+'. Fuerza '+strength+' de 100.');}else say('Señal débil. Esperar, no entrar.');
+function calculate(){if(digits.length<20){say('Aún no hay veinte ticks');return}let c=Array(10).fill(0),a=digits.slice(-200);a.forEach(d=>c[d]++);let order=[...Array(10).keys()].sort((x,y)=>c[y]-c[x]),best=order[0],second=order[1],strength=Math.round(50+((c[best]-c[second])/Math.max(c[best],1))*100);predicted=best;const po=q('#predOut');if(po)po.textContent='Predicción de último dígito: '+best;const po2=q('.best-op-title');if(po2)po2.textContent='🏆 MEJOR OPERATIVA — '+(assetSelect?.value||asset);const po3=q('.best-op-text');if(po3)po3.innerHTML='Predicción actual: <b>dígito '+best+'</b>. Fuerza matemática: <b>'+strength+'/100</b>. Se recalcula con los ticks vivos. Esto es una estimación estadística, no una garantía.';let green=strength>=70;qs('.panel-resultado').forEach(x=>x.style.display='none');let target=green?q('.panel-left'):q('.panel-right');clock.classList.toggle('on',green);clock.classList.remove('hit');if(green){clock.querySelector('strong').textContent='10';clock.querySelector('span').textContent='PREDICCIÓN POSITIVA';left=10;clearInterval(timer);timer=setInterval(()=>{left--;clock.querySelector('strong').textContent=Math.max(left,0);if(left<=0){clearInterval(timer);clock.querySelector('span').textContent='TIEMPO TERMINADO';say('Tiempo terminado')}},1000);say('Predicción positiva. Dígito '+best+'. Fuerza '+strength+' de 100.');}else say('Señal débil. Esperar, no entrar.');
 const guide=q('.guide-text');if(guide)guide.textContent=(green?'PREDICCIÓN POSITIVA: ':'SEÑAL DÉBIL: ')+best+' · fuerza matemática '+strength+'/100'+(green?' · entrada manual durante 10 segundos':' · ESPERAR — NO ENTRAR');}
-assetSelect?.addEventListener('change',()=>{asset=symbols[assetSelect.value]||asset;digits=[];prices=[];q('#liveState').textContent='CAMBIANDO ACTIVO';});calc?.addEventListener('click',calculate);recalc?.addEventListener('click',calculate);connect();
+assetSelect?.addEventListener('change',()=>{asset=symbols[assetSelect.value]||asset;digits=[];prices=[];q('#liveState').textContent='CAMBIANDO ACTIVO';});calc?.addEventListener('click',calculate);recalc?.addEventListener('click',calculate);predictBtn?.addEventListener('click',()=>{calculate();});connect();
 })();
 </script>
 </body>
