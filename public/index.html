@@ -1421,101 +1421,25 @@ updateClock();
 ============================================================ */
 
 function connectDeriv(){
-
-  if(socket){
-
-    try{
-      socket.close();
-    }catch(e){}
-
-  }
-
+  if(socket){try{socket.close()}catch(e){}}
   setConnection(false,"CONECTANDO...");
-
-  const url =
-    "wss://ws.derivws.com/websockets/v3?app_id=1089";
-
-  try{
-
-    socket = new WebSocket(url);
-
-  }catch(error){
-
-    setConnection(false,"ERROR");
-
-    return;
-
-  }
-
-
-  socket.onopen = function(){
-
+  const proto=location.protocol==='https:'?'wss':'ws';
+  try{socket=new WebSocket(proto+'://'+location.host);}catch(error){setConnection(false,"ERROR");return;}
+  socket.onopen=function(){
     setConnection(true,"EN LÍNEA");
-
-    $("statusText").textContent =
-      "Conectado. Esperando ticks...";
-
-    socket.send(JSON.stringify({
-
-      ticks:currentAsset,
-      subscribe:1
-
-    }));
-
+    $("statusText").textContent="Conectado al servidor local. Esperando ticks...";
+    try{socket.send(JSON.stringify({ticks:currentAsset,symbol:currentAsset,subscribe:1}));}catch(e){}
   };
-
-
-  socket.onmessage = function(event){
-
+  socket.onmessage=function(event){
     try{
-
-      const data = JSON.parse(event.data);
-
-      if(data.error){
-
-        console.log(data.error);
-
-        setConnection(false,"ERROR DERIV");
-
-        return;
-
-      }
-
-
-      if(data.tick){
-
-        processTick(data.tick);
-
-      }
-
-    }catch(error){
-
-      console.log(error);
-
-    }
-
+      const data=JSON.parse(event.data);
+      if(data.error){setConnection(false,"ERROR DEL SERVIDOR");$("statusText").textContent=data.error.message||"Error del servidor";return;}
+      const tick=data.tick || (data.status==='TICK RECIBIDO' ? data : null);
+      if(tick && tick.quote!==undefined){processTick(tick);}
+    }catch(error){console.warn('Mensaje no válido',error)}
   };
-
-
-  socket.onerror = function(){
-
-    setConnection(false,"ERROR");
-
-    $("statusText").textContent =
-      "Error de conexión con Deriv.";
-
-  };
-
-
-  socket.onclose = function(){
-
-    setConnection(false,"DESCONECTADO");
-
-    $("statusText").textContent =
-      "Conexión cerrada.";
-
-  };
-
+  socket.onerror=function(){setConnection(false,"ERROR");$("statusText").textContent="Error de conexión con el servidor local.";};
+  socket.onclose=function(){setConnection(false,"DESCONECTADO");$("statusText").textContent="Conexión cerrada.";};
 }
 
 
