@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>G2LUDE // MATH ENGINE PRO v3 + OHLC</title>
+<title>SCANNER AZUL // DERIV DIGIT ANALYZER</title>
 
 <style>
 :root{
@@ -471,6 +471,25 @@ button:active{
 .log-pending{
     color:var(--yellow);
 }
+
+/* =========================================================
+   MOTOR DE MOMENTO ÓPTIMO 1-10s
+   ========================================================= */
+.timing-panel{margin-top:10px;border:1px solid rgba(0,255,204,.45);border-radius:10px;padding:10px;background:rgba(0,20,16,.72);box-shadow:0 0 14px rgba(0,255,204,.08)}
+.timing-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px}
+.timing-title{font-weight:1000;color:#00ffcc;letter-spacing:.7px;font-size:12px}
+.timing-live{font-size:11px;color:#ffe600;font-weight:900}
+.timing-best{border:1px solid rgba(255,230,0,.5);border-radius:8px;padding:8px;margin-bottom:8px;background:rgba(255,230,0,.04);font-size:12px;line-height:1.45}
+.timing-best strong{color:#ffe600}
+.timing-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.timing-cell{border:1px solid rgba(77,166,255,.35);border-radius:6px;padding:5px 2px;text-align:center;min-width:0;background:rgba(77,166,255,.035)}
+.timing-cell.active{border-color:#00ffcc;box-shadow:0 0 8px rgba(0,255,204,.18)}
+.timing-cell.best{border-color:#ffe600;box-shadow:0 0 8px rgba(255,230,0,.16)}
+.timing-sec{font-size:10px;color:#4da6ff;font-weight:900}
+.timing-rate{font-size:12px;color:#eafff8;font-weight:1000;margin-top:2px}
+.timing-sample{font-size:9px;color:#8aa99f;margin-top:2px}
+.timing-note{font-size:9px;color:#7d9b91;margin-top:7px;line-height:1.35}
+
 </style>
 <style>
 /* Mejor legibilidad en celular */
@@ -479,7 +498,29 @@ body{font-size:14px}.panel-title{font-size:14px!important}.prediction.signal-goo
 </style><style>
 /* Mejor visibilidad para ranking y señales */
 #rankTable{font-size:12px!important}#rankTable th{font-size:12px!important;padding:8px 3px!important}#rankTable td{font-size:13px!important;padding:8px 3px!important}.signal-log{font-size:12px!important;max-height:180px}.signal-log .log-row{padding:6px 2px!important}.signal-log .log-row span{font-size:12px!important}.history-grid{gap:7px}.history-item{padding:8px 3px!important}.history-digit{font-size:20px!important}.scanner-bg{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:.24}
-</style></head>
+</style>
+<style id="scanner-azul-ui">
+/* ===== SCANNER AZUL — DISEÑO PRINCIPAL ===== */
+:root{--azul:#168cff;--azul2:#00c8ff;--azul3:#0759c9;--fondo:#03101f;--panel:#071b31;--panel2:#092744;--texto:#eaf7ff;--muted:#7fa8c9;--verde:#19f5a5;--rojo:#ff496d;--amarillo:#ffd84d}
+*{box-sizing:border-box}
+body{min-height:100vh;background:radial-gradient(circle at 50% 0%,#0b4f91 0%,#061b32 35%,#020914 78%);color:var(--texto);font-family:Arial,Helvetica,sans-serif;align-items:flex-start;padding:24px 14px}
+.phone-frame{width:min(1180px,100%);max-height:none;overflow:visible;padding:18px;border:1px solid rgba(22,140,255,.55);border-radius:24px;background:linear-gradient(180deg,rgba(6,27,49,.98),rgba(2,13,26,.99));box-shadow:0 0 55px rgba(0,120,255,.28),inset 0 1px 0 rgba(255,255,255,.05)}
+.top-hud{padding:4px 2px 16px;margin-bottom:14px;border-bottom:1px solid rgba(22,140,255,.28)}
+.brand{font-size:24px;letter-spacing:2px;color:#fff;font-weight:900}.status{font-size:12px;color:#9dcced}.dot{background:var(--verde);box-shadow:0 0 12px var(--verde)}
+.filter-row{display:grid;grid-template-columns:110px minmax(210px,300px) 1fr;gap:12px;align-items:center;margin-bottom:14px;padding:12px 14px;background:linear-gradient(90deg,#08294b,#061b32);border:1px solid rgba(22,140,255,.35);border-radius:14px}.filter-row span:first-child{color:#7fc5ff;font-size:12px;font-weight:900;letter-spacing:1px}.filter-row select{height:42px;border:1px solid #168cff;border-radius:9px;background:#061b31;color:#fff;padding:0 12px;font-weight:900}.filter-row #lastTickDisplay{justify-self:end;color:#fff;font-size:20px!important;font-weight:900}
+.panel,.timing-panel,.prediction{background:linear-gradient(145deg,rgba(8,36,65,.98),rgba(4,20,38,.98));border:1px solid rgba(22,140,255,.35);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.22);padding:15px;margin:0 0 14px}.panel-title{color:#75c8ff!important;font-size:13px!important;font-weight:900;letter-spacing:1.2px;border-bottom:1px solid rgba(22,140,255,.2);padding-bottom:9px;margin-bottom:12px}
+.chart-panel{padding:15px}.chart-title{color:#8bd4ff!important;font-weight:900}.chart-live{color:var(--verde)!important}.chart-wrap{height:330px!important;background:#020c18!important;border:1px solid rgba(22,140,255,.28)!important;border-radius:12px!important}.chart-info{color:#80a9c8!important}
+.hot-ranking{display:grid!important;grid-template-columns:repeat(3,1fr);gap:12px}.hot{background:linear-gradient(180deg,#0b3158,#061b31)!important;border:1px solid rgba(22,140,255,.45)!important;border-radius:14px!important;padding:15px!important}.hot-digit{font-size:38px!important;color:#fff!important}.hot-score{color:#55b9ff!important;font-size:13px!important}
+.digits-grid{display:grid!important;grid-template-columns:repeat(10,1fr);gap:7px}.digit-cell,.digit-item{background:#061b31!important;border:1px solid rgba(22,140,255,.28)!important;border-radius:8px!important}
+.analysis{color:#bdd9ef!important;line-height:1.55}.rankTable,#rankTable{background:#061525!important;border-color:rgba(22,140,255,.25)!important}.rankTable th,#rankTable th{color:#72c5ff!important;background:#09294a!important}.rankTable td,#rankTable td{border-color:rgba(22,140,255,.14)!important;color:#d9efff!important}
+.prediction{display:grid;grid-template-columns:1fr auto;grid-template-areas:"title digit" "market digit" "current digit" "score digit" "quality digit" "gap timer";gap:7px 18px;padding:22px;border:1px solid rgba(0,200,255,.6);background:radial-gradient(circle at 80% 50%,rgba(0,160,255,.2),rgba(4,20,38,.98) 55%);box-shadow:0 0 35px rgba(0,140,255,.18)}.pred-title{grid-area:title;color:#8dd7ff!important;font-size:15px!important;font-weight:900;letter-spacing:1px}.pred-digit{grid-area:digit;align-self:center;font-size:105px!important;line-height:.9;color:#fff!important;text-shadow:0 0 28px rgba(0,170,255,.7)}#liveMarket{grid-area:market!important;border-color:rgba(0,200,255,.4)!important;background:rgba(0,80,150,.16)!important}.pred-current{grid-area:current}.pred-score{grid-area:score;color:#5fc1ff!important}.pred-quality{grid-area:quality;color:#b8dfff!important}.pred-gap{grid-area:gap}.timer{grid-area:timer;background:linear-gradient(135deg,#0757a8,#0a2d55)!important;border:1px solid #168cff!important;border-radius:12px!important;padding:12px 18px!important;text-align:center;color:#9bd7ff!important}.timer strong{font-size:42px!important;color:#fff!important}
+.timing-panel{border-color:rgba(0,200,255,.5);background:linear-gradient(180deg,#082b4d,#051a30)}.timing-title{color:#76ceff!important;font-size:15px!important}.timing-live{color:var(--verde)!important}.timing-best{background:rgba(0,128,255,.12)!important;border-color:rgba(0,190,255,.5)!important;color:#d8f2ff!important;font-size:15px!important}.timing-best strong{color:#fff!important}.timing-grid{grid-template-columns:repeat(10,1fr)!important;gap:6px}.timing-cell{background:#061c32!important;border-color:rgba(22,140,255,.35)!important;padding:10px 4px!important}.timing-cell.active{border-color:#00d9ff!important;box-shadow:0 0 13px rgba(0,217,255,.25)}.timing-cell.best{border-color:#ffd84d!important;box-shadow:0 0 14px rgba(255,216,77,.25)}.timing-sec{color:#69c6ff!important}.timing-rate{color:#fff!important}.timing-sample{color:#789cba!important}.timing-note{color:#7295b1!important}
+.stats-grid{display:grid!important;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#061a2e!important;border:1px solid rgba(22,140,255,.25)!important;border-radius:12px!important;padding:13px!important}.stat-value{color:#fff!important}.stat-label{color:#73b9e8!important}.small{color:#789bb8!important}.history-grid{display:grid!important;grid-template-columns:repeat(10,1fr);gap:7px}.history-item{background:#061b31!important;border-color:rgba(22,140,255,.3)!important}.history-digit{color:#fff!important}.signal-log{color:#c9e8ff!important}.log-row{border-color:rgba(22,140,255,.15)!important}
+button{border-radius:11px!important;border:1px solid #168cff!important;background:linear-gradient(90deg,#075bc2,#00a8ef)!important;color:#fff!important;font-weight:900!important;min-height:46px!important;box-shadow:0 8px 22px rgba(0,120,255,.18)}#predictButton{font-size:15px!important;letter-spacing:.5px}
+.toast{background:#072b4c!important;border-color:#168cff!important;color:#bde7ff!important}
+@media(max-width:700px){body{padding:8px 5px}.phone-frame{padding:11px;border-radius:18px}.brand{font-size:17px}.filter-row{grid-template-columns:1fr 1fr}.filter-row span:first-child{display:none}.filter-row #lastTickDisplay{grid-column:1/-1;justify-self:start}.chart-wrap{height:245px!important}.digits-grid{grid-template-columns:repeat(5,1fr)}.history-grid{grid-template-columns:repeat(5,1fr)}.timing-grid{grid-template-columns:repeat(5,1fr)!important}.prediction{grid-template-columns:1fr 115px;grid-template-areas:"title digit" "market digit" "current digit" "score digit" "quality digit" "gap gap" "timer timer"}.pred-digit{font-size:78px!important}.timer strong{font-size:36px!important}}
+</style>
+</head>
 
 <body><canvas id="scannerBg" class="scanner-bg"></canvas>
 
@@ -700,6 +741,20 @@ body{font-size:14px}.panel-title{font-size:14px!important}.prediction.signal-goo
 
     </div>
 
+</div>
+
+
+<!-- MOTOR DE MOMENTO ÓPTIMO -->
+<div class="timing-panel" id="timingPanel">
+    <div class="timing-head">
+        <div class="timing-title">MOTOR DE MOMENTO ÓPTIMO 1–10s</div>
+        <div class="timing-live" id="timingLive">APRENDIENDO</div>
+    </div>
+    <div class="timing-best" id="timingBest">
+        <strong>MEJOR MOMENTO:</strong> -- &nbsp; | &nbsp; RENDIMIENTO: --
+    </div>
+    <div class="timing-grid" id="timingGrid"></div>
+    <div class="timing-note">Cada segundo se evalúa contra el siguiente tick. El resultado es estadístico y necesita varias muestras; no garantiza el próximo dígito.</div>
 </div>
 
 
@@ -974,7 +1029,9 @@ function processTickForCandle(
 
 
     const now =
-        Date.now();
+        Number.isFinite(Number(tickObj.epoch))
+        ? Number(tickObj.epoch)*1000
+        : Date.now();
 
 
     /*
@@ -1505,6 +1562,164 @@ let wins = 0;
 let losses = 0;
 
 let signalHistory = [];
+
+/* =========================================================
+   MOTOR DE MOMENTO ÓPTIMO 1-10s
+   ========================================================= */
+const TIMING_SECONDS = 10;
+const TIMING_MIN_SAMPLES = 5;
+let timingStats = Array.from({length:TIMING_SECONDS},()=>({signals:0,wins:0,losses:0}));
+let timingSession = null;
+let timingLastSecond = 0;
+
+function getTimingStorageKey(){
+    const assetEl=document.getElementById("assetSelector");
+    return "g2lude_timing_v1_"+(assetEl ? assetEl.value : "R_100");
+}
+
+function loadTimingStats(){
+    try{
+        const raw=localStorage.getItem(getTimingStorageKey());
+        if(raw){
+            const parsed=JSON.parse(raw);
+            if(Array.isArray(parsed) && parsed.length===TIMING_SECONDS){
+                timingStats=parsed.map(x=>({
+                    signals:Number(x.signals)||0,
+                    wins:Number(x.wins)||0,
+                    losses:Number(x.losses)||0
+                }));
+            }
+        }
+    }catch(e){ console.warn("No se pudo cargar memoria de momento",e); }
+    renderTimingStats();
+}
+
+function saveTimingStats(){
+    try{ localStorage.setItem(getTimingStorageKey(),JSON.stringify(timingStats)); }
+    catch(e){ console.warn("No se pudo guardar memoria de momento",e); }
+}
+
+function timingRate(stat){
+    return stat.signals>0 ? stat.wins/stat.signals*100 : 0;
+}
+
+function timingAdjustedRate(stat){
+    /* Base teórica de acertar un dígito: 10%.
+       Suavizado para que 1/1 no parezca mejor que 20/20. */
+    if(!stat.signals) return 0;
+    return ((stat.wins+1)/(stat.signals+10))*100;
+}
+
+function timingScore(stat){
+    if(!stat.signals) return 0;
+    const edge=timingAdjustedRate(stat)-10;
+    const edgeScore=clamp(50+(edge/20)*50,0,100);
+    const sampleFactor=clamp(stat.signals/30,0,1);
+    return edgeScore*.75+sampleFactor*25;
+}
+
+function getBestTimingSecond(){
+    const candidates=timingStats
+        .map((stat,index)=>({stat,index,score:timingScore(stat)}))
+        .filter(x=>x.stat.signals>=TIMING_MIN_SAMPLES);
+    if(!candidates.length) return null;
+    candidates.sort((a,b)=>b.score-a.score);
+    return candidates[0];
+}
+
+function renderTimingStats(activeSecond=0){
+    const grid=document.getElementById("timingGrid");
+    const bestEl=document.getElementById("timingBest");
+    const liveEl=document.getElementById("timingLive");
+    if(!grid || !bestEl || !liveEl) return;
+
+    const best=getBestTimingSecond();
+    liveEl.textContent=activeSecond>0 ? `SEGUNDO ${activeSecond}/10` : (best ? "MOMENTO APRENDIDO" : "APRENDIENDO");
+
+    if(best){
+        const st=best.stat;
+        bestEl.innerHTML=`<strong>MEJOR MOMENTO: S${best.index+1}</strong> &nbsp; | &nbsp; RENDIMIENTO: ${timingRate(st).toFixed(1)}% (${st.wins}/${st.signals}) &nbsp; | &nbsp; SCORE MOMENTO: ${best.score.toFixed(1)}`;
+    }else{
+        const total=timingStats.reduce((a,x)=>a+x.signals,0);
+        bestEl.innerHTML=`<strong>MEJOR MOMENTO: --</strong> &nbsp; | &nbsp; ACUMULANDO DATOS (${total} muestras; mínimo ${TIMING_MIN_SAMPLES} por segundo)`;
+    }
+
+    grid.innerHTML=timingStats.map((st,i)=>{
+        const rate=st.signals ? timingRate(st) : null;
+        const isBest=best && best.index===i;
+        const active=activeSecond===i+1;
+        return `<div class="timing-cell ${active?"active":""} ${isBest?"best":""}">
+            <div class="timing-sec">S${i+1}</div>
+            <div class="timing-rate">${rate===null?"--":rate.toFixed(0)+"%"}</div>
+            <div class="timing-sample">${st.signals?st.wins+"/"+st.signals:"--"}</div>
+        </div>`;
+    }).join("");
+}
+
+function resetTimingSession(){
+    timingSession=null;
+    timingLastSecond=0;
+    renderTimingStats();
+}
+
+function startTimingSession(){
+    timingSession={
+        startMs:Date.now(),
+        startEpochMs:Date.now(),
+        snapshots:{},
+        pendingBySecond:{}
+    };
+    timingLastSecond=0;
+    renderTimingStats(1);
+}
+
+function processTimingTick(digit){
+    if(!timingSession) return;
+
+    const elapsed=(Date.now()-timingSession.startMs)/1000;
+    const second=Math.floor(elapsed)+1;
+
+    /* Primero resolvemos el candidato del segundo anterior con este tick. */
+    const resolveSecond=second-1;
+    if(resolveSecond>=1 && resolveSecond<=TIMING_SECONDS && timingSession.pendingBySecond[resolveSecond]){
+        const candidate=timingSession.pendingBySecond[resolveSecond];
+        const st=timingStats[resolveSecond-1];
+        st.signals++;
+        if(digit===candidate.digit) st.wins++; else st.losses++;
+        delete timingSession.pendingBySecond[resolveSecond];
+        saveTimingStats();
+        renderTimingStats(Math.min(Math.max(second,1),TIMING_SECONDS));
+        if(resolveSecond===TIMING_SECONDS){
+            timingSession=null;
+            timingLastSecond=0;
+            renderTimingStats();
+            return;
+        }
+    }
+
+    if(second<1 || second>TIMING_SECONDS) return;
+
+    if(!timingSession.snapshots[second]){
+        const results=analyzeAllDigits();
+        if(results.length){
+            const best=results[0];
+            timingSession.snapshots[second]={
+                digit:best.digit,
+                score:best.score,
+                createdAt:Date.now()
+            };
+            timingSession.pendingBySecond[second]=timingSession.snapshots[second];
+            timingLastSecond=second;
+            renderTimingStats(second);
+            const timingText=document.getElementById("timingBest");
+            if(timingText && best){
+                const learned=getBestTimingSecond();
+                const learnedText=learned ? `MEJOR HISTÓRICO S${learned.index+1}` : "AÚN APRENDIENDO";
+                timingText.innerHTML=`<strong>${learnedText}</strong> &nbsp; | &nbsp; AHORA S${second}: D${best.digit} · SCORE ${best.score.toFixed(1)}`;
+            }
+        }
+    }
+}
 
 
 const digitMemory =
@@ -2570,6 +2785,8 @@ function processTick(
     digit
 ){
 
+    processTimingTick(digit);
+
     if(
         pendingPrediction!==null
     ){
@@ -2779,6 +2996,7 @@ function generatePrediction(){
         matchDigit:null
     };
 
+    startTimingSession();
 
     signals++;
 
@@ -3071,7 +3289,7 @@ function startTimer(){
 
 
     timerCount.textContent =
-        `${seconds}s`;
+        `${seconds}s · S1`;
 
 
     timerInterval =
@@ -3086,7 +3304,7 @@ function startTimer(){
                 ){
 
                     timerCount.textContent =
-                        `${seconds}s`;
+                        `${seconds}s · S${Math.max(1,11-seconds)}`;
 
                 }else{
 
@@ -3202,7 +3420,7 @@ function extractLastDigit(
 
 function connectDeriv(symbol){
     if(ws){try{ws.close()}catch(e){}}
-    recentDigits=[]; pendingPrediction=null; clearInterval(timerInterval); resetCandleChart();
+    recentDigits=[]; pendingPrediction=null; clearInterval(timerInterval); resetTimingSession(); resetCandleChart();
     document.getElementById('statusText').textContent='CONECTANDO';
     document.getElementById('liveDot').style.background='#ffe600';
     const proto=location.protocol==='https:'?'wss':'ws';
@@ -3254,6 +3472,10 @@ document.getElementById(
         clearInterval(
             timerInterval
         );
+
+        resetTimingSession();
+        timingStats=Array.from({length:TIMING_SECONDS},()=>({signals:0,wins:0,losses:0}));
+        loadTimingStats();
 
 
         document.getElementById(
@@ -3310,6 +3532,7 @@ document.getElementById("predictButton").addEventListener("click",()=>{hablar("E
 
 function iniciarFondoNumeros(){const c=document.getElementById('scannerBg'),x=c.getContext('2d');let fs=22,cols,ys=[];function size(){c.width=innerWidth;c.height=innerHeight;cols=Math.ceil(c.width/fs);ys=Array(cols).fill(0).map(()=>Math.random()*c.height)}size();addEventListener('resize',size);(function loop(){x.fillStyle='rgba(2,10,30,.20)';x.fillRect(0,0,c.width,c.height);x.font=fs+'px monospace';for(let i=0;i<cols;i++){x.fillStyle=i%6===0?'rgba(30,120,255,.72)':'rgba(10,70,220,.50)';x.fillText(Math.floor(Math.random()*10),i*fs,ys[i]);ys[i]+=fs;if(ys[i]>c.height&&Math.random()>.94)ys[i]=0}requestAnimationFrame(loop)})()}iniciarFondoNumeros();
 initUI();
+loadTimingStats();
 
 resizeCandleCanvas();
 
