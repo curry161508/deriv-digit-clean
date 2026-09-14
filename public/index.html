@@ -476,9 +476,12 @@ button:active{
 /* Mejor legibilidad en celular */
 body{font-size:14px}.panel-title{font-size:14px!important}.prediction.signal-good{border-color:#00ff80;background:rgba(0,255,128,.08)}.prediction.signal-good .pred-digit{color:#00ff80}.prediction.signal-bad{border-color:#ff3355;background:rgba(255,51,85,.08)}.prediction.signal-bad .pred-digit{color:#ff3355}
 .pred-title{font-size:13px!important}.pred-score{font-size:19px!important}.pred-quality,.pred-gap{font-size:12px!important}.timer{font-size:16px!important}.timer strong{font-size:28px!important}.history-digit{font-size:17px!important}.history-rate,.history-count{font-size:10px!important}.small,.toast{font-size:11px!important}#lastTickDisplay{font-size:18px!important;font-weight:900}#voiceButton{background:linear-gradient(90deg,#0066ff,#00ccff)!important}
+</style><style>
+/* Mejor visibilidad para ranking y señales */
+#rankTable{font-size:12px!important}#rankTable th{font-size:12px!important;padding:8px 3px!important}#rankTable td{font-size:13px!important;padding:8px 3px!important}.signal-log{font-size:12px!important;max-height:180px}.signal-log .log-row{padding:6px 2px!important}.signal-log .log-row span{font-size:12px!important}.history-grid{gap:7px}.history-item{padding:8px 3px!important}.history-digit{font-size:20px!important}.scanner-bg{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:.24}
 </style></head>
 
-<body>
+<body><canvas id="scannerBg" class="scanner-bg"></canvas>
 
 <div class="phone-frame">
 
@@ -3305,6 +3308,7 @@ document.getElementById("predictButton").addEventListener("click",()=>{hablar("E
    INICIO
    ========================================================= */
 
+function iniciarFondoNumeros(){const c=document.getElementById('scannerBg'),x=c.getContext('2d');let fs=22,cols,ys=[];function size(){c.width=innerWidth;c.height=innerHeight;cols=Math.ceil(c.width/fs);ys=Array(cols).fill(0).map(()=>Math.random()*c.height)}size();addEventListener('resize',size);(function loop(){x.fillStyle='rgba(2,10,30,.20)';x.fillRect(0,0,c.width,c.height);x.font=fs+'px monospace';for(let i=0;i<cols;i++){x.fillStyle=i%6===0?'rgba(0,255,204,.75)':'rgba(30,150,255,.48)';x.fillText(Math.floor(Math.random()*10),i*fs,ys[i]);ys[i]+=fs;if(ys[i]>c.height&&Math.random()>.94)ys[i]=0}requestAnimationFrame(loop)})()}iniciarFondoNumeros();
 initUI();
 
 resizeCandleCanvas();
