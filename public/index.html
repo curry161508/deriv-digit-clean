@@ -566,8 +566,10 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 
     <select id="modeSelector" aria-label="Modo de análisis">
         <option value="matches">MATCHES — ÚLTIMO DÍGITO</option>
-        <option value="even">EVEN — DÍGITO PAR</option>
+        <option value="even">EVEN — CUALQUIER PAR</option>
+        <option value="odd">ODD — CUALQUIER IMPAR</option>
         <option value="over">OVER — MAYOR QUE 4</option>
+        <option value="under">UNDER — MENOR O IGUAL QUE 4</option>
     </select>
 
     <span id="lastTickDisplay">
@@ -1678,6 +1680,8 @@ function startTimingSession(){
     };
     timingLastSecond=0;
     renderTimingStats(1);
+    const learned=getBestTimingSecond();
+    if(learned) hablar(`Mejor momento observado: segundo ${learned.index+1}. La ventana comienza ahora.`);
 }
 
 function processTimingTick(digit){
@@ -1718,6 +1722,8 @@ function processTimingTick(digit){
             timingSession.pendingBySecond[second]=timingSession.snapshots[second];
             timingLastSecond=second;
             renderTimingStats(second);
+            const learnedNow=getBestTimingSecond();
+            if(learnedNow && second===learnedNow.index+1) hablar(`Momento recomendado: quedan aproximadamente ${11-second} segundos.`);
             const timingText=document.getElementById("timingBest");
             if(timingText && best){
                 const learned=getBestTimingSecond();
@@ -2859,7 +2865,9 @@ function generatePrediction(){
     pendingMode = mode;
     let results = allResults;
     if(mode === "even") results = allResults.filter(x=>x.digit%2===0);
+    if(mode === "odd") results = allResults.filter(x=>x.digit%2!==0);
     if(mode === "over") results = allResults.filter(x=>x.digit>4);
+    if(mode === "under") results = allResults.filter(x=>x.digit<=4);
     if(results.length<2){showNoSignal("DATOS INSUFICIENTES PARA ESTE MODO",0,0);return;}
     const best = results[0];
     const second = results[1];
@@ -2946,7 +2954,7 @@ function generatePrediction(){
     prediction.style.display="block"; prediction.classList.remove("signal-bad"); prediction.classList.add("signal-good"); document.querySelector(".pred-title").textContent="SEÑAL POSITIVA — CANDIDATO PRINCIPAL";
 
     predDigit.textContent = best.digit;
-    document.querySelector(".pred-title").textContent = mode==="matches" ? "SEÑAL POSITIVA — MATCHES" : mode==="even" ? "SEÑAL POSITIVA — EVEN" : "SEÑAL POSITIVA — OVER";
+    document.querySelector(".pred-title").textContent = mode==="matches" ? `SEÑAL POSITIVA — MATCHES · DÍGITO ${best.digit}` : mode==="even" ? "SEÑAL POSITIVA — EVEN · CUALQUIER PAR" : mode==="odd" ? "SEÑAL POSITIVA — ODD · CUALQUIER IMPAR" : mode==="over" ? "SEÑAL POSITIVA — OVER · MAYOR QUE 4" : "SEÑAL POSITIVA — UNDER · MENOR O IGUAL QUE 4";
 
 
     predScore.textContent =
@@ -3082,7 +3090,7 @@ function showNoSignal(
 function evaluatePendingPrediction(actualDigit){
     if(pendingPrediction===null)return;
     const p=pendingPrediction;
-    const isMatch=p.mode==="matches" ? actualDigit===p.digit : p.mode==="even" ? actualDigit%2===0 : actualDigit>4;
+    const isMatch=p.mode==="matches" ? actualDigit===p.digit : p.mode==="even" ? actualDigit%2===0 : p.mode==="odd" ? actualDigit%2!==0 : p.mode==="over" ? actualDigit>4 : actualDigit<=4;
     if(isMatch && !p.matched){
         p.matched=true;
         p.matchDigit=actualDigit;
