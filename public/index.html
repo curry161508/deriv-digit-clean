@@ -3308,7 +3308,7 @@ document.getElementById("predictButton").addEventListener("click",()=>{hablar("E
    INICIO
    ========================================================= */
 
-function iniciarFondoNumeros(){const c=document.getElementById('scannerBg'),x=c.getContext('2d');let fs=22,cols,ys=[];function size(){c.width=innerWidth;c.height=innerHeight;cols=Math.ceil(c.width/fs);ys=Array(cols).fill(0).map(()=>Math.random()*c.height)}size();addEventListener('resize',size);(function loop(){x.fillStyle='rgba(2,10,30,.20)';x.fillRect(0,0,c.width,c.height);x.font=fs+'px monospace';for(let i=0;i<cols;i++){x.fillStyle=i%6===0?'rgba(0,180,255,.70)':'rgba(25,110,255,.46)';x.fillText(Math.floor(Math.random()*10),i*fs,ys[i]);ys[i]+=fs;if(ys[i]>c.height&&Math.random()>.94)ys[i]=0}requestAnimationFrame(loop)})()}iniciarFondoNumeros();
+function iniciarFondoNumeros(){const c=document.getElementById('scannerBg'),x=c.getContext('2d');let fs=22,cols,ys=[];function size(){c.width=innerWidth;c.height=innerHeight;cols=Math.ceil(c.width/fs);ys=Array(cols).fill(0).map(()=>Math.random()*c.height)}size();addEventListener('resize',size);(function loop(){x.fillStyle='rgba(2,10,30,.20)';x.fillRect(0,0,c.width,c.height);x.font=fs+'px monospace';for(let i=0;i<cols;i++){x.fillStyle=i%6===0?'rgba(30,120,255,.72)':'rgba(10,70,220,.50)';x.fillText(Math.floor(Math.random()*10),i*fs,ys[i]);ys[i]+=fs;if(ys[i]>c.height&&Math.random()>.94)ys[i]=0}requestAnimationFrame(loop)})()}iniciarFondoNumeros();
 initUI();
 
 resizeCandleCanvas();
