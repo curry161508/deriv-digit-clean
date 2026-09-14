@@ -2771,7 +2771,9 @@ function generatePrediction(){
         },
 
         createdAt:
-            Date.now()
+            Date.now(),
+        matched:false,
+        matchDigit:null
     };
 
 
@@ -2848,111 +2850,31 @@ function showNoSignal(
    BACKTEST
    ========================================================= */
 
-function evaluatePendingPrediction(
-    actualDigit
-){
-
-    if(
-        pendingPrediction===null
-    ){
-
-        return;
+function evaluatePendingPrediction(actualDigit){
+    if(pendingPrediction===null)return;
+    const p=pendingPrediction;
+    if(actualDigit===p.digit && !p.matched){
+        p.matched=true;
+        p.matchDigit=actualDigit;
+        p.matchTime=Date.now();
+        systemToast.textContent=`COINCIDENCIA — CANDIDATO ${p.digit} — APARECIÓ DURANTE LA VENTANA`;
+        document.getElementById('prediction').classList.add('signal-good');
+        hablar('Coincidencia. El dígito '+p.digit+' apareció durante la ventana.');
     }
+}
 
-
-    const p =
-        pendingPrediction;
-
-
-    const correct =
-        actualDigit===
-        p.digit;
-
-
-    if(correct){
-
-        wins++;
-
-
-        digitMemory[
-            p.digit
-        ].wins++;
-
-    }else{
-
-        losses++;
-
-
-        digitMemory[
-            p.digit
-        ].losses++;
-    }
-
-
-    document.getElementById(
-        "winCount"
-    ).textContent =
-        wins;
-
-
-    document.getElementById(
-        "lossCount"
-    ).textContent =
-        losses;
-
-
-    const total =
-        wins+
-        losses;
-
-
-    if(
-        total>0
-    ){
-
-        const rate =
-            wins/
-            total*
-            100;
-
-
-        document.getElementById(
-            "backtestRate"
-        ).textContent =
-            `TASA OBSERVADA: ${
-                rate.toFixed(2)
-            }%`;
-    }
-
-
-    updateLastLog(
-        correct
-        ?"ACIERTO"
-        :"FALLO"
-    );
-
-
+function finalizePendingPrediction(){
+    if(pendingPrediction===null)return;
+    const p=pendingPrediction, correct=!!p.matched;
+    if(correct){wins++;digitMemory[p.digit].wins++;}
+    else{losses++;digitMemory[p.digit].losses++;}
+    document.getElementById('winCount').textContent=wins;
+    document.getElementById('lossCount').textContent=losses;
+    const total=wins+losses;
+    if(total>0)document.getElementById('backtestRate').textContent=`TASA OBSERVADA: ${(wins/total*100).toFixed(2)}%`;
+    updateLastLog(correct?'ACIERTO':'FALLO');
     renderHistory();
-
-
-    if(correct){
-
-        systemToast.textContent =
-            `ACIERTO — SALIÓ ${
-                actualDigit
-            }`;
-
-    }else{
-
-        systemToast.textContent =
-            `FALLO — CANDIDATO ${
-                p.digit
-            } / SALIÓ ${
-                actualDigit
-            }`;
-    }
-
-
+    systemToast.textContent=correct?`ACIERTO — EL ${p.digit} APARECIÓ DURANTE LOS 10 SEGUNDOS`:`FALLO — EL CANDIDATO ${p.digit} NO APARECIÓ EN LOS 10 SEGUNDOS`;
     pendingPrediction=null;
 }
 
@@ -3171,6 +3093,7 @@ function startTimer(){
 
                     timerCount.textContent =
                         "FIN";
+                    finalizePendingPrediction();
                 }
 
             },
