@@ -564,6 +564,12 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 
     </select>
 
+    <select id="modeSelector" aria-label="Modo de análisis">
+        <option value="matches">MATCHES — ÚLTIMO DÍGITO</option>
+        <option value="even">EVEN — DÍGITO PAR</option>
+        <option value="over">OVER — MAYOR QUE 4</option>
+    </select>
+
     <span id="lastTickDisplay">
         TICK: --
     </span>
@@ -1556,6 +1562,7 @@ function hablar(texto){if(!voiceEnabled || !("speechSynthesis" in window))return
 let timerInterval = null;
 
 let pendingPrediction = null;
+let pendingMode = "matches";
 
 let signals = 0;
 let wins = 0;
@@ -2847,15 +2854,15 @@ function generatePrediction(){
     }
 
 
-    const results =
-        analyzeAllDigits();
-
-
-    const best =
-        results[0];
-
-    const second =
-        results[1];
+    const allResults = analyzeAllDigits();
+    const mode = document.getElementById("modeSelector")?.value || "matches";
+    pendingMode = mode;
+    let results = allResults;
+    if(mode === "even") results = allResults.filter(x=>x.digit%2===0);
+    if(mode === "over") results = allResults.filter(x=>x.digit>4);
+    if(results.length<2){showNoSignal("DATOS INSUFICIENTES PARA ESTE MODO",0,0);return;}
+    const best = results[0];
+    const second = results[1];
 
 
     const difference =
@@ -2938,8 +2945,8 @@ function generatePrediction(){
 
     prediction.style.display="block"; prediction.classList.remove("signal-bad"); prediction.classList.add("signal-good"); document.querySelector(".pred-title").textContent="SEÑAL POSITIVA — CANDIDATO PRINCIPAL";
 
-    predDigit.textContent =
-        best.digit;
+    predDigit.textContent = best.digit;
+    document.querySelector(".pred-title").textContent = mode==="matches" ? "SEÑAL POSITIVA — MATCHES" : mode==="even" ? "SEÑAL POSITIVA — EVEN" : "SEÑAL POSITIVA — OVER";
 
 
     predScore.textContent =
@@ -2993,7 +3000,8 @@ function generatePrediction(){
         createdAt:
             Date.now(),
         matched:false,
-        matchDigit:null
+        matchDigit:null,
+        mode:pendingMode
     };
 
     startTimingSession();
@@ -3074,7 +3082,8 @@ function showNoSignal(
 function evaluatePendingPrediction(actualDigit){
     if(pendingPrediction===null)return;
     const p=pendingPrediction;
-    if(actualDigit===p.digit && !p.matched){
+    const isMatch=p.mode==="matches" ? actualDigit===p.digit : p.mode==="even" ? actualDigit%2===0 : actualDigit>4;
+    if(isMatch && !p.matched){
         p.matched=true;
         p.matchDigit=actualDigit;
         p.matchTime=Date.now();
