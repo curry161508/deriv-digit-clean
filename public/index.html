@@ -517,7 +517,7 @@ body{min-height:100vh;background:radial-gradient(circle at 50% 0%,#0b4f91 0%,#06
 .brand{font-size:24px;letter-spacing:2px;color:#fff;font-weight:900}.status{font-size:12px;color:#9dcced}.dot{background:var(--verde);box-shadow:0 0 12px var(--verde)}
 .filter-row{display:grid;grid-template-columns:110px minmax(210px,300px) 1fr;gap:12px;align-items:center;margin-bottom:14px;padding:12px 14px;background:linear-gradient(90deg,#08294b,#061b32);border:1px solid rgba(22,140,255,.35);border-radius:14px}.filter-row span:first-child{color:#7fc5ff;font-size:12px;font-weight:900;letter-spacing:1px}.filter-row select{height:42px;border:1px solid #168cff;border-radius:9px;background:#061b31;color:#fff;padding:0 12px;font-weight:900}.filter-row #lastTickDisplay{justify-self:end;color:#fff;font-size:20px!important;font-weight:900}
 .panel,.timing-panel,.prediction{background:linear-gradient(145deg,rgba(8,36,65,.98),rgba(4,20,38,.98));border:1px solid rgba(22,140,255,.35);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.22);padding:15px;margin:0 0 14px}.panel-title{color:#75c8ff!important;font-size:13px!important;font-weight:900;letter-spacing:1.2px;border-bottom:1px solid rgba(22,140,255,.2);padding-bottom:9px;margin-bottom:12px}
-.chart-panel{padding:15px}.chart-title{color:#8bd4ff!important;font-weight:900}.chart-live{color:var(--verde)!important}.chart-wrap{height:330px!important;background:#020c18!important;border:1px solid rgba(22,140,255,.28)!important;border-radius:12px!important}.chart-info{color:#80a9c8!important}
+.chart-panel{padding:15px}.chart-title{color:#8bd4ff!important;font-weight:900}.chart-live{color:var(--verde)!important}.chart-wrap{height:220px!important;background:#020c18!important;border:1px solid rgba(22,140,255,.28)!important;border-radius:12px!important}.chart-info{color:#80a9c8!important}
 .hot-ranking{display:grid!important;grid-template-columns:repeat(3,1fr);gap:12px}.hot{background:linear-gradient(180deg,#0b3158,#061b31)!important;border:1px solid rgba(22,140,255,.45)!important;border-radius:14px!important;padding:15px!important}.hot-digit{font-size:38px!important;color:#fff!important}.hot-score{color:#55b9ff!important;font-size:13px!important}
 .digits-grid{display:grid!important;grid-template-columns:repeat(10,1fr);gap:7px}.digit-cell,.digit-item{background:#061b31!important;border:1px solid rgba(22,140,255,.28)!important;border-radius:8px!important}
 .analysis{color:#bdd9ef!important;line-height:1.55}.rankTable,#rankTable{background:#061525!important;border-color:rgba(22,140,255,.25)!important}.rankTable th,#rankTable th{color:#72c5ff!important;background:#09294a!important}.rankTable td,#rankTable td{border-color:rgba(22,140,255,.14)!important;color:#d9efff!important}
@@ -533,7 +533,7 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 .timer-trace{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:9px;font-size:10px;font-weight:900;color:#ccecff}
 .timer-trace span{padding:6px 5px;border:1px solid rgba(22,140,255,.28);border-radius:7px;background:rgba(0,30,65,.45);text-align:center}
 @media(max-width:700px){.timer-trace{grid-template-columns:1fr;gap:4px}.analyze-near-timer{min-height:48px!important;font-size:15px!important}}
-@media(max-width:700px){body{padding:8px 5px}.phone-frame{padding:11px;border-radius:18px}.brand{font-size:17px}.filter-row{grid-template-columns:1fr 1fr}.filter-row span:first-child{display:none}.filter-row #lastTickDisplay{grid-column:1/-1;justify-self:start}.chart-wrap{height:245px!important}.digits-grid{grid-template-columns:repeat(5,1fr)}.history-grid{grid-template-columns:repeat(5,1fr)}.timing-grid{grid-template-columns:repeat(5,1fr)!important}.prediction{grid-template-columns:1fr 115px;grid-template-areas:"title digit" "market digit" "current digit" "score digit" "quality digit" "gap gap" "timer timer"}.pred-digit{font-size:78px!important}.timer strong{font-size:36px!important}}
+@media(max-width:700px){body{padding:8px 5px}.phone-frame{padding:11px;border-radius:18px}.brand{font-size:17px}.filter-row{grid-template-columns:1fr 1fr}.filter-row span:first-child{display:none}.filter-row #lastTickDisplay{grid-column:1/-1;justify-self:start}.chart-wrap{height:210px!important}.digits-grid{grid-template-columns:repeat(5,1fr)}.history-grid{grid-template-columns:repeat(5,1fr)}.timing-grid{grid-template-columns:repeat(5,1fr)!important}.prediction{grid-template-columns:1fr 115px;grid-template-areas:"title digit" "market digit" "current digit" "score digit" "quality digit" "gap gap" "timer timer"}.pred-digit{font-size:78px!important}.timer strong{font-size:36px!important}}
 
 
 /* BOT AUTOMÁTICO — SOLO ANÁLISIS / OBSERVACIÓN */
@@ -556,7 +556,8 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 </style>
 </head>
 
-<body><canvas id="scannerBg" class="scanner-bg"></canvas>
+<body>
+<canvas id="scannerBg" class="scanner-bg"></canvas>
 
 <div class="phone-frame">
 
@@ -1012,7 +1013,7 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 <div class="voice-mode-row">
   <label>VOZ DEL ESCÁNER · NIVEL DE DETALLE
     <select id="voiceDetailSelect">
-      <option value="full" selected>TODO · ANÁLISIS Y RESULTADOS</option>
+      <option value="full" selected>SOLO AL PULSAR · RESUMEN</option>
       <option value="summary">RESUMEN · MENOS HABLA</option>
     </select>
   </label>
@@ -1037,6 +1038,8 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 
 
 <script>
+function actualizarReloj10(seg){const e=document.getElementById("countdown10");if(e)e.textContent=String(Math.max(0,seg));}
+
 
 /* =========================================================
    G2LUDE MATH ENGINE PRO v3 + OHLC · MODE DISPLAY FIX v6
@@ -1487,19 +1490,13 @@ function procesarVoz(){
   u.onerror=()=>{voiceSpeaking=false;procesarVoz();};
   speechSynthesis.speak(u);
 }
-function hablar(texto){
+function hablar(texto,forzado=false){
+  if(VOICE_ONLY_ON_ACTION && !forzado) return;
   if(!voiceEnabled || !("speechSynthesis" in window))return;
   voiceQueue.push(String(texto));
   procesarVoz();
 }
-function hablarCuenta(texto){
-  if(!voiceEnabled || !("speechSynthesis" in window))return;
-  /* No guardamos segundos atrasados: cuando hay un aviso importante hablando,
-     la cuenta espera y retomará desde el segundo actual en el próximo tick. */
-  if(voiceSpeaking || voiceQueue.length)return;
-  voiceQueue.push(String(texto));
-  procesarVoz();
-}
+function hablarCuenta(){ return; }
 function detenerVoz(){
   voiceQueue=[];
   voiceSpeaking=false;
@@ -3101,17 +3098,38 @@ function generatePrediction(fromBot=false){
     quality=clamp(sampleQ+evidenceQ+zQ,0,100);
   }
 
-  const requiredGap=mode==='matches'?(recentDigits.length>=80?3:recentDigits.length>=50?3.5:4):2.0;
-  const requiredQuality=mode==='matches'?(recentDigits.length>=80?60:recentDigits.length>=50?58:55):55;
+  /* MATCHES compite entre 10 dígitos. EVEN/ODD/OVER/UNDER son
+     condiciones binarias 50/50; no deben usar el mismo filtro de
+     competencia entre dígitos. El filtro anterior era demasiado
+     estricto y podía bloquear estas modalidades indefinidamente. */
+  const requiredGap=mode==='matches'?(recentDigits.length>=80?3:recentDigits.length>=50?3.5:4):1.25;
+  const requiredQuality=mode==='matches'?(recentDigits.length>=80?60:recentDigits.length>=50?58:55):50;
   const modeBaseline=mode==='matches'?0.10:0.50;
   const observed=best.p100;
-  if(observed<modeBaseline && mode!=='matches'){
-    showNoSignal(`SIN VENTAJA POSITIVA EN ${modeLabel(mode)} · ${ (observed*100).toFixed(1)}% vs ${(modeBaseline*100).toFixed(0)}% BASE`,Math.max(0,modeBaseline-observed),0);
-    if(fromBot&&botAuto)scheduleBotCycle(Number(document.getElementById('botDelaySelect')?.value||3000));
+
+  if(mode!=='matches'){
+    /* Señal binaria: buscamos una pequeña ventaja sobre 50%.
+       Con pocas muestras también aceptamos evidencia equivalente
+       mediante z-score, pero nunca prometemos que sea predictiva. */
+    const positiveObserved=observed>=0.55;
+    const positiveZ=Number(best.z100)>=0.70;
+    if(!positiveObserved && !positiveZ){
+      showNoSignal(`ESPERAR · ${modeLabel(mode)} SIN VENTAJA SUFICIENTE · ${(observed*100).toFixed(1)}% vs 50% BASE`,Math.max(0,0.50-observed),0.05);
+      if(fromBot&&botAuto)scheduleBotCycle(Number(document.getElementById('botDelaySelect')?.value||3000));
+      return;
+    }
+  }
+
+  if(difference<requiredGap){
+    showNoSignal(mode==='matches'?"EVIDENCIA MATEMÁTICA INSUFICIENTE":`EVIDENCIA ${modeLabel(mode)} TODAVÍA CORTA`,difference,requiredGap);
+    if(fromBot&&botAuto)scheduleBotCycle(1000);
     return;
   }
-  if(difference<requiredGap){showNoSignal("EVIDENCIA MATEMÁTICA INSUFICIENTE",difference,requiredGap);if(fromBot&&botAuto)scheduleBotCycle(1000);return;}
-  if(quality<requiredQuality){showNoSignal("CALIDAD ESTADÍSTICA INSUFICIENTE",quality,requiredQuality);if(fromBot&&botAuto)scheduleBotCycle(1000);return;}
+  if(quality<requiredQuality){
+    showNoSignal(mode==='matches'?"CALIDAD ESTADÍSTICA INSUFICIENTE":`CALIDAD ${modeLabel(mode)} TODAVÍA CORTA`,quality,requiredQuality);
+    if(fromBot&&botAuto)scheduleBotCycle(1000);
+    return;
+  }
 
   prediction.style.display="block";prediction.classList.remove("signal-bad");prediction.classList.add("signal-good");
   document.querySelector(".pred-title").textContent=mode==="matches"?`SEÑAL POSITIVA — MATCHES · DÍGITO ${best.digit}`:`SEÑAL POSITIVA — ${modeLabel(mode)} · CONDICIÓN ACTIVA`;
@@ -3389,6 +3407,7 @@ function startTimer(){
 
     timerCount.textContent =
         `${seconds}s · S1`;
+    
 
 
     timerInterval =
@@ -3404,6 +3423,7 @@ function startTimer(){
 
                     timerCount.textContent =
                         `${seconds}s · S${Math.max(1,11-seconds)}`;
+                    
 
                 }else{
 
@@ -3413,6 +3433,7 @@ function startTimer(){
 
                     timerCount.textContent =
                         "FIN";
+                    
                     finalizePendingPrediction();
                 }
 
@@ -3721,9 +3742,17 @@ document.getElementById("modeSelector").addEventListener("change",()=>{
   predScore.textContent="ESPERANDO ANÁLISIS";
   predQuality.textContent=`CONDICIÓN: ${label}`;
   predGap.textContent=mode==='matches'?"El próximo análisis elegirá un dígito":"El próximo análisis evaluará la condición completa";
-  systemToast.textContent=`MODO CAMBIADO → ${label} · EJECUTA EL ANÁLISIS PARA GENERAR UNA NUEVA SEÑAL`;
-  hablar(`Modo cambiado a ${label}. No hay señal activa. El motor matemático queda preparado para evaluar la condición completa. Ejecuta el análisis cuando haya suficientes ticks.`);
+  systemToast.textContent=`MODO CAMBIADO → ${label} · ANALIZANDO CUANDO HAYA 20 TICKS`;
+  hablar(`Modo cambiado a ${label}. No hay señal activa todavía. El motor matemático queda preparado para evaluar la condición completa.`);
   loadMultiStats();
+  /* Si ya hay 20 o más ticks, analizar automáticamente el modo nuevo. */
+  if(recentDigits.length>=20){
+    setTimeout(()=>{
+      if(!multiActive && pendingPrediction===null && document.getElementById('modeSelector')?.value===mode){
+        generatePrediction(false);
+      }
+    },250);
+  }
 });
 
 /* =========================================================
@@ -3774,6 +3803,14 @@ connectDeriv(
     "R_100"
 );
 
+
+const VOICE_CLICK_ANNOUNCE=true;
+document.addEventListener('click',e=>{
+  if(!VOICE_CLICK_ANNOUNCE)return;
+  const b=e.target.closest('button'); if(!b)return;
+  const t=(b.innerText||b.textContent||'').trim().replace(/\s+/g,' ');
+  if(t && typeof hablar==='function') hablar(t,true);
+},{capture:true});
 </script>
 
 </body>
