@@ -490,6 +490,14 @@ button:active{
 .timing-sample{font-size:9px;color:#8aa99f;margin-top:2px}
 .timing-note{font-size:9px;color:#7d9b91;margin-top:7px;line-height:1.35}
 
+
+.control-launch-panel{margin:12px 0;padding:10px;border:1px solid rgba(22,140,255,.3);border-radius:12px;background:rgba(0,25,55,.55)}
+.primary-launch{display:block!important;width:100%!important;min-height:52px!important;font-size:16px!important;font-weight:1000!important;letter-spacing:.5px}
+.control-launch-note{text-align:center;margin-top:6px;font-size:10px;color:#8fc8ef;font-weight:800}
+
+.chart-panel .chart-wrap{height:220px!important}
+.chart-info{font-size:8px}
+
 </style>
 <style>
 /* Mejor legibilidad en celular */
@@ -533,6 +541,7 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 .bot-toggle.active{background:linear-gradient(90deg,#08754e,#11c985)!important;border-color:#19f5a5!important;box-shadow:0 0 18px rgba(25,245,165,.25)!important}
 .bot-controls{display:grid;grid-template-columns:1fr auto;gap:7px;align-items:center;margin-top:7px;font-size:9px;font-weight:900;color:#8fc9ec;text-align:left}
 .bot-controls label{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;border:1px solid rgba(22,140,255,.25);border-radius:7px;background:rgba(0,30,65,.45)}
+.manual-hint{margin-top:6px;font-size:9px;line-height:1.3;color:#9fc8e6;text-align:center}.manual-hint strong{color:#fff}
 .bot-controls select{height:28px;border:1px solid rgba(22,140,255,.55);border-radius:6px;background:#061b31;color:#fff;font-size:10px;font-weight:900;padding:0 6px}
 #botStatusInfo{text-align:center;padding:6px 7px;border:1px solid rgba(22,140,255,.25);border-radius:7px;background:rgba(0,30,65,.45);white-space:nowrap}
 @media(max-width:700px){.bot-controls{grid-template-columns:1fr}.bot-controls label{display:grid;grid-template-columns:1fr auto}.bot-controls select{width:100%}}
@@ -568,24 +577,41 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 
     <span>ACTIVO</span>
 
-    <select id="assetSelector">
+    <select id="assetSelector" aria-label="Índice Volatility">
+        <option value="R_100">VOLATILITY 100 (1s)</option>
+        <option value="R_75">VOLATILITY 75 (1s)</option>
+        <option value="R_50">VOLATILITY 50 (1s)</option>
+        <option value="R_25">VOLATILITY 25 (1s)</option>
+        <option value="R_10">VOLATILITY 10 (1s)</option>
+        <option value="1HZ100V">VOLATILITY 100 (1s) · 1HZ</option>
+        <option value="1HZ75V">VOLATILITY 75 (1s) · 1HZ</option>
+        <option value="1HZ50V">VOLATILITY 50 (1s) · 1HZ</option>
+        <option value="1HZ25V">VOLATILITY 25 (1s) · 1HZ</option>
+        <option value="1HZ10V">VOLATILITY 10 (1s)</option>
+    </select>
 
-        <option value="R_100">
-            VOLATILITY 100 (1s)
-        </option>
+    <select id="productSelector" aria-label="Tipo de producto">
+        <option value="analysis">ANÁLISIS · TICKS</option>
+        <option value="MULTUP">MULTIPLICADOR · UP</option>
+        <option value="MULTDOWN">MULTIPLICADOR · DOWN</option>
+    </select>
 
-        <option value="R_50">
-            VOLATILITY 50 (1s)
-        </option>
-
-        <option value="R_25">
-            VOLATILITY 25 (1s)
-        </option>
-
-        <option value="1HZ10V">
-            VOLATILITY 10 (1s)
-        </option>
-
+    <select id="multiplierSelector" aria-label="Multiplicador">
+        <option value="10">10×</option>
+        <option value="20">20×</option>
+        <option value="30">30×</option>
+        <option value="40">40×</option>
+        <option value="50">50×</option>
+        <option value="60">60×</option>
+        <option value="75">75×</option>
+        <option value="100" selected>100×</option>
+        <option value="150">150×</option>
+        <option value="200">200×</option>
+        <option value="250">250×</option>
+        <option value="300">300×</option>
+        <option value="400">400×</option>
+        <option value="500">500×</option>
+        <option value="1000">1000×</option>
     </select>
 
     <select id="modeSelector" aria-label="Modo de análisis">
@@ -599,6 +625,7 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
     <span id="lastTickDisplay">
         TICK: --
     </span>
+    <span id="volatilityCatalogInfo" title="Catálogo recibido de Deriv">VOLATILITY: cargando…</span>
 
 </div>
 
@@ -769,7 +796,7 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
         <div class="timer-label">VENTANA DE OBSERVACIÓN</div>
         <strong id="timerCount">10s</strong>
 
-        <button id="predictButton" class="analyze-near-timer">● ANALIZAR AHORA</button>
+        <button id="predictButton" class="analyze-near-timer" type="button">▶ INICIAR PREDICCIÓN</button>
         <button id="botToggleButton" class="bot-toggle" type="button">🤖 BOT AUTOMÁTICO: OFF</button>
         <div class="bot-controls">
             <label>PAUSA ENTRE CICLOS
@@ -966,6 +993,11 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 
 </div>
 
+
+<div class="control-launch-panel">
+  <button id="startPredictionButton" class="primary-launch" type="button">▶ INICIAR PREDICCIÓN</button>
+  <div class="control-launch-note">Disponible en TODOS los activos y modos: MATCHES · EVEN · ODD · OVER · UNDER</div>
+</div>
 
 <button id="voiceButton" style="margin-bottom:8px">🔊 ACTIVAR VOZ</button>
 <button id="resetMultiButton" style="margin-top:8px;background:linear-gradient(90deg,#263b55,#405d7d)!important">↻ REINICIAR ESTADÍSTICAS DE VENTANAS</button>
@@ -1292,358 +1324,109 @@ function updateCandleInfo(){
    ========================================================= */
 
 function renderCandles(){
+    if(!ctx || !canvas) return;
 
-    if(
-        !ctx ||
-        !canvas
-    ){
+    const rect=canvas.getBoundingClientRect();
+    const width=rect.width;
+    const height=rect.height;
+    ctx.clearRect(0,0,width,height);
 
-        return;
-    }
-
-
-    const rect =
-        canvas.getBoundingClientRect();
-
-
-    const width =
-        rect.width;
-
-
-    const height =
-        rect.height;
-
-
-    ctx.clearRect(
-        0,
-        0,
-        width,
-        height
-    );
-
-
-    const displayList =
-        currentCandle
-        ? [...candles,currentCandle]
-        : candles;
-
-
-    if(
-        displayList.length===0
-    ){
-
-        /*
-           Texto inicial.
-        */
-
-        ctx.fillStyle =
-            "rgba(0,255,204,.35)";
-
-        ctx.font =
-            "9px Courier New";
-
+    const displayList=currentCandle ? [...candles,currentCandle] : candles;
+    if(!displayList.length){
+        ctx.fillStyle="rgba(0,255,204,.35)";
+        ctx.font="9px Courier New";
         ctx.textAlign="center";
-
-        ctx.fillText(
-            "ESPERANDO TICKS...",
-            width/2,
-            height/2
-        );
-
+        ctx.fillText("ESPERANDO TICKS...",width/2,height/2);
         return;
     }
 
+    let minPrice=Infinity,maxPrice=-Infinity;
+    displayList.forEach(c=>{
+        minPrice=Math.min(minPrice,c.low);
+        maxPrice=Math.max(maxPrice,c.high);
+    });
 
-    let minPrice=Infinity;
-
-    let maxPrice=-Infinity;
-
-
-    displayList.forEach(
-        c=>{
-
-            if(
-                c.low<minPrice
-            ){
-
-                minPrice=c.low;
-            }
-
-            if(
-                c.high>maxPrice
-            ){
-
-                maxPrice=c.high;
-            }
-        }
-    );
-
-
-    let range =
-        maxPrice-minPrice;
-
-
-    /*
-       Evitamos que una vela plana
-       desaparezca completamente.
-    */
-
-    if(
-        range===0
-    ){
-
-        range =
-            Math.abs(
-                maxPrice
-            )*0.00001 ||
-            1;
-
-        minPrice -= range/2;
-        maxPrice += range/2;
+    let range=maxPrice-minPrice;
+    if(!Number.isFinite(range) || range<=0){
+        range=Math.abs(maxPrice)*0.00002 || 1;
     }
 
-
-    const paddingTop=14;
-    const paddingBottom=14;
-    const paddingLeft=7;
-    const paddingRight=7;
-
-
-    const chartWidth =
-        width-
-        paddingLeft-
-        paddingRight;
-
-
-    const chartHeight =
-        height-
-        paddingTop-
-        paddingBottom;
-
-
     /*
-       Las velas ocupan todo el ancho
-       disponible.
+       Escala con margen: evita que las mechas ocupen todo el panel
+       y hace que la trayectoria de precio se vea como un gráfico real.
     */
+    const visualPadding=range*0.10;
+    minPrice-=visualPadding;
+    maxPrice+=visualPadding;
+    range=maxPrice-minPrice;
 
-    const slotWidth =
-        chartWidth/
-        displayList.length;
-
-
-    const candleWidth =
-        Math.max(
-            3,
-            Math.min(
-                11,
-                slotWidth*0.62
-            )
-        );
-
+    const paddingTop=12,paddingBottom=16,paddingLeft=8,paddingRight=8;
+    const chartWidth=Math.max(1,width-paddingLeft-paddingRight);
+    const chartHeight=Math.max(1,height-paddingTop-paddingBottom);
+    const slotWidth=chartWidth/displayList.length;
+    const candleWidth=Math.max(4,Math.min(12,slotWidth*0.72));
 
     function priceToY(price){
-
-        return (
-            paddingTop+
-            chartHeight*
-            (
-                1-
-                (
-                    price-minPrice
-                )/range
-            )
-        );
+        return paddingTop+chartHeight*(1-(price-minPrice)/range);
     }
 
-
-    /*
-       Línea central de referencia.
-    */
-
-    ctx.strokeStyle =
-        "rgba(0,255,204,.07)";
-
+    /* Rejilla discreta para dar referencia visual al movimiento. */
     ctx.lineWidth=1;
+    ctx.strokeStyle="rgba(120,190,220,.08)";
+    for(let g=1;g<5;g++){
+        const y=paddingTop+(chartHeight*g/5);
+        ctx.beginPath();ctx.moveTo(paddingLeft,y);ctx.lineTo(width-paddingRight,y);ctx.stroke();
+    }
 
-    ctx.beginPath();
-
-    ctx.moveTo(
-        0,
-        height/2
-    );
-
-    ctx.lineTo(
-        width,
-        height/2
-    );
-
-    ctx.stroke();
-
-
-    /*
-       Dibujar cada vela.
-    */
-
-    displayList.forEach(
-        (c,index)=>{
-
-            const centerX =
-                paddingLeft+
-                index*slotWidth+
-                slotWidth/2;
-
-
-            const yHigh =
-                priceToY(
-                    c.high
-                );
-
-            const yLow =
-                priceToY(
-                    c.low
-                );
-
-            const yOpen =
-                priceToY(
-                    c.open
-                );
-
-            const yClose =
-                priceToY(
-                    c.close
-                );
-
-
-            const bullish =
-                c.close>=c.open;
-
-
-            const color =
-                bullish
-                ? "#00ff66"
-                : "#ff3355";
-
-
-            /*
-               MECHA
-            */
-
-            ctx.strokeStyle=color;
-
-            ctx.lineWidth=1;
-
-            ctx.beginPath();
-
-            ctx.moveTo(
-                centerX,
-                yHigh
-            );
-
-            ctx.lineTo(
-                centerX,
-                yLow
-            );
-
-            ctx.stroke();
-
-
-            /*
-               CUERPO
-            */
-
-            const bodyTop =
-                Math.min(
-                    yOpen,
-                    yClose
-                );
-
-
-            const bodyHeight =
-                Math.max(
-                    1,
-                    Math.abs(
-                        yClose-yOpen
-                    )
-                );
-
-
-            ctx.fillStyle=color;
-
-
-            ctx.fillRect(
-                centerX-
-                candleWidth/2,
-                bodyTop,
-                candleWidth,
-                bodyHeight
-            );
-
-
-            /*
-               Borde suave para la vela actual.
-            */
-
-            if(
-                index===
-                displayList.length-1
-            ){
-
-                ctx.strokeStyle =
-                    "rgba(255,230,0,.7)";
-
-                ctx.lineWidth=1;
-
-                ctx.strokeRect(
-                    centerX-
-                    candleWidth/2,
-                    bodyTop,
-                    candleWidth,
-                    bodyHeight
-                );
-            }
-        }
-    );
-
-
-    /*
-       Línea de precio actual.
-    */
-
-    if(
-        currentCandle
-    ){
-
-        const y =
-            priceToY(
-                currentCandle.close
-            );
-
-
-        ctx.strokeStyle =
-            "rgba(255,230,0,.35)";
-
-        ctx.setLineDash(
-            [3,3]
-        );
-
+    /* Línea de cierre sutil: ayuda a ver claramente subidas y bajadas
+       cuando el cuerpo de las velas es muy pequeño por la escala del índice. */
+    if(displayList.length>1){
+        ctx.strokeStyle="rgba(0,255,204,.28)";
+        ctx.lineWidth=1;
         ctx.beginPath();
-
-        ctx.moveTo(
-            0,
-            y
-        );
-
-        ctx.lineTo(
-            width,
-            y
-        );
-
+        displayList.forEach((c,index)=>{
+            const x=paddingLeft+index*slotWidth+slotWidth/2;
+            const y=priceToY(c.close);
+            if(index===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+        });
         ctx.stroke();
+    }
 
+    displayList.forEach((c,index)=>{
+        const centerX=paddingLeft+index*slotWidth+slotWidth/2;
+        const yHigh=priceToY(c.high);
+        const yLow=priceToY(c.low);
+        const yOpen=priceToY(c.open);
+        const yClose=priceToY(c.close);
+        const bullish=c.close>=c.open;
+        const color=bullish ? "#00ff66" : "#ff3355";
+
+        /* Mecha */
+        ctx.strokeStyle=color;
+        ctx.lineWidth=1;
+        ctx.beginPath();ctx.moveTo(centerX,yHigh);ctx.lineTo(centerX,yLow);ctx.stroke();
+
+        /* Cuerpo visible incluso cuando la variación es mínima. */
+        const bodyTop=Math.min(yOpen,yClose);
+        const bodyHeight=Math.max(3,Math.abs(yClose-yOpen));
+        ctx.fillStyle=color;
+        ctx.fillRect(centerX-candleWidth/2,bodyTop,candleWidth,bodyHeight);
+
+        if(index===displayList.length-1){
+            ctx.strokeStyle="rgba(255,230,0,.85)";
+            ctx.lineWidth=1;
+            ctx.strokeRect(centerX-candleWidth/2,bodyTop,candleWidth,bodyHeight);
+        }
+    });
+
+    if(currentCandle){
+        const y=priceToY(currentCandle.close);
+        ctx.strokeStyle="rgba(255,230,0,.38)";
+        ctx.setLineDash([4,4]);
+        ctx.beginPath();ctx.moveTo(paddingLeft,y);ctx.lineTo(width-paddingRight,y);ctx.stroke();
         ctx.setLineDash([]);
     }
 }
-
 
 /* =========================================================
    MOTOR MATEMÁTICO
@@ -1702,13 +1485,7 @@ function resetMultiStats(){
   const st=document.getElementById('multiState');if(st)st.textContent='LISTO';
   systemToast.textContent='ESTADÍSTICAS 4S / 5S / 7S / 10S REINICIADAS';
 }
-function modeMatches(mode,digit,predicted){
-  if(mode==='matches')return digit===predicted;
-  if(mode==='even')return digit%2===0;
-  if(mode==='odd')return digit%2!==0;
-  if(mode==='over')return digit>4;
-  return digit<=4;
-}
+function modeMatches(mode,digit,predicted){ return mode==='matches' ? digit===predicted : modeCondition(mode,digit); }
 function multiRate(st){return st.signals?st.wins/st.signals*100:0;}
 function bestMultiWindow(){
   const eligible=MULTI_WINDOWS.map(w=>({w,st:multiWindows[w]?.stats})).filter(x=>x.st&&x.st.signals>0);
@@ -3127,209 +2904,87 @@ function processTick(
    GENERAR SEÑAL
    ========================================================= */
 
-function generatePrediction(fromBot=false){
-
-    if(
-        recentDigits.length<20
-    ){
-
-        systemToast.textContent =
-            "NECESITAMOS AL MENOS 20 TICKS.";
-
-        return;
-    }
-
-
-    if(multiActive || pendingPrediction!==null){
-        systemToast.textContent="YA EXISTE UN CICLO 5S / 7S / 10S ACTIVO.";
-        if(fromBot && botAuto)scheduleBotCycle(500);
-        return;
-    }
-
-
-    const allResults = analyzeAllDigits();
-    const mode = document.getElementById("modeSelector")?.value || "matches";
-    pendingMode = mode;
-    let results = allResults;
-    if(mode === "even") results = allResults.filter(x=>x.digit%2===0);
-    if(mode === "odd") results = allResults.filter(x=>x.digit%2!==0);
-    if(mode === "over") results = allResults.filter(x=>x.digit>4);
-    if(mode === "under") results = allResults.filter(x=>x.digit<=4);
-    if(results.length<2){showNoSignal("DATOS INSUFICIENTES PARA ESTE MODO",0,0);return;}
-    const best = results[0];
-    const second = results[1];
-
-
-    const difference =
-        best.score-
-        second.score;
-
-
-    const quality =
-        calculateSignalQuality(
-            best,
-            second
-        );
-
-
-    let requiredGap=4;
-
-
-    if(
-        recentDigits.length>=50
-    ){
-
-        requiredGap=3.5;
-    }
-
-
-    if(
-        recentDigits.length>=80
-    ){
-
-        requiredGap=3;
-    }
-
-
-    let requiredQuality=55;
-
-
-    if(
-        recentDigits.length>=50
-    ){
-
-        requiredQuality=58;
-    }
-
-
-    if(
-        recentDigits.length>=80
-    ){
-
-        requiredQuality=60;
-    }
-
-
-    if(
-        difference<requiredGap
-    ){
-
-        showNoSignal(
-            "CANDIDATOS DEMASIADO CERCANOS",
-            difference,
-            requiredGap
-        );
-
-        return;
-    }
-
-
-    if(
-        quality<requiredQuality
-    ){
-
-        showNoSignal(
-            "CALIDAD ESTADÍSTICA INSUFICIENTE",
-            quality,
-            requiredQuality
-        );
-
-        return;
-    }
-
-
-    prediction.style.display="block"; prediction.classList.remove("signal-bad"); prediction.classList.add("signal-good"); document.querySelector(".pred-title").textContent="SEÑAL POSITIVA — CANDIDATO PRINCIPAL";
-
-    predDigit.textContent = best.digit;
-    document.querySelector(".pred-title").textContent = mode==="matches" ? `SEÑAL POSITIVA — MATCHES · DÍGITO ${best.digit}` : mode==="even" ? "SEÑAL POSITIVA — EVEN · CUALQUIER PAR" : mode==="odd" ? "SEÑAL POSITIVA — ODD · CUALQUIER IMPAR" : mode==="over" ? "SEÑAL POSITIVA — OVER · MAYOR QUE 4" : "SEÑAL POSITIVA — UNDER · MENOR O IGUAL QUE 4";
-
-
-    predScore.textContent =
-        `SCORE ${
-            best.score.toFixed(2)
-        }`;
-
-
-    predQuality.textContent =
-        `CALIDAD ${
-            quality.toFixed(1)
-        }/100`;
-
-
-    predGap.textContent =
-        `Ventaja sobre #2: ${
-            difference.toFixed(2)
-        }`;
-
-
-    pendingPrediction={
-
-        digit:
-            best.digit,
-
-        score:
-            best.score,
-
-        quality,
-
-        difference,
-
-        metrics:{
-
-            frequency:
-                best.frequencyScore,
-
-            momentum:
-                best.momentumScore,
-
-            consistency:
-                best.consistencyScore,
-
-            stability:
-                best.stabilityScore,
-
-            recency:
-                best.recencyScore
-        },
-
-        createdAt:
-            Date.now(),
-        matched:false,
-        matchDigit:null,
-        mode:pendingMode
-    };
-
-    startTimingSession();
-
-    signals++;
-
-
-    digitMemory[
-        best.digit
-    ].signals++;
-
-
-    document.getElementById(
-        "signalCount"
-    ).textContent =
-        signals;
-
-
-    addSignalLog(
-        best,
-        "PENDIENTE"
-    );
-
-    startMultiEngine(best.digit,best.score,pendingMode);
-    startTimer();
-
-
-    systemToast.textContent = fromBot
-        ? `BOT · CANDIDATO ${best.digit} GENERADO — 5S / 7S / 10S EN OBSERVACIÓN`
-        : `CANDIDATO ${best.digit} GENERADO — ESPERANDO SIGUIENTE TICK`;
-    if(fromBot)renderBotState(`BOT ACTIVO · CICLO #${botRuns} · CANDIDATO ${best.digit}`);
+function modeCondition(mode,digit){
+  if(mode==='even') return digit%2===0;
+  if(mode==='odd') return digit%2!==0;
+  if(mode==='over') return digit>4;
+  if(mode==='under') return digit<=4;
+  return true;
+}
+function calculateModeMetrics(mode){
+  const baseline=(mode==='matches')?0.10:0.50;
+  const windows=[20,50,100].map(n=>countWindow(recentDigits,n));
+  const ps=windows.map(w=>w.size? w.digits.filter(d=>modeCondition(mode,d)).length/w.size : 0);
+  const zs=windows.map((w,i)=>w.size? (ps[i]-baseline)/Math.sqrt(baseline*(1-baseline)/w.size) : 0);
+  const frequencyScore=clamp(50+zs[2]*12,0,100);
+  const momentumRaw=windows[2].size?((ps[0]-ps[2])/0.50):0;
+  const momentumScore=clamp(50+momentumRaw*50,0,100);
+  const avgZ=zs.reduce((a,b)=>a+b,0)/3;
+  const consistencyScore=clamp(50+avgZ*12,0,100);
+  const spread=standardDeviation(ps);
+  const stabilityScore=100-clamp(spread/0.20,0,1)*100;
+  const positiveEvidence=ps.map(p=>p-baseline).filter(x=>x>0).length;
+  const recencyScore=50+positiveEvidence*12;
+  const score=clamp(frequencyScore*0.45+momentumScore*0.20+consistencyScore*0.20+stabilityScore*0.10+recencyScore*0.05,0,100);
+  return {mode,baseline,p20:ps[0],p50:ps[1],p100:ps[2],z20:zs[0],z50:zs[1],z100:zs[2],frequencyScore,momentumScore,consistencyScore,stabilityScore,recencyScore,score,evidence:positiveEvidence};
+}
+function representativeDigitForMode(mode){
+  if(mode==='even') return 0;
+  if(mode==='odd') return 1;
+  if(mode==='over') return 5;
+  if(mode==='under') return 4;
+  return null;
 }
 
+function generatePrediction(fromBot=false){
+  if(recentDigits.length<20){systemToast.textContent="NECESITAMOS AL MENOS 20 TICKS.";return;}
+  if(multiActive||pendingPrediction!==null){systemToast.textContent="YA EXISTE UN CICLO ACTIVO.";if(fromBot&&botAuto)scheduleBotCycle(500);return;}
+
+  const mode=document.getElementById("modeSelector")?.value||"matches";
+  pendingMode=mode;
+  let best,second,quality,difference;
+
+  if(mode==='matches'){
+    const allResults=analyzeAllDigits();
+    best=allResults[0]; second=allResults[1];
+    difference=best.score-second.score;
+    quality=calculateSignalQuality(best,second);
+  }else{
+    const m=calculateModeMetrics(mode);
+    best={digit:representativeDigitForMode(mode),score:m.score,frequencyScore:m.frequencyScore,momentumScore:m.momentumScore,consistencyScore:m.consistencyScore,stabilityScore:m.stabilityScore,recencyScore:m.recencyScore,z20:m.z20,z50:m.z50,z100:m.z100,p20:m.p20,p50:m.p50,p100:m.p100,modeMetrics:m};
+    second={score:Math.max(0,m.score-(Math.abs(m.z100)+0.5)*2)};
+    difference=Math.abs(m.z100)*4+Math.max(0,(m.p100-m.baseline)*20);
+    const sampleQ=clamp((recentDigits.length-20)/80,0,1)*30+40;
+    const evidenceQ=(m.evidence/3)*20;
+    const zQ=clamp(Math.max(0,m.z100)/2,0,1)*30;
+    quality=clamp(sampleQ+evidenceQ+zQ,0,100);
+  }
+
+  const requiredGap=mode==='matches'?(recentDigits.length>=80?3:recentDigits.length>=50?3.5:4):2.0;
+  const requiredQuality=mode==='matches'?(recentDigits.length>=80?60:recentDigits.length>=50?58:55):55;
+  const modeBaseline=mode==='matches'?0.10:0.50;
+  const observed=best.p100;
+  if(observed<modeBaseline && mode!=='matches'){
+    showNoSignal(`SIN VENTAJA POSITIVA EN ${modeLabel(mode)} · ${ (observed*100).toFixed(1)}% vs ${(modeBaseline*100).toFixed(0)}% BASE`,Math.max(0,modeBaseline-observed),0);
+    if(fromBot&&botAuto)scheduleBotCycle(Number(document.getElementById('botDelaySelect')?.value||3000));
+    return;
+  }
+  if(difference<requiredGap){showNoSignal("EVIDENCIA MATEMÁTICA INSUFICIENTE",difference,requiredGap);if(fromBot&&botAuto)scheduleBotCycle(1000);return;}
+  if(quality<requiredQuality){showNoSignal("CALIDAD ESTADÍSTICA INSUFICIENTE",quality,requiredQuality);if(fromBot&&botAuto)scheduleBotCycle(1000);return;}
+
+  prediction.style.display="block";prediction.classList.remove("signal-bad");prediction.classList.add("signal-good");
+  document.querySelector(".pred-title").textContent=mode==="matches"?`SEÑAL POSITIVA — MATCHES · DÍGITO ${best.digit}`:`SEÑAL POSITIVA — ${modeLabel(mode)} · CONDICIÓN ACTIVA`;
+  predDigit.textContent=mode==='matches'?best.digit:modeLabel(mode);
+  predScore.textContent=`SCORE ${best.score.toFixed(2)}`;
+  predQuality.textContent=`CALIDAD ${quality.toFixed(1)}/100`;
+  predGap.textContent=mode==='matches'?`Ventaja sobre #2: ${difference.toFixed(2)}`:`PROB. 100T: ${(best.p100*100).toFixed(1)}% · BASE ${(modeBaseline*100).toFixed(0)}%`;
+
+  pendingPrediction={digit:best.digit,score:best.score,quality,difference,metrics:{frequency:best.frequencyScore,momentum:best.momentumScore,consistency:best.consistencyScore,stability:best.stabilityScore,recency:best.recencyScore},createdAt:Date.now(),matched:false,matchDigit:null,mode:pendingMode};
+  startTimingSession();signals++;digitMemory[best.digit].signals++;document.getElementById("signalCount").textContent=signals;
+  addSignalLog(best,"PENDIENTE");startMultiEngine(best.digit,best.score,pendingMode);startTimer();
+  systemToast.textContent=fromBot?`BOT · ${modeLabel(mode)} · CICLO ${botRuns} · 4S / 5S / 7S / 10S`:`${modeLabel(mode)} · PREDICCIÓN INICIADA · 4S / 5S / 7S / 10S`;
+  if(fromBot)renderBotState(`BOT ACTIVO · ${modeLabel(mode)} · CICLO #${botRuns}`);
+}
 
 /* =========================================================
    SIN SEÑAL
@@ -3710,6 +3365,46 @@ function extractLastDigit(
 
 
 /* =========================================================
+   CATÁLOGO DINÁMICO DE VOLATILITY + MULTIPLICADORES
+   ========================================================= */
+function isVolatilitySymbol(item){
+  const name=String(item?.display_name||item?.name||'').toLowerCase();
+  const symbol=String(item?.symbol||'').toUpperCase();
+  return /volatility/.test(name) || /volatility/.test(symbol.toLowerCase()) || /^1HZ.*V$/.test(symbol) || /^R_.*$/.test(symbol) && /volatility/.test(name);
+}
+
+function populateVolatilitySymbols(items){
+  const select=document.getElementById('assetSelector');
+  if(!select || !Array.isArray(items)) return;
+  const current=select.value;
+  const seen=new Map();
+  items.filter(isVolatilitySymbol).forEach(item=>{
+    const symbol=item.symbol;
+    if(!symbol || seen.has(symbol)) return;
+    seen.set(symbol,item);
+  });
+  if(!seen.size) return;
+  select.innerHTML='';
+  [...seen.entries()].sort((a,b)=>{
+    const na=String(a[1].display_name||a[0]); const nb=String(b[1].display_name||b[0]);
+    return na.localeCompare(nb,undefined,{numeric:true,sensitivity:'base'});
+  }).forEach(([symbol,item])=>{
+    const opt=document.createElement('option');
+    opt.value=symbol;
+    opt.textContent=(item.display_name||symbol).toUpperCase();
+    select.appendChild(opt);
+  });
+  if([...select.options].some(o=>o.value===current)) select.value=current;
+  else if([...select.options].some(o=>o.value==='1HZ100V')) select.value='1HZ100V';
+  const count=document.getElementById('volatilityCatalogInfo');
+  if(count) count.textContent=`VOLATILITY DISPONIBLES: ${select.options.length}`;
+}
+
+function requestVolatilityCatalog(socket){
+  try{socket.send(JSON.stringify({active_symbols:'brief',product_type:'basic',req_id:7001}));}catch(e){}
+}
+
+/* =========================================================
    CONEXIÓN DERIV
    ========================================================= */
 
@@ -3720,8 +3415,31 @@ function connectDeriv(symbol){
     document.getElementById('liveDot').style.background='#ffe600';
     const proto=location.protocol==='https:'?'wss':'ws';
     ws=new WebSocket(proto+'://'+location.host);
-    ws.onopen=()=>{try{ws.send(JSON.stringify({ticks:symbol,subscribe:1,symbol}))}catch(e){} document.getElementById('statusText').textContent='LIVE';document.getElementById('liveDot').style.background='#00ffcc';systemToast.textContent=`RECIBIENDO TICKS: ${symbol}`;};
-    ws.onmessage=event=>{try{const data=JSON.parse(event.data);if(data.error){systemToast.textContent='DERIV: '+(data.error.message||'ERROR');return;}const tick=data.tick||((data.status==='TICK RECIBIDO')?data:null);if(tick&&tick.quote!==undefined){processTickForCandle(tick); const liveMarket=document.getElementById("liveMarket"); if(liveMarket) liveMarket.innerHTML=`PRECIO EN VIVO: <strong>${tick.quote}</strong> &nbsp; | &nbsp; ÚLTIMO DÍGITO: <strong id="liveDigitBig" style="font-size:28px;color:#00ffcc">—</strong>`; const digit=extractLastDigit(tick);if(digit!==null)processTick(digit);}}catch(error){console.error('Error procesando tick',error)}};
+    ws.onopen=()=>{
+      requestVolatilityCatalog(ws);
+      try{ws.send(JSON.stringify({ticks:symbol,subscribe:1,symbol}))}catch(e){}
+      document.getElementById('statusText').textContent='LIVE';
+      document.getElementById('liveDot').style.background='#00ffcc';
+      systemToast.textContent=`RECIBIENDO TICKS: ${symbol}`;
+    };
+    ws.onmessage=event=>{
+      try{
+        const data=JSON.parse(event.data);
+        if(data.msg_type==='active_symbols' && Array.isArray(data.active_symbols)){
+          populateVolatilitySymbols(data.active_symbols);
+          return;
+        }
+        if(data.error){systemToast.textContent='DERIV: '+(data.error.message||'ERROR');return;}
+        const tick=data.tick||((data.status==='TICK RECIBIDO')?data:null);
+        if(tick&&tick.quote!==undefined){
+          processTickForCandle(tick);
+          const liveMarket=document.getElementById("liveMarket");
+          if(liveMarket) liveMarket.innerHTML=`PRECIO EN VIVO: <strong>${tick.quote}</strong> &nbsp; | &nbsp; ÚLTIMO DÍGITO: <strong id="liveDigitBig" style="font-size:28px;color:#00ffcc">—</strong>`;
+          const digit=extractLastDigit(tick);
+          if(digit!==null)processTick(digit);
+        }
+      }catch(error){console.error('Error procesando tick',error)}
+    };
     ws.onerror=()=>{document.getElementById('statusText').textContent='ERROR';document.getElementById('liveDot').style.background='#ff3355';systemToast.textContent='ERROR DE CONEXIÓN CON EL SERVIDOR';};
     ws.onclose=()=>{document.getElementById('statusText').textContent='DESCONECTADO';document.getElementById('liveDot').style.background='#ff3355';};
 }
@@ -3736,6 +3454,10 @@ document.getElementById(
 ).addEventListener(
     "change",
     function(){
+
+        if(multiActive){ stopMultiEngine(true); }
+        const startBtn=document.getElementById("predictButton");
+        if(startBtn){ startBtn.style.display="block"; startBtn.textContent="▶ INICIAR PREDICCIÓN"; }
 
         recentDigits=[];
 
@@ -3818,6 +3540,20 @@ document.getElementById(
 );
 
 
+document.getElementById("productSelector").addEventListener("change",()=>{
+  const p=document.getElementById('productSelector').value;
+  const m=document.getElementById('multiplierSelector');
+  if(m) m.disabled=(p==='analysis');
+  systemToast.textContent=p==='analysis'?'MODO ANÁLISIS · MULTIPLICADOR NO APLICA AL TICK':'MULTIPLICADOR SELECCIONADO · '+(m?.value||'100')+'× · '+p;
+});
+document.getElementById("multiplierSelector").addEventListener("change",()=>{
+  const p=document.getElementById('productSelector').value;
+  systemToast.textContent=p==='analysis'?'MODO ANÁLISIS · MULTIPLICADOR NO APLICA AL TICK':`MULTIPLICADOR ${this?.value||document.getElementById('multiplierSelector').value}×`;
+});
+const initialProduct=document.getElementById('productSelector');
+const initialMultiplier=document.getElementById('multiplierSelector');
+if(initialMultiplier) initialMultiplier.disabled=(initialProduct?.value==='analysis');
+
 document.getElementById("modeSelector").addEventListener("change",()=>{
   if(multiActive){systemToast.textContent="FINALIZA EL CICLO ACTUAL ANTES DE CAMBIAR EL MODO.";return;}
   loadMultiStats();
@@ -3826,13 +3562,16 @@ document.getElementById("modeSelector").addEventListener("change",()=>{
 /* =========================================================
    BOTÓN
    ========================================================= */
+function runManualPrediction(){
+  if(botAuto){botAuto=false;if(botTimer){clearTimeout(botTimer);botTimer=null;}renderBotState('BOT DETENIDO · MODO MANUAL');}
+  hablar("Ejecutando análisis matemático");
+  generatePrediction(false);
+}
+
 
 document.getElementById("voiceButton").addEventListener("click",()=>{voiceEnabled=!voiceEnabled;document.getElementById("voiceButton").textContent=voiceEnabled?"🔊 VOZ ACTIVADA":"🔇 VOZ DESACTIVADA";if(voiceEnabled)hablar("Voz activada. Sistema listo.");});
-document.getElementById("predictButton").addEventListener("click",()=>{
-  if(botAuto){botAuto=false;if(botTimer){clearTimeout(botTimer);botTimer=null;}renderBotState('BOT DETENIDO · MODO MANUAL');}
-  hablar("Ejecutando análisis matemático en cuatro, cinco, siete y diez segundos");
-  generatePrediction(false);
-});
+document.getElementById("predictButton").addEventListener("click",runManualPrediction);
+const startPredictionButton=document.getElementById("startPredictionButton"); if(startPredictionButton)startPredictionButton.addEventListener("click",runManualPrediction);
 document.getElementById("botToggleButton").addEventListener("click",toggleAutoBot);
 document.getElementById("botDelaySelect").addEventListener("change",()=>{
   if(botAuto){if(botTimer){clearTimeout(botTimer);botTimer=null;}renderBotState('BOT ACTIVO · PAUSA ACTUALIZADA');scheduleBotCycle(Number(document.getElementById('botDelaySelect').value||3000));}
