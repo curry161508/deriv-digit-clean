@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>G2LUDE // MATH ENGINE PRO v3 + OHLC</title>
+<title>SCANNER AZUL // MULTIWINDOW DIGIT ENGINE</title>
 
 <style>
 :root{
@@ -471,6 +471,25 @@ button:active{
 .log-pending{
     color:var(--yellow);
 }
+
+/* =========================================================
+   MOTOR DE MOMENTO ÓPTIMO 1-10s
+   ========================================================= */
+.timing-panel{margin-top:10px;border:1px solid rgba(0,255,204,.45);border-radius:10px;padding:10px;background:rgba(0,20,16,.72);box-shadow:0 0 14px rgba(0,255,204,.08)}
+.timing-head{display:flex;justify-content:space-between;gap:8px;align-items:center;margin-bottom:8px}
+.timing-title{font-weight:1000;color:#00ffcc;letter-spacing:.7px;font-size:12px}
+.timing-live{font-size:11px;color:#ffe600;font-weight:900}
+.timing-best{border:1px solid rgba(255,230,0,.5);border-radius:8px;padding:8px;margin-bottom:8px;background:rgba(255,230,0,.04);font-size:12px;line-height:1.45}
+.timing-best strong{color:#ffe600}
+.timing-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px}
+.timing-cell{border:1px solid rgba(77,166,255,.35);border-radius:6px;padding:5px 2px;text-align:center;min-width:0;background:rgba(77,166,255,.035)}
+.timing-cell.active{border-color:#00ffcc;box-shadow:0 0 8px rgba(0,255,204,.18)}
+.timing-cell.best{border-color:#ffe600;box-shadow:0 0 8px rgba(255,230,0,.16)}
+.timing-sec{font-size:10px;color:#4da6ff;font-weight:900}
+.timing-rate{font-size:12px;color:#eafff8;font-weight:1000;margin-top:2px}
+.timing-sample{font-size:9px;color:#8aa99f;margin-top:2px}
+.timing-note{font-size:9px;color:#7d9b91;margin-top:7px;line-height:1.35}
+
 </style>
 <style>
 /* Mejor legibilidad en celular */
@@ -479,158 +498,52 @@ body{font-size:14px}.panel-title{font-size:14px!important}.prediction.signal-goo
 </style><style>
 /* Mejor visibilidad para ranking y señales */
 #rankTable{font-size:12px!important}#rankTable th{font-size:12px!important;padding:8px 3px!important}#rankTable td{font-size:13px!important;padding:8px 3px!important}.signal-log{font-size:12px!important;max-height:180px}.signal-log .log-row{padding:6px 2px!important}.signal-log .log-row span{font-size:12px!important}.history-grid{gap:7px}.history-item{padding:8px 3px!important}.history-digit{font-size:20px!important}.scanner-bg{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;opacity:.24}
-.timing-main{
-    display:grid;
-    grid-template-columns:1fr 1fr;
-    gap:7px;
-    margin-bottom:8px;
-}
-.timing-card{
-    border:1px solid rgba(0,255,204,.22);
-    border-radius:9px;
-    padding:7px;
-    text-align:center;
-    background:rgba(0,255,204,.025);
-}
-.timing-label{
-    font-size:9px;
-    color:#79bfb1;
-}
-.timing-value{
-    font-size:19px;
-    font-weight:bold;
-    margin-top:3px;
-    color:var(--yellow);
-}
-.timing-sub{
-    font-size:9px;
-    margin-top:2px;
-    color:#baffef;
-}
-.timing-grid{
-    display:grid;
-    grid-template-columns:repeat(5,1fr);
-    gap:5px;
-}
-.timing-cell{
-    border:1px solid rgba(0,255,204,.16);
-    border-radius:7px;
-    padding:5px 2px;
-    text-align:center;
-    background:rgba(0,255,204,.02);
-}
-.timing-cell.best{
-    border-color:var(--yellow);
-    box-shadow:0 0 9px rgba(255,230,0,.18);
-}
-.timing-cell.active{
-    border-color:#00ff80;
-    background:rgba(0,255,128,.07);
-}
-.timing-second{
-    font-size:10px;
-    font-weight:bold;
-}
-.timing-rate{
-    font-size:11px;
-    color:#baffef;
-    margin-top:2px;
-}
-.timing-sample{
-    font-size:8px;
-    color:#6ca89d;
-    margin-top:2px;
-}
-.timing-note{
-    font-size:9px;
-    line-height:1.35;
-    color:#78aaa1;
-    margin-top:7px;
-}
+</style>
+<style id="scanner-azul-ui">
+/* ===== SCANNER AZUL — DISEÑO PRINCIPAL ===== */
+:root{--azul:#168cff;--azul2:#00c8ff;--azul3:#0759c9;--fondo:#03101f;--panel:#071b31;--panel2:#092744;--texto:#eaf7ff;--muted:#7fa8c9;--verde:#19f5a5;--rojo:#ff496d;--amarillo:#ffd84d}
+*{box-sizing:border-box}
+body{min-height:100vh;background:radial-gradient(circle at 50% 0%,#0b4f91 0%,#061b32 35%,#020914 78%);color:var(--texto);font-family:Arial,Helvetica,sans-serif;align-items:flex-start;padding:24px 14px}
+.phone-frame{width:min(1180px,100%);max-height:none;overflow:visible;padding:18px;border:1px solid rgba(22,140,255,.55);border-radius:24px;background:linear-gradient(180deg,rgba(6,27,49,.98),rgba(2,13,26,.99));box-shadow:0 0 55px rgba(0,120,255,.28),inset 0 1px 0 rgba(255,255,255,.05)}
+.top-hud{padding:4px 2px 16px;margin-bottom:14px;border-bottom:1px solid rgba(22,140,255,.28)}
+.brand{font-size:24px;letter-spacing:2px;color:#fff;font-weight:900}.status{font-size:12px;color:#9dcced}.dot{background:var(--verde);box-shadow:0 0 12px var(--verde)}
+.filter-row{display:grid;grid-template-columns:110px minmax(210px,300px) 1fr;gap:12px;align-items:center;margin-bottom:14px;padding:12px 14px;background:linear-gradient(90deg,#08294b,#061b32);border:1px solid rgba(22,140,255,.35);border-radius:14px}.filter-row span:first-child{color:#7fc5ff;font-size:12px;font-weight:900;letter-spacing:1px}.filter-row select{height:42px;border:1px solid #168cff;border-radius:9px;background:#061b31;color:#fff;padding:0 12px;font-weight:900}.filter-row #lastTickDisplay{justify-self:end;color:#fff;font-size:20px!important;font-weight:900}
+.panel,.timing-panel,.prediction{background:linear-gradient(145deg,rgba(8,36,65,.98),rgba(4,20,38,.98));border:1px solid rgba(22,140,255,.35);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.22);padding:15px;margin:0 0 14px}.panel-title{color:#75c8ff!important;font-size:13px!important;font-weight:900;letter-spacing:1.2px;border-bottom:1px solid rgba(22,140,255,.2);padding-bottom:9px;margin-bottom:12px}
+.chart-panel{padding:15px}.chart-title{color:#8bd4ff!important;font-weight:900}.chart-live{color:var(--verde)!important}.chart-wrap{height:330px!important;background:#020c18!important;border:1px solid rgba(22,140,255,.28)!important;border-radius:12px!important}.chart-info{color:#80a9c8!important}
+.hot-ranking{display:grid!important;grid-template-columns:repeat(3,1fr);gap:12px}.hot{background:linear-gradient(180deg,#0b3158,#061b31)!important;border:1px solid rgba(22,140,255,.45)!important;border-radius:14px!important;padding:15px!important}.hot-digit{font-size:38px!important;color:#fff!important}.hot-score{color:#55b9ff!important;font-size:13px!important}
+.digits-grid{display:grid!important;grid-template-columns:repeat(10,1fr);gap:7px}.digit-cell,.digit-item{background:#061b31!important;border:1px solid rgba(22,140,255,.28)!important;border-radius:8px!important}
+.analysis{color:#bdd9ef!important;line-height:1.55}.rankTable,#rankTable{background:#061525!important;border-color:rgba(22,140,255,.25)!important}.rankTable th,#rankTable th{color:#72c5ff!important;background:#09294a!important}.rankTable td,#rankTable td{border-color:rgba(22,140,255,.14)!important;color:#d9efff!important}
+.prediction{display:grid;grid-template-columns:1fr auto;grid-template-areas:"title digit" "market digit" "current digit" "score digit" "quality digit" "gap timer";gap:7px 18px;padding:22px;border:1px solid rgba(0,200,255,.6);background:radial-gradient(circle at 80% 50%,rgba(0,160,255,.2),rgba(4,20,38,.98) 55%);box-shadow:0 0 35px rgba(0,140,255,.18)}.pred-title{grid-area:title;color:#8dd7ff!important;font-size:15px!important;font-weight:900;letter-spacing:1px}.pred-digit{grid-area:digit;align-self:center;font-size:105px!important;line-height:.9;color:#fff!important;text-shadow:0 0 28px rgba(0,170,255,.7)}#liveMarket{grid-area:market!important;border-color:rgba(0,200,255,.4)!important;background:rgba(0,80,150,.16)!important}.pred-current{grid-area:current}.pred-score{grid-area:score;color:#5fc1ff!important}.pred-quality{grid-area:quality;color:#b8dfff!important}.pred-gap{grid-area:gap}.timer{grid-area:timer;background:linear-gradient(135deg,#0757a8,#0a2d55)!important;border:1px solid #168cff!important;border-radius:12px!important;padding:12px 18px!important;text-align:center;color:#9bd7ff!important}.timer strong{font-size:42px!important;color:#fff!important}
+.timing-panel{border-color:rgba(0,200,255,.5);background:linear-gradient(180deg,#082b4d,#051a30)}.timing-title{color:#76ceff!important;font-size:15px!important}.timing-live{color:var(--verde)!important}.timing-best{background:rgba(0,128,255,.12)!important;border-color:rgba(0,190,255,.5)!important;color:#d8f2ff!important;font-size:15px!important}.timing-best strong{color:#fff!important}.timing-grid{grid-template-columns:repeat(10,1fr)!important;gap:6px}.timing-cell{background:#061c32!important;border-color:rgba(22,140,255,.35)!important;padding:10px 4px!important}.timing-cell.active{border-color:#00d9ff!important;box-shadow:0 0 13px rgba(0,217,255,.25)}.timing-cell.best{border-color:#ffd84d!important;box-shadow:0 0 14px rgba(255,216,77,.25)}.timing-sec{color:#69c6ff!important}.timing-rate{color:#fff!important}.timing-sample{color:#789cba!important}.timing-note{color:#7295b1!important}
+.stats-grid{display:grid!important;grid-template-columns:repeat(3,1fr);gap:10px}.stat{background:#061a2e!important;border:1px solid rgba(22,140,255,.25)!important;border-radius:12px!important;padding:13px!important}.stat-value{color:#fff!important}.stat-label{color:#73b9e8!important}.small{color:#789bb8!important}.history-grid{display:grid!important;grid-template-columns:repeat(10,1fr);gap:7px}.history-item{background:#061b31!important;border-color:rgba(22,140,255,.3)!important}.history-digit{color:#fff!important}.signal-log{color:#c9e8ff!important}.log-row{border-color:rgba(22,140,255,.15)!important}
+button{border-radius:11px!important;border:1px solid #168cff!important;background:linear-gradient(90deg,#075bc2,#00a8ef)!important;color:#fff!important;font-weight:900!important;min-height:46px!important;box-shadow:0 8px 22px rgba(0,120,255,.18)}#predictButton{font-size:15px!important;letter-spacing:.5px}
+.toast{background:#072b4c!important;border-color:#168cff!important;color:#bde7ff!important}
+
+/* CONTROL DE ANÁLISIS JUNTO AL RELOJ */
+.timer-label{font-size:11px;letter-spacing:1px;font-weight:900;color:#9bd7ff;margin-bottom:2px}
+.analyze-near-timer{display:block!important;width:100%!important;margin:9px 0 0!important;min-height:44px!important;font-size:14px!important;letter-spacing:.4px!important}
+.timer-trace{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:9px;font-size:10px;font-weight:900;color:#ccecff}
+.timer-trace span{padding:6px 5px;border:1px solid rgba(22,140,255,.28);border-radius:7px;background:rgba(0,30,65,.45);text-align:center}
+@media(max-width:700px){.timer-trace{grid-template-columns:1fr;gap:4px}.analyze-near-timer{min-height:48px!important;font-size:15px!important}}
+@media(max-width:700px){body{padding:8px 5px}.phone-frame{padding:11px;border-radius:18px}.brand{font-size:17px}.filter-row{grid-template-columns:1fr 1fr}.filter-row span:first-child{display:none}.filter-row #lastTickDisplay{grid-column:1/-1;justify-self:start}.chart-wrap{height:245px!important}.digits-grid{grid-template-columns:repeat(5,1fr)}.history-grid{grid-template-columns:repeat(5,1fr)}.timing-grid{grid-template-columns:repeat(5,1fr)!important}.prediction{grid-template-columns:1fr 115px;grid-template-areas:"title digit" "market digit" "current digit" "score digit" "quality digit" "gap gap" "timer timer"}.pred-digit{font-size:78px!important}.timer strong{font-size:36px!important}}
+
+
+/* BOT AUTOMÁTICO — SOLO ANÁLISIS / OBSERVACIÓN */
+.bot-toggle{display:block!important;width:100%!important;margin:7px 0 0!important;min-height:42px!important;background:linear-gradient(90deg,#143c67,#176da8)!important;border-color:rgba(0,217,255,.7)!important}
+.bot-toggle.active{background:linear-gradient(90deg,#08754e,#11c985)!important;border-color:#19f5a5!important;box-shadow:0 0 18px rgba(25,245,165,.25)!important}
+.bot-controls{display:grid;grid-template-columns:1fr auto;gap:7px;align-items:center;margin-top:7px;font-size:9px;font-weight:900;color:#8fc9ec;text-align:left}
+.bot-controls label{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:6px 8px;border:1px solid rgba(22,140,255,.25);border-radius:7px;background:rgba(0,30,65,.45)}
+.bot-controls select{height:28px;border:1px solid rgba(22,140,255,.55);border-radius:6px;background:#061b31;color:#fff;font-size:10px;font-weight:900;padding:0 6px}
+#botStatusInfo{text-align:center;padding:6px 7px;border:1px solid rgba(22,140,255,.25);border-radius:7px;background:rgba(0,30,65,.45);white-space:nowrap}
+@media(max-width:700px){.bot-controls{grid-template-columns:1fr}.bot-controls label{display:grid;grid-template-columns:1fr auto}.bot-controls select{width:100%}}
+
+/* ===== MOTOR MULTIVENTANA 4S / 5S / 7S / 10S ===== */
+.multi-panel{padding:15px;margin:0 0 14px;border:1px solid rgba(0,200,255,.45);border-radius:16px;background:linear-gradient(145deg,rgba(8,36,65,.98),rgba(4,20,38,.98));box-shadow:0 10px 30px rgba(0,0,0,.22)}
+.multi-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.multi-title{font-size:15px;font-weight:900;color:#76ceff;letter-spacing:1px}.multi-state{font-size:11px;font-weight:900;color:#19f5a5;text-align:right}
+.multi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.multi-card{position:relative;overflow:hidden;border:1px solid rgba(22,140,255,.35);border-radius:13px;padding:12px;background:linear-gradient(180deg,#092744,#051a30)}.multi-card.live{border-color:#00d9ff;box-shadow:0 0 18px rgba(0,217,255,.18)}.multi-card.win{border-color:#19f5a5}.multi-card.loss{border-color:#ff496d}.multi-card.wait{border-color:#ffd84d}.multi-window{font-size:12px;color:#69c6ff;font-weight:900}.multi-count{font-size:34px;line-height:1;font-weight:900;color:#fff;margin:8px 0}.multi-target{font-size:12px;color:#cbe9ff}.multi-score{font-size:12px;color:#76ceff;margin-top:5px}.multi-result{font-size:12px;font-weight:900;margin-top:8px;min-height:18px}.multi-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:9px}.multi-meta div{background:#061a2e;border:1px solid rgba(22,140,255,.2);border-radius:7px;padding:5px;text-align:center;font-size:9px;color:#8fb3cf}.multi-meta strong{display:block;color:#fff;font-size:11px;margin-top:2px}.multi-progress{height:5px;border-radius:5px;background:#02101d;overflow:hidden;margin-top:10px}.multi-progress span{display:block;height:100%;width:0;background:#168cff;transition:width .15s linear}.multi-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}.multi-stat{padding:8px;text-align:center;background:#061a2e;border:1px solid rgba(22,140,255,.2);border-radius:9px}.multi-stat b{display:block;color:#fff;font-size:14px}.multi-stat small{color:#73b9e8;font-size:8px}.multi-diagnostics{margin-top:8px;padding:8px 9px;border:1px solid rgba(0,217,255,.18);border-radius:8px;background:rgba(0,120,255,.05);color:#9bc8e6;font-size:10px;line-height:1.45}.multi-note{margin-top:9px;color:#7295b1;font-size:10px;line-height:1.4}
+@media(max-width:700px){.multi-grid{grid-template-columns:1fr}.multi-summary{grid-template-columns:repeat(2,1fr)}}
 
 </style>
-<style id="blue-interface-fix">
-:root{
-  --bg:#020817!important;
-  --panel:#071426!important;
-  --green:#38e8ff!important;
-  --pink:#5b5cff!important;
-  --white:#eef7ff!important;
-  --red:#ff4d67!important;
-  --yellow:#63a9ff!important;
-  --blue:#38e8ff!important;
-}
-body{
-  background:radial-gradient(circle at top,#092b55,#020817 68%)!important;
-  color:#eef7ff!important;
-}
-.panel,.prediction,.timing-panel{
-  border-color:rgba(56,232,255,.55)!important;
-  box-shadow:0 0 18px rgba(56,232,255,.10)!important;
-}
-.panel-title,.chart-title,.brand,.timing-title{color:#38e8ff!important}
-.chart-live,.status,.timing-live{color:#38e8ff!important}
-.dot,.live-dot{background:#38e8ff!important;box-shadow:0 0 12px #38e8ff!important}
-#liveMarket{border-color:#38e8ff!important;color:#eef7ff!important}
-#liveDigitBig{color:#38e8ff!important}
-button,#predictButton{
-  background:linear-gradient(90deg,#075cff,#00bfffcf)!important;
-  border-color:#38e8ff!important;
-  color:#fff!important;
-  box-shadow:0 0 16px rgba(56,232,255,.22)!important;
-}
-.pred-digit{color:#38e8ff!important;text-shadow:0 0 18px rgba(56,232,255,.45)!important}
-.timer strong{color:#63a9ff!important;text-shadow:0 0 15px rgba(99,169,255,.45)!important}
-.timing-best{color:#eef7ff!important;border-color:rgba(56,232,255,.5)!important}
-.timing-cell.active,.timing-cell.best{border-color:#38e8ff!important;background:rgba(56,232,255,.10)!important}
-</style>
-
-
-<style id="prediction-layout-fix">
-.prediction{
-  display:grid!important;
-  grid-template-columns:1fr 1fr!important;
-  gap:8px!important;
-  align-items:center!important;
-}
-.prediction .pred-title{grid-column:1/-1}
-.pred-digit{grid-row:2 / span 5}
-#liveMarket,.pred-gap,.pred-score,.pred-quality{grid-column:2}
-.timer{
-  grid-column:1/-1!important;
-  margin-top:4px!important;
-  display:flex!important;
-  align-items:center!important;
-  justify-content:space-between!important;
-  gap:8px!important;
-}
-.predict-near-timer{
-  grid-column:1/-1!important;
-  width:100%!important;
-  margin-top:0!important;
-  min-height:46px!important;
-}
-@media(max-width:420px){
- .prediction{grid-template-columns:1fr 105px!important}
- .pred-digit{font-size:68px!important}
-}
-</style>
-
-
-<style id="timing-mode-style">
-.timing-mode{
-  flex:1!important;
-  min-height:36px!important;
-  padding:6px!important;
-  font-size:12px!important;
-  margin:0!important;
-}
-.timing-mode.active{
-  background:linear-gradient(90deg,#075cff,#00bfff)!important;
-  border-color:#38e8ff!important;
-}
-</style>
-
 </head>
 
 <body><canvas id="scannerBg" class="scanner-bg"></canvas>
@@ -673,6 +586,14 @@ button,#predictButton{
             VOLATILITY 10 (1s)
         </option>
 
+    </select>
+
+    <select id="modeSelector" aria-label="Modo de análisis">
+        <option value="matches">MATCHES — ÚLTIMO DÍGITO</option>
+        <option value="even">EVEN — CUALQUIER PAR</option>
+        <option value="odd">ODD — CUALQUIER IMPAR</option>
+        <option value="over">OVER — MAYOR QUE 4</option>
+        <option value="under">UNDER — MENOR O IGUAL QUE 4</option>
     </select>
 
     <span id="lastTickDisplay">
@@ -845,46 +766,102 @@ button,#predictButton{
 
     <div class="timer">
 
-        VENTANA DE OBSERVACIÓN:
-        <strong id="timerCount">
-            10s
-        </strong>
+        <div class="timer-label">VENTANA DE OBSERVACIÓN</div>
+        <strong id="timerCount">10s</strong>
+
+        <button id="predictButton" class="analyze-near-timer">● ANALIZAR AHORA</button>
+        <button id="botToggleButton" class="bot-toggle" type="button">🤖 BOT AUTOMÁTICO: OFF</button>
+        <div class="bot-controls">
+            <label>PAUSA ENTRE CICLOS
+                <select id="botDelaySelect">
+                    <option value="0">INMEDIATO</option>
+                    <option value="1000">1 SEG</option>
+                    <option value="3000" selected>3 SEG</option>
+                    <option value="5000">5 SEG</option>
+                    <option value="10000">10 SEG</option>
+                </select>
+            </label>
+            <span id="botStatusInfo">BOT EN ESPERA</span>
+        </div>
+
+        <div class="timer-trace">
+            <span id="predictionStartInfo">INICIO: —</span>
+            <span id="firstTickInfo">1er TICK: —</span>
+            <span id="tickCounterInfo">TICKS: 0</span>
+        </div>
 
     </div>
 
 </div>
 
 
-<!-- MOTOR DE MOMENTO ÓPTIMO 1 — 10 SEGUNDOS -->
-
-<div class="panel">
-
-    <div class="panel-title">
-        MOTOR DE MOMENTO ÓPTIMO — 1 A 10 S
+<!-- MOTOR DE MOMENTO ÓPTIMO -->
+<div class="timing-panel" id="timingPanel">
+    <div class="timing-head">
+        <div class="timing-title">MOTOR DE MOMENTO ÓPTIMO 1–10s</div>
+        <div class="timing-live" id="timingLive">APRENDIENDO</div>
     </div>
-
-    <div class="timing-main">
-
-        <div class="timing-card">
-            <div class="timing-label">SEGUNDO ACTUAL</div>
-            <div class="timing-value" id="timingCurrentSecond">—</div>
-            <div class="timing-sub" id="timingCurrentCandidate">CANDIDATO: —</div>
-        </div>
-
-        <div class="timing-card">
-            <div class="timing-label">MEJOR MOMENTO HISTÓRICO</div>
-            <div class="timing-value" id="timingBestSecond">APRENDIENDO</div>
-            <div class="timing-sub" id="timingBestRate">MÍNIMO 10 OBS.</div>
-        </div>
-
+    <div class="timing-best" id="timingBest">
+        <strong>MEJOR MOMENTO:</strong> -- &nbsp; | &nbsp; RENDIMIENTO: --
     </div>
-
     <div class="timing-grid" id="timingGrid"></div>
+    <div class="timing-note">Cada segundo se evalúa contra el siguiente tick. El resultado es estadístico y necesita varias muestras; no garantiza el próximo dígito.</div>
+</div>
 
-    <div class="timing-note" id="timingNote">
-        El motor compara S1–S10 usando el mismo criterio del backtest: candidato del segundo → siguiente tick. No supone que un segundo sea mejor; lo aprende con datos.
+
+
+<!-- MOTOR MULTIVENTANA -->
+<div class="multi-panel" id="multiPanel">
+  <div class="multi-head">
+    <div class="multi-title">PREDICCIÓN MULTIVENTANA · 4S / 5S / 7S / 10S</div>
+    <div class="multi-state" id="multiState">LISTO</div>
+  </div>
+  <div class="multi-grid">
+    <div class="multi-card" id="windowCard4">
+      <div class="multi-window">VENTANA 4 SEGUNDOS</div>
+      <div class="multi-count" id="windowCount4">—</div>
+      <div class="multi-target" id="windowTarget4">Candidato: —</div>
+      <div class="multi-score" id="windowScore4">Score: —</div>
+      <div class="multi-result" id="windowResult4">Esperando análisis</div>
+      <div class="multi-meta"><div>ACIERTO<strong id="windowWins4">0</strong></div><div>FALLO<strong id="windowLoss4">0</strong></div><div>TASA<strong id="windowRate4">—</strong></div></div>
+      <div class="multi-progress"><span id="windowProgress4"></span></div>
     </div>
-
+    <div class="multi-card" id="windowCard5">
+      <div class="multi-window">VENTANA 5 SEGUNDOS</div>
+      <div class="multi-count" id="windowCount5">—</div>
+      <div class="multi-target" id="windowTarget5">Candidato: —</div>
+      <div class="multi-score" id="windowScore5">Score: —</div>
+      <div class="multi-result" id="windowResult5">Esperando análisis</div>
+      <div class="multi-meta"><div>ACIERTO<strong id="windowWins5">0</strong></div><div>FALLO<strong id="windowLoss5">0</strong></div><div>TASA<strong id="windowRate5">—</strong></div></div>
+      <div class="multi-progress"><span id="windowProgress5"></span></div>
+    </div>
+    <div class="multi-card" id="windowCard7">
+      <div class="multi-window">VENTANA 7 SEGUNDOS</div>
+      <div class="multi-count" id="windowCount7">—</div>
+      <div class="multi-target" id="windowTarget7">Candidato: —</div>
+      <div class="multi-score" id="windowScore7">Score: —</div>
+      <div class="multi-result" id="windowResult7">Esperando análisis</div>
+      <div class="multi-meta"><div>ACIERTO<strong id="windowWins7">0</strong></div><div>FALLO<strong id="windowLoss7">0</strong></div><div>TASA<strong id="windowRate7">—</strong></div></div>
+      <div class="multi-progress"><span id="windowProgress7"></span></div>
+    </div>
+    <div class="multi-card" id="windowCard10">
+      <div class="multi-window">VENTANA 10 SEGUNDOS</div>
+      <div class="multi-count" id="windowCount10">—</div>
+      <div class="multi-target" id="windowTarget10">Candidato: —</div>
+      <div class="multi-score" id="windowScore10">Score: —</div>
+      <div class="multi-result" id="windowResult10">Esperando análisis</div>
+      <div class="multi-meta"><div>ACIERTO<strong id="windowWins10">0</strong></div><div>FALLO<strong id="windowLoss10">0</strong></div><div>TASA<strong id="windowRate10">—</strong></div></div>
+      <div class="multi-progress"><span id="windowProgress10"></span></div>
+    </div>
+  </div>
+  <div class="multi-summary">
+    <div class="multi-stat"><b id="bestWindowLabel">—</b><small>MEJOR VENTANA</small></div>
+    <div class="multi-stat"><b id="bestWindowRate">—</b><small>RENDIMIENTO</small></div>
+    <div class="multi-stat"><b id="cycleNumber">0</b><small>CICLOS</small></div>
+    <div class="multi-stat"><b id="agreementLabel">—</b><small>ESTABILIDAD</small></div>
+  </div>
+  <div class="multi-diagnostics" id="multiDiagnostics">DIAGNÓSTICO: esperando muestras…</div>
+  <div class="multi-note">Las cuatro ventanas usan el mismo candidato y comienzan en el mismo instante. Cada una gana si su condición aparece en cualquier tick dentro de su propia duración. Se registra el primer tick que acierta y el tiempo aproximado hasta el acierto para comparar 4S, 5S, 7S y 10S.</div>
 </div>
 
 
@@ -991,7 +968,7 @@ button,#predictButton{
 
 
 <button id="voiceButton" style="margin-bottom:8px">🔊 ACTIVAR VOZ</button>
-
+<button id="resetMultiButton" style="margin-top:8px;background:linear-gradient(90deg,#263b55,#405d7d)!important">↻ REINICIAR ESTADÍSTICAS DE VENTANAS</button>
 
 <div
     class="toast"
@@ -1157,7 +1134,9 @@ function processTickForCandle(
 
 
     const now =
-        Date.now();
+        Number.isFinite(Number(tickObj.epoch))
+        ? Number(tickObj.epoch)*1000
+        : Date.now();
 
 
     /*
@@ -1682,6 +1661,210 @@ function hablar(texto){if(!voiceEnabled || !("speechSynthesis" in window))return
 let timerInterval = null;
 
 let pendingPrediction = null;
+let pendingMode = "matches";
+
+/* =========================================================
+   MOTOR MULTIVENTANA 4S / 5S / 7S / 10S
+   ========================================================= */
+const MULTI_WINDOWS=[4,5,7,10];
+const MULTI_STORAGE_PREFIX='g2lude_multi_v2_';
+let multiWindows={};
+let multiTicker=null;
+let multiCycle=0;
+let multiActive=false;
+let multiLastCandidate=null;
+let botAuto=false;
+let botTimer=null;
+let botRuns=0;
+
+function multiStorageKey(){
+  const a=document.getElementById('assetSelector');
+  const m=document.getElementById('modeSelector');
+  return MULTI_STORAGE_PREFIX+(a?.value||'R_100')+'_'+(m?.value||'matches');
+}
+function emptyMultiStats(){return {signals:0,wins:0,losses:0,hitTimeMsTotal:0,hitCount:0};}
+function loadMultiStats(){
+  try{const raw=localStorage.getItem(multiStorageKey());const parsed=raw?JSON.parse(raw):{};
+    MULTI_WINDOWS.forEach(w=>{multiWindows[w]={duration:w,state:'idle',start:0,predicted:null,mode:'matches',matched:false,matchDigit:null,matchedAt:0,matchElapsedMs:0,matchTickCount:0,firstTick:null,firstTickTime:0,tickCount:0,stats:Object.assign(emptyMultiStats(),parsed[w]?.stats||{})};});
+    multiCycle=Number(parsed.cycle)||0;
+  }catch(e){MULTI_WINDOWS.forEach(w=>multiWindows[w]={duration:w,state:'idle',start:0,predicted:null,mode:'matches',matched:false,matchDigit:null,matchedAt:0,matchElapsedMs:0,matchTickCount:0,firstTick:null,firstTickTime:0,tickCount:0,stats:emptyMultiStats()});multiCycle=0;}
+  renderMultiStats();
+}
+function saveMultiStats(){
+  try{const out={cycle:multiCycle};MULTI_WINDOWS.forEach(w=>out[w]={stats:multiWindows[w].stats});localStorage.setItem(multiStorageKey(),JSON.stringify(out));}catch(e){}
+}
+function resetMultiStats(){
+  stopMultiEngine();
+  try{localStorage.removeItem(multiStorageKey());}catch(e){}
+  loadMultiStats();
+  multiCycle=0;
+  const el=document.getElementById('cycleNumber');if(el)el.textContent='0';
+  const st=document.getElementById('multiState');if(st)st.textContent='LISTO';
+  systemToast.textContent='ESTADÍSTICAS 4S / 5S / 7S / 10S REINICIADAS';
+}
+function modeMatches(mode,digit,predicted){
+  if(mode==='matches')return digit===predicted;
+  if(mode==='even')return digit%2===0;
+  if(mode==='odd')return digit%2!==0;
+  if(mode==='over')return digit>4;
+  return digit<=4;
+}
+function multiRate(st){return st.signals?st.wins/st.signals*100:0;}
+function bestMultiWindow(){
+  const eligible=MULTI_WINDOWS.map(w=>({w,st:multiWindows[w]?.stats})).filter(x=>x.st&&x.st.signals>0);
+  if(!eligible.length)return null;
+  eligible.sort((a,b)=>multiRate(b.st)-multiRate(a.st)||b.st.signals-a.st.signals);
+  return eligible[0];
+}
+function renderMultiStats(){
+  MULTI_WINDOWS.forEach(w=>{
+    const o=multiWindows[w]; if(!o)return; const st=o.stats;
+    const count=document.getElementById('windowCount'+w); const card=document.getElementById('windowCard'+w);
+    if(count)count.textContent=o.state==='active'?formatRemaining(o):o.state==='win'?'✓':o.state==='loss'?'✕':'—';
+    const target=document.getElementById('windowTarget'+w);if(target)target.textContent=o.predicted===null?'Candidato: —':`Candidato: ${o.predicted} · ${modeLabel(o.mode)}`;
+    const score=document.getElementById('windowScore'+w);if(score)score.textContent=o.score===undefined?'Score: —':`Score: ${Number(o.score).toFixed(1)}`;
+    const result=document.getElementById('windowResult'+w);if(result)result.textContent=o.state==='active'?'OBSERVANDO TICKS…':o.state==='win'?`ACIERTO · apareció ${o.matchDigit} · ${((o.matchElapsedMs||0)/1000).toFixed(1)}s · tick #${o.matchTickCount||0}`:o.state==='loss'?'FALLO · no apareció':'Esperando análisis';
+    ['Wins','Loss','Rate'].forEach(()=>{});
+    const we=document.getElementById('windowWins'+w);if(we)we.textContent=st.wins;
+    const le=document.getElementById('windowLoss'+w);if(le)le.textContent=st.losses;
+    const re=document.getElementById('windowRate'+w);if(re)re.textContent=st.signals?multiRate(st).toFixed(1)+'%':'—';
+    const pr=document.getElementById('windowProgress'+w);if(pr)pr.style.width=o.state==='active'?Math.max(0,Math.min(100,((Date.now()-o.start)/(w*1000))*100))+'%':(o.state==='win'||o.state==='loss'?'100%':'0%');
+    if(card){card.classList.remove('live','win','loss','wait');if(o.state==='active')card.classList.add('live');if(o.state==='win')card.classList.add('win');if(o.state==='loss')card.classList.add('loss');}
+  });
+  const best=bestMultiWindow();
+  const bw=document.getElementById('bestWindowLabel');if(bw)bw.textContent=best?best.w+'S':'—';
+  const br=document.getElementById('bestWindowRate');if(br)br.textContent=best?multiRate(best.st).toFixed(1)+'%':'—';
+  const cy=document.getElementById('cycleNumber');if(cy)cy.textContent=multiCycle;
+  const ag=document.getElementById('agreementLabel');
+  if(ag){const active=MULTI_WINDOWS.map(w=>multiWindows[w]).filter(o=>o?.state==='active');ag.textContent=active.length===4?'4/4 ACTIVAS':active.length?active.length+'/4 ACTIVAS':'—';}
+  const diag=document.getElementById('multiDiagnostics');
+  if(diag){
+    const parts=MULTI_WINDOWS.map(w=>{
+      const st=multiWindows[w]?.stats||emptyMultiStats();
+      const avg=st.hitCount>0 ? ((st.hitTimeMsTotal/st.hitCount)/1000).toFixed(1)+'s' : '—';
+      return `${w}S: ${st.signals} muestras · ${st.wins} aciertos · TMA ${avg}`;
+    });
+    const totalSignals=MULTI_WINDOWS.reduce((a,w)=>a+(multiWindows[w]?.stats?.signals||0),0);
+    diag.textContent=totalSignals ? 'DIAGNÓSTICO · '+parts.join('  |  ') : 'DIAGNÓSTICO: esperando muestras…';
+  }
+}
+function renderBotState(message){
+  const b=document.getElementById('botToggleButton');
+  const st=document.getElementById('botStatusInfo');
+  if(b){b.textContent=botAuto?'🤖 BOT AUTOMÁTICO: ON':'🤖 BOT AUTOMÁTICO: OFF';b.classList.toggle('active',botAuto);}
+  if(st)st.textContent=message|| (botAuto?'BOT ACTIVO · ESPERANDO DATOS':'BOT EN ESPERA');
+}
+function scheduleBotCycle(delay){
+  if(!botAuto)return;
+  if(botTimer)clearTimeout(botTimer);
+  botTimer=setTimeout(()=>{
+    botTimer=null;
+    if(!botAuto)return;
+    if(multiActive || pendingPrediction!==null){
+      renderBotState('BOT ACTIVO · CICLO EN CURSO');
+      scheduleBotCycle(500);
+      return;
+    }
+    if(recentDigits.length<20){
+      renderBotState(`BOT ACTIVO · ${recentDigits.length}/20 TICKS`);
+      scheduleBotCycle(1000);
+      return;
+    }
+    botRuns++;
+    renderBotState(`BOT ANALIZANDO · CICLO #${botRuns}`);
+    hablar(`Bot automático: ejecutando análisis ${botRuns}`);
+    generatePrediction(true);
+  },Math.max(0,Number(delay)||0));
+}
+function toggleAutoBot(){
+  botAuto=!botAuto;
+  if(botAuto){
+    renderBotState('BOT ACTIVO · BUSCANDO PRÓXIMO CICLO');
+    scheduleBotCycle(0);
+  }else{
+    if(botTimer){clearTimeout(botTimer);botTimer=null;}
+    renderBotState('BOT DETENIDO');
+  }
+}
+
+function modeLabel(mode){return mode==='matches'?'MATCHES':mode==='even'?'EVEN':mode==='odd'?'ODD':mode==='over'?'OVER':'UNDER';}
+function formatRemaining(o){return Math.max(0,(o.duration*1000-(Date.now()-o.start))/1000).toFixed(1)+'s';}
+function renderPredictionTrace(){
+  const o=multiWindows[10];
+  const start=document.getElementById('predictionStartInfo');
+  const first=document.getElementById('firstTickInfo');
+  const count=document.getElementById('tickCounterInfo');
+  if(!o || !start || !first || !count)return;
+  start.textContent=o.start?`INICIO: ${new Date(o.start).toLocaleTimeString()}`:'INICIO: —';
+  first.textContent=o.firstTick===null?'1er TICK: —':`1er TICK: ${o.firstTick} · ${new Date(o.firstTickTime).toLocaleTimeString()}`;
+  count.textContent=`TICKS: ${o.tickCount||0}`;
+}
+
+function startMultiEngine(predicted,score,mode){
+  stopMultiEngine(false);
+  multiCycle++; multiActive=true; multiLastCandidate=predicted;
+  const now=Date.now();
+  MULTI_WINDOWS.forEach(w=>{const o=multiWindows[w]||{stats:emptyMultiStats()};o.duration=w;o.state='active';o.start=now;o.predicted=predicted;o.score=score;o.mode=mode;o.matched=false;o.matchDigit=null;o.matchedAt=0;o.matchElapsedMs=0;o.matchTickCount=0;o.firstTick=null;o.firstTickTime=0;o.tickCount=0;o.stats=o.stats||emptyMultiStats();o.stats.signals++;multiWindows[w]=o;});
+  saveMultiStats(); renderMultiStats();
+  if(multiTicker)clearInterval(multiTicker);
+  multiTicker=setInterval(updateMultiEngine,100);
+  const main=multiWindows[10];
+  if(timerCount)timerCount.textContent='10.0s';
+  renderPredictionTrace();
+  if(systemToast)systemToast.textContent=`CICLO ${multiCycle} · CANDIDATO ${predicted} · 4S / 5S / 7S / 10S ACTIVAS`;
+}
+function processMultiTick(digit){
+  if(!multiActive)return;
+  MULTI_WINDOWS.forEach(w=>{const o=multiWindows[w];if(!o||o.state!=='active')return;o.tickCount=(o.tickCount||0)+1;if(o.firstTick===null){o.firstTick=digit;o.firstTickTime=Date.now();}if(modeMatches(o.mode,digit,o.predicted)&&!o.matched){o.matched=true;o.matchDigit=digit;o.matchedAt=Date.now();o.matchElapsedMs=o.matchedAt-o.start;o.matchTickCount=o.tickCount;o.stats.hitTimeMsTotal=(Number(o.stats.hitTimeMsTotal)||0)+o.matchElapsedMs;o.stats.hitCount=(Number(o.stats.hitCount)||0)+1;document.getElementById('prediction')?.classList.add('signal-good');}});
+  renderMultiStats();
+  renderPredictionTrace();
+}
+function updateMultiEngine(){
+  if(!multiActive){renderMultiStats();return;}
+  let finished=0;
+  MULTI_WINDOWS.forEach(w=>{const o=multiWindows[w];if(!o||o.state!=='active'){if(o?.state==='win'||o?.state==='loss')finished++;return;}
+    const elapsed=Date.now()-o.start;
+    if(elapsed>=w*1000){finalizeMultiWindow(w);finished++;}
+  });
+  const o10=multiWindows[10];
+  if(o10?.state==='active'&&timerCount)timerCount.textContent=formatRemaining(o10)+' · 10S';
+  renderMultiStats();
+  renderPredictionTrace();
+  if(finished===4){
+  multiActive=false;
+  if(multiTicker){clearInterval(multiTicker);multiTicker=null;}
+  pendingPrediction=null;
+  saveMultiStats();
+  const summary=`CICLO ${multiCycle} FINALIZADO · 4S ${statusText(4)} · 5S ${statusText(5)} · 7S ${statusText(7)} · 10S ${statusText(10)}`;
+  setTimeout(()=>{if(systemToast)systemToast.textContent=summary;},0);
+  if(botAuto){
+    const delay=Number(document.getElementById('botDelaySelect')?.value||3000);
+    renderBotState(`BOT ACTIVO · PRÓXIMO EN ${Math.max(0,delay)/1000}s`);
+    scheduleBotCycle(delay);
+  }
+}
+}
+function statusText(w){const o=multiWindows[w];return o?.state==='win'?'✓':o?.state==='loss'?'✕':'—';}
+function finalizeMultiWindow(w){
+  const o=multiWindows[w];if(!o||o.state!=='active')return;
+  const correct=!!o.matched;o.state=correct?'win':'loss';
+  if(correct)o.stats.wins++;else o.stats.losses++;
+  if(w===10){
+    if(pendingPrediction){
+      const d=pendingPrediction.digit;
+      if(correct) digitMemory[d].wins++; else digitMemory[d].losses++;
+    }
+    wins=multiWindows[10].stats.wins;losses=multiWindows[10].stats.losses;
+    document.getElementById('winCount').textContent=wins;document.getElementById('lossCount').textContent=losses;
+    const total=wins+losses;if(total)document.getElementById('backtestRate').textContent=`TASA 10S OBSERVADA: ${(wins/total*100).toFixed(2)}%`;
+    if(pendingPrediction){pendingPrediction.matched=correct;pendingPrediction.matchDigit=o.matchDigit;}
+    updateLastLog(correct?'ACIERTO':'FALLO');renderHistory();
+  }
+  saveMultiStats();renderMultiStats();
+  if(voiceEnabled)hablar(`${w} segundos: ${correct?'acierto':'fallo'}`);
+}
+function stopMultiEngine(resetStates=true){if(multiTicker){clearInterval(multiTicker);multiTicker=null;}multiActive=false;if(resetStates)MULTI_WINDOWS.forEach(w=>{if(multiWindows[w])multiWindows[w].state='idle';});renderMultiStats();}
+
 
 let signals = 0;
 let wins = 0;
@@ -1689,26 +1872,168 @@ let losses = 0;
 
 let signalHistory = [];
 
-
 /* =========================================================
-   MOTOR DE MOMENTO ÓPTIMO 1 — 10 SEGUNDOS
+   MOTOR DE MOMENTO ÓPTIMO 1-10s
    ========================================================= */
-
-const TIMING_WINDOW_SECONDS = 10;
-const TIMING_MIN_OBSERVATIONS = 10;
-
-let timingStats = Array.from(
-    {length:TIMING_WINDOW_SECONDS},
-    (_,index)=>({
-        second:index+1,
-        signals:0,
-        wins:0,
-        losses:0
-    })
-);
-
+const TIMING_SECONDS = 10;
+const TIMING_MIN_SAMPLES = 5;
+let timingStats = Array.from({length:TIMING_SECONDS},()=>({signals:0,wins:0,losses:0}));
 let timingSession = null;
 let timingLastSecond = 0;
+
+function getTimingStorageKey(){
+    const assetEl=document.getElementById("assetSelector");
+    return "g2lude_timing_v1_"+(assetEl ? assetEl.value : "R_100");
+}
+
+function loadTimingStats(){
+    try{
+        const raw=localStorage.getItem(getTimingStorageKey());
+        if(raw){
+            const parsed=JSON.parse(raw);
+            if(Array.isArray(parsed) && parsed.length===TIMING_SECONDS){
+                timingStats=parsed.map(x=>({
+                    signals:Number(x.signals)||0,
+                    wins:Number(x.wins)||0,
+                    losses:Number(x.losses)||0
+                }));
+            }
+        }
+    }catch(e){ console.warn("No se pudo cargar memoria de momento",e); }
+    renderTimingStats();
+}
+
+function saveTimingStats(){
+    try{ localStorage.setItem(getTimingStorageKey(),JSON.stringify(timingStats)); }
+    catch(e){ console.warn("No se pudo guardar memoria de momento",e); }
+}
+
+function timingRate(stat){
+    return stat.signals>0 ? stat.wins/stat.signals*100 : 0;
+}
+
+function timingAdjustedRate(stat){
+    /* Base teórica de acertar un dígito: 10%.
+       Suavizado para que 1/1 no parezca mejor que 20/20. */
+    if(!stat.signals) return 0;
+    return ((stat.wins+1)/(stat.signals+10))*100;
+}
+
+function timingScore(stat){
+    if(!stat.signals) return 0;
+    const edge=timingAdjustedRate(stat)-10;
+    const edgeScore=clamp(50+(edge/20)*50,0,100);
+    const sampleFactor=clamp(stat.signals/30,0,1);
+    return edgeScore*.75+sampleFactor*25;
+}
+
+function getBestTimingSecond(){
+    const candidates=timingStats
+        .map((stat,index)=>({stat,index,score:timingScore(stat)}))
+        .filter(x=>x.stat.signals>=TIMING_MIN_SAMPLES);
+    if(!candidates.length) return null;
+    candidates.sort((a,b)=>b.score-a.score);
+    return candidates[0];
+}
+
+function renderTimingStats(activeSecond=0){
+    const grid=document.getElementById("timingGrid");
+    const bestEl=document.getElementById("timingBest");
+    const liveEl=document.getElementById("timingLive");
+    if(!grid || !bestEl || !liveEl) return;
+
+    const best=getBestTimingSecond();
+    liveEl.textContent=activeSecond>0 ? `SEGUNDO ${activeSecond}/10` : (best ? "MOMENTO APRENDIDO" : "APRENDIENDO");
+
+    if(best){
+        const st=best.stat;
+        bestEl.innerHTML=`<strong>MEJOR MOMENTO: S${best.index+1}</strong> &nbsp; | &nbsp; RENDIMIENTO: ${timingRate(st).toFixed(1)}% (${st.wins}/${st.signals}) &nbsp; | &nbsp; SCORE MOMENTO: ${best.score.toFixed(1)}`;
+    }else{
+        const total=timingStats.reduce((a,x)=>a+x.signals,0);
+        bestEl.innerHTML=`<strong>MEJOR MOMENTO: --</strong> &nbsp; | &nbsp; ACUMULANDO DATOS (${total} muestras; mínimo ${TIMING_MIN_SAMPLES} por segundo)`;
+    }
+
+    grid.innerHTML=timingStats.map((st,i)=>{
+        const rate=st.signals ? timingRate(st) : null;
+        const isBest=best && best.index===i;
+        const active=activeSecond===i+1;
+        return `<div class="timing-cell ${active?"active":""} ${isBest?"best":""}">
+            <div class="timing-sec">S${i+1}</div>
+            <div class="timing-rate">${rate===null?"--":rate.toFixed(0)+"%"}</div>
+            <div class="timing-sample">${st.signals?st.wins+"/"+st.signals:"--"}</div>
+        </div>`;
+    }).join("");
+}
+
+function resetTimingSession(){
+    timingSession=null;
+    timingLastSecond=0;
+    renderTimingStats();
+}
+
+function startTimingSession(){
+    timingSession={
+        startMs:Date.now(),
+        startEpochMs:Date.now(),
+        snapshots:{},
+        pendingBySecond:{}
+    };
+    timingLastSecond=0;
+    renderTimingStats(1);
+    const learned=getBestTimingSecond();
+    if(learned) hablar(`Mejor momento observado: segundo ${learned.index+1}. La ventana comienza ahora.`);
+}
+
+function processTimingTick(digit){
+    if(!timingSession) return;
+
+    const elapsed=(Date.now()-timingSession.startMs)/1000;
+    const second=Math.floor(elapsed)+1;
+
+    /* Primero resolvemos el candidato del segundo anterior con este tick. */
+    const resolveSecond=second-1;
+    if(resolveSecond>=1 && resolveSecond<=TIMING_SECONDS && timingSession.pendingBySecond[resolveSecond]){
+        const candidate=timingSession.pendingBySecond[resolveSecond];
+        const st=timingStats[resolveSecond-1];
+        st.signals++;
+        if(digit===candidate.digit) st.wins++; else st.losses++;
+        delete timingSession.pendingBySecond[resolveSecond];
+        saveTimingStats();
+        renderTimingStats(Math.min(Math.max(second,1),TIMING_SECONDS));
+        if(resolveSecond===TIMING_SECONDS){
+            timingSession=null;
+            timingLastSecond=0;
+            renderTimingStats();
+            return;
+        }
+    }
+
+    if(second<1 || second>TIMING_SECONDS) return;
+
+    if(!timingSession.snapshots[second]){
+        const results=analyzeAllDigits();
+        if(results.length){
+            const best=results[0];
+            timingSession.snapshots[second]={
+                digit:best.digit,
+                score:best.score,
+                createdAt:Date.now()
+            };
+            timingSession.pendingBySecond[second]=timingSession.snapshots[second];
+            timingLastSecond=second;
+            renderTimingStats(second);
+            const learnedNow=getBestTimingSecond();
+            if(learnedNow && second===learnedNow.index+1) hablar(`Momento recomendado: quedan aproximadamente ${11-second} segundos.`);
+            const timingText=document.getElementById("timingBest");
+            if(timingText && best){
+                const learned=getBestTimingSecond();
+                const learnedText=learned ? `MEJOR HISTÓRICO S${learned.index+1}` : "AÚN APRENDIENDO";
+                timingText.innerHTML=`<strong>${learnedText}</strong> &nbsp; | &nbsp; AHORA S${second}: D${best.digit} · SCORE ${best.score.toFixed(1)}`;
+            }
+        }
+    }
+}
+
 
 const digitMemory =
     Array.from(
@@ -1760,24 +2085,6 @@ const historyGrid =
 
 const signalLog =
     document.getElementById("signalLog");
-
-const timingCurrentSecond =
-    document.getElementById("timingCurrentSecond");
-
-const timingCurrentCandidate =
-    document.getElementById("timingCurrentCandidate");
-
-const timingBestSecond =
-    document.getElementById("timingBestSecond");
-
-const timingBestRate =
-    document.getElementById("timingBestRate");
-
-const timingGrid =
-    document.getElementById("timingGrid");
-
-const timingNote =
-    document.getElementById("timingNote");
 
 
 /* =========================================================
@@ -2424,334 +2731,6 @@ function calculateSignalQuality(
 
 
 /* =========================================================
-   MOTOR DE MOMENTO ÓPTIMO
-   ========================================================= */
-
-function resetTimingSession(){
-    timingSession=null;
-    timingLastSecond=0;
-
-    if(timingCurrentSecond)
-        timingCurrentSecond.textContent="—";
-
-    if(timingCurrentCandidate)
-        timingCurrentCandidate.textContent="CANDIDATO: —";
-
-    renderTimingStats();
-}
-
-function resetTimingStats(){
-    timingStats=Array.from(
-        {length:TIMING_WINDOW_SECONDS},
-        (_,index)=>({
-            second:index+1,
-            signals:0,
-            wins:0,
-            losses:0
-        })
-    );
-    resetTimingSession();
-}
-
-function getTimingRate(stat){
-    if(!stat || stat.signals<=0)
-        return null;
-
-    return stat.wins/stat.signals*100;
-}
-
-function getTimingAdjustedRate(stat){
-    if(!stat || stat.signals<=0)
-        return 10;
-
-    /* Suavizado hacia el 10% teórico para evitar que 1/1
-       sea tratado como evidencia fuerte. */
-    return (
-        (stat.wins+1)/
-        (stat.signals+10)
-    )*100;
-}
-
-function getTimingZ(stat){
-    if(!stat || stat.signals<=0)
-        return 0;
-
-    const n=stat.signals;
-    const expected=n*0.10;
-    const sd=Math.sqrt(n*0.10*0.90);
-
-    return sd>0
-        ?(stat.wins-expected)/sd
-        :0;
-}
-
-function getBestTimingSecond(){
-    const eligible=timingStats.filter(
-        s=>s.signals>=TIMING_MIN_OBSERVATIONS
-    );
-
-    if(!eligible.length)
-        return null;
-
-    return [...eligible].sort((a,b)=>{
-        const az=getTimingZ(a);
-        const bz=getTimingZ(b);
-
-        /* Primero evidencia estadística; en empate,
-           tasa ajustada y finalmente tamaño de muestra. */
-        if(Math.abs(bz-az)>0.001)
-            return bz-az;
-
-        const ar=getTimingAdjustedRate(a);
-        const br=getTimingAdjustedRate(b);
-
-        if(Math.abs(br-ar)>0.001)
-            return br-ar;
-
-        return b.signals-a.signals;
-    })[0];
-}
-
-function renderTimingStats(){
-    if(!timingGrid)
-        return;
-
-    const best=getBestTimingSecond();
-
-    timingGrid.innerHTML=timingStats.map(stat=>{
-        const rate=getTimingRate(stat);
-        const isBest=best && stat.second===best.second;
-        const isActive=timingSession &&
-            timingLastSecond===stat.second;
-
-        return `
-            <div class="timing-cell ${isBest?"best":""} ${isActive?"active":""}">
-                <div class="timing-second">S${stat.second}</div>
-                <div class="timing-rate">
-                    ${rate===null?"--":rate.toFixed(1)+"%"}
-                </div>
-                <div class="timing-sample">
-                    ${stat.signals} obs.
-                </div>
-            </div>
-        `;
-    }).join("");
-
-    if(best){
-        const rate=getTimingRate(best);
-
-        timingBestSecond.textContent=
-            `S${best.second}`;
-
-        timingBestRate.textContent=
-            `${rate.toFixed(1)}% — ${best.wins}/${best.signals}`;
-    }else{
-        timingBestSecond.textContent=
-            "APRENDIENDO";
-
-        const maxObs=Math.max(
-            ...timingStats.map(s=>s.signals)
-        );
-
-        timingBestRate.textContent=
-            `${maxObs}/${TIMING_MIN_OBSERVATIONS} OBS. MÍN.`;
-    }
-}
-
-function timingElapsedSecond(tickEpochMs){
-    if(!timingSession)
-        return null;
-
-    const elapsed=
-        tickEpochMs-timingSession.startEpochMs;
-
-    if(elapsed<0)
-        return 1;
-
-    return clamp(
-        Math.floor(elapsed/1000)+1,
-        1,
-        TIMING_WINDOW_SECONDS
-    );
-}
-
-function createTimingSnapshot(second){
-    if(
-        !timingSession ||
-        second<1 ||
-        second>TIMING_WINDOW_SECONDS ||
-        timingSession.snapshots[second]
-    ){
-        return;
-    }
-
-    const results=analyzeAllDigits();
-
-    if(!results.length)
-        return;
-
-    const best=results[0];
-    const secondBest=results[1] || best;
-
-    const difference=
-        best.score-secondBest.score;
-
-    const quality=
-        calculateSignalQuality(
-            best,
-            secondBest
-        );
-
-    timingSession.snapshots[second]={
-        second,
-        digit:best.digit,
-        score:best.score,
-        quality,
-        difference,
-        createdAt:Date.now()
-    };
-
-    timingLastSecond=second;
-
-    if(timingCurrentSecond)
-        timingCurrentSecond.textContent=`S${second}`;
-
-    if(timingCurrentCandidate)
-        timingCurrentCandidate.textContent=
-            `CANDIDATO: D${best.digit} · ${best.score.toFixed(1)}`;
-
-    renderTimingStats();
-}
-
-function evaluateTimingSnapshots(actualDigit){
-    if(!timingSession)
-        return;
-
-    const pendingSeconds=
-        Object.keys(timingSession.snapshots)
-        .filter(key=>{
-            const s=timingSession.snapshots[key];
-            return !s.resolved;
-        })
-        .map(Number)
-        .sort((a,b)=>a-b);
-
-    pendingSeconds.forEach(second=>{
-        const snapshot=
-            timingSession.snapshots[second];
-
-        if(snapshot.resolved)
-            return;
-
-        const stat=timingStats[second-1];
-
-        stat.signals++;
-
-        if(actualDigit===snapshot.digit){
-            stat.wins++;
-            snapshot.result="ACIERTO";
-        }else{
-            stat.losses++;
-            snapshot.result="FALLO";
-        }
-
-        snapshot.resolved=true;
-    });
-
-    renderTimingStats();
-}
-
-function processTimingTick(tickObj){
-    if(!timingSession || !tickObj)
-        return;
-
-    const tickEpoch=
-        Number(tickObj.epoch);
-
-    const tickMs=
-        Number.isFinite(tickEpoch)
-        ?tickEpoch*1000
-        :Date.now();
-
-    const second=
-        timingElapsedSecond(tickMs);
-
-    if(second===null)
-        return;
-
-    /* Primero resolvemos los snapshots anteriores con este tick.
-       Así cada segundo mide exactamente el siguiente tick. */
-    evaluateTimingSnapshots(
-        extractLastDigit(tickObj)
-    );
-
-    if(
-        !timingSession.snapshots[second] &&
-        recentDigits.length>=20
-    ){
-        createTimingSnapshot(second);
-    }
-
-    timingSession.lastTickEpochMs=tickMs;
-
-    renderTimingStats();
-}
-
-function startTimingSession(){
-    resetTimingSession();
-
-    const startEpoch=
-        Number.isFinite(Number(window.__g2ludeLastTickEpochMs))
-        ?Number(window.__g2ludeLastTickEpochMs)
-        :Date.now();
-
-    timingSession={
-        startEpochMs:startEpoch,
-        snapshots:{},
-        active:true,
-        lastTickEpochMs:startEpoch
-    };
-
-    timingLastSecond=1;
-
-    if(timingCurrentSecond)
-        timingCurrentSecond.textContent="S1";
-
-    if(timingCurrentCandidate)
-        timingCurrentCandidate.textContent="CANDIDATO: CALCULANDO";
-
-    renderTimingStats();
-}
-
-function finishTimingSession(){
-    if(!timingSession)
-        return;
-
-    timingSession.active=false;
-
-    const best=getBestTimingSecond();
-
-    if(best){
-        const rate=getTimingRate(best);
-
-        if(timingNote)
-            timingNote.textContent=
-                `MEJOR MOMENTO ACTUAL: S${best.second} · ${rate.toFixed(1)}% (${best.wins}/${best.signals}). Resultado medido contra el siguiente tick.`;
-    }else if(timingNote){
-        timingNote.textContent=
-            "MOTOR APRENDIENDO: todavía no hay 10 observaciones completas en ningún segundo.";
-    }
-
-    renderTimingStats();
-}
-
-function initTimingUI(){
-    renderTimingStats();
-    resetTimingSession();
-}
-
-
-/* =========================================================
    UI
    ========================================================= */
 
@@ -3116,29 +3095,11 @@ function getQualityShort(
    ========================================================= */
 
 function processTick(
-    digit,
-    tickObj=null
+    digit
 ){
 
-    if(
-        pendingPrediction!==null
-    ){
-
-        evaluatePendingPrediction(
-            digit
-        );
-    }
-
-    if(timingSession){
-        if(tickObj)
-            processTimingTick(tickObj);
-        else
-            processTimingTick({
-                epoch:Date.now()/1000,
-                quote:String(digit)
-            });
-    }
-
+    processTimingTick(digit);
+    processMultiTick(digit);
 
     recentDigits.push(
         digit
@@ -3166,7 +3127,7 @@ function processTick(
    GENERAR SEÑAL
    ========================================================= */
 
-function generatePrediction(){
+function generatePrediction(fromBot=false){
 
     if(
         recentDigits.length<20
@@ -3179,26 +3140,24 @@ function generatePrediction(){
     }
 
 
-    if(
-        pendingPrediction!==null
-    ){
-
-        systemToast.textContent =
-            "YA EXISTE UNA SEÑAL PENDIENTE.";
-
+    if(multiActive || pendingPrediction!==null){
+        systemToast.textContent="YA EXISTE UN CICLO 5S / 7S / 10S ACTIVO.";
+        if(fromBot && botAuto)scheduleBotCycle(500);
         return;
     }
 
 
-    const results =
-        analyzeAllDigits();
-
-
-    const best =
-        results[0];
-
-    const second =
-        results[1];
+    const allResults = analyzeAllDigits();
+    const mode = document.getElementById("modeSelector")?.value || "matches";
+    pendingMode = mode;
+    let results = allResults;
+    if(mode === "even") results = allResults.filter(x=>x.digit%2===0);
+    if(mode === "odd") results = allResults.filter(x=>x.digit%2!==0);
+    if(mode === "over") results = allResults.filter(x=>x.digit>4);
+    if(mode === "under") results = allResults.filter(x=>x.digit<=4);
+    if(results.length<2){showNoSignal("DATOS INSUFICIENTES PARA ESTE MODO",0,0);return;}
+    const best = results[0];
+    const second = results[1];
 
 
     const difference =
@@ -3281,8 +3240,8 @@ function generatePrediction(){
 
     prediction.style.display="block"; prediction.classList.remove("signal-bad"); prediction.classList.add("signal-good"); document.querySelector(".pred-title").textContent="SEÑAL POSITIVA — CANDIDATO PRINCIPAL";
 
-    predDigit.textContent =
-        best.digit;
+    predDigit.textContent = best.digit;
+    document.querySelector(".pred-title").textContent = mode==="matches" ? `SEÑAL POSITIVA — MATCHES · DÍGITO ${best.digit}` : mode==="even" ? "SEÑAL POSITIVA — EVEN · CUALQUIER PAR" : mode==="odd" ? "SEÑAL POSITIVA — ODD · CUALQUIER IMPAR" : mode==="over" ? "SEÑAL POSITIVA — OVER · MAYOR QUE 4" : "SEÑAL POSITIVA — UNDER · MENOR O IGUAL QUE 4";
 
 
     predScore.textContent =
@@ -3302,8 +3261,6 @@ function generatePrediction(){
             difference.toFixed(2)
         }`;
 
-
-    startTimingSession();
 
     pendingPrediction={
 
@@ -3338,9 +3295,11 @@ function generatePrediction(){
         createdAt:
             Date.now(),
         matched:false,
-        matchDigit:null
+        matchDigit:null,
+        mode:pendingMode
     };
 
+    startTimingSession();
 
     signals++;
 
@@ -3361,14 +3320,14 @@ function generatePrediction(){
         "PENDIENTE"
     );
 
-
+    startMultiEngine(best.digit,best.score,pendingMode);
     startTimer();
 
 
-    systemToast.textContent =
-        `CANDIDATO ${
-            best.digit
-        } GENERADO — ESPERANDO SIGUIENTE TICK`;
+    systemToast.textContent = fromBot
+        ? `BOT · CANDIDATO ${best.digit} GENERADO — 5S / 7S / 10S EN OBSERVACIÓN`
+        : `CANDIDATO ${best.digit} GENERADO — ESPERANDO SIGUIENTE TICK`;
+    if(fromBot)renderBotState(`BOT ACTIVO · CICLO #${botRuns} · CANDIDATO ${best.digit}`);
 }
 
 
@@ -3418,7 +3377,8 @@ function showNoSignal(
 function evaluatePendingPrediction(actualDigit){
     if(pendingPrediction===null)return;
     const p=pendingPrediction;
-    if(actualDigit===p.digit && !p.matched){
+    const isMatch=p.mode==="matches" ? actualDigit===p.digit : p.mode==="even" ? actualDigit%2===0 : p.mode==="odd" ? actualDigit%2!==0 : p.mode==="over" ? actualDigit>4 : actualDigit<=4;
+    if(isMatch && !p.matched){
         p.matched=true;
         p.matchDigit=actualDigit;
         p.matchTime=Date.now();
@@ -3429,17 +3389,8 @@ function evaluatePendingPrediction(actualDigit){
 }
 
 function finalizePendingPrediction(){
-    if(pendingPrediction===null)return;
-    const p=pendingPrediction, correct=!!p.matched;
-    if(correct){wins++;digitMemory[p.digit].wins++;}
-    else{losses++;digitMemory[p.digit].losses++;}
-    document.getElementById('winCount').textContent=wins;
-    document.getElementById('lossCount').textContent=losses;
-    const total=wins+losses;
-    if(total>0)document.getElementById('backtestRate').textContent=`TASA OBSERVADA: ${(wins/total*100).toFixed(2)}%`;
-    updateLastLog(correct?'ACIERTO':'FALLO');
-    renderHistory();
-    systemToast.textContent=correct?`ACIERTO — EL ${p.digit} APARECIÓ DURANTE LOS 10 SEGUNDOS`:`FALLO — EL CANDIDATO ${p.digit} NO APARECIÓ EN LOS 10 SEGUNDOS`;
+    /* Compatibilidad con versiones anteriores: el backtest real lo finaliza 10S. */
+    if(multiActive)return;
     pendingPrediction=null;
 }
 
@@ -3629,11 +3580,11 @@ function startTimer(){
     );
 
 
-    let seconds=Number(window.__G2LUDE_TEST_WINDOW||7);
+    let seconds=10;
 
 
     timerCount.textContent =
-        `${seconds}s`;
+        `${seconds}s · S1`;
 
 
     timerInterval =
@@ -3648,7 +3599,7 @@ function startTimer(){
                 ){
 
                     timerCount.textContent =
-                        `${seconds}s`;
+                        `${seconds}s · S${Math.max(1,11-seconds)}`;
 
                 }else{
 
@@ -3658,7 +3609,6 @@ function startTimer(){
 
                     timerCount.textContent =
                         "FIN";
-                    finishTimingSession();
                     finalizePendingPrediction();
                 }
 
@@ -3765,15 +3715,15 @@ function extractLastDigit(
 
 function connectDeriv(symbol){
     if(ws){try{ws.close()}catch(e){}}
-    recentDigits=[]; pendingPrediction=null; clearInterval(timerInterval); resetCandleChart(); resetTimingStats(); window.__g2ludeLastTickEpochMs=Date.now();
+    recentDigits=[]; pendingPrediction=null; clearInterval(timerInterval); resetTimingSession(); resetCandleChart();
     document.getElementById('statusText').textContent='CONECTANDO';
     document.getElementById('liveDot').style.background='#ffe600';
     const proto=location.protocol==='https:'?'wss':'ws';
     ws=new WebSocket(proto+'://'+location.host);
-    ws.onopen=()=>{try{ws.send(JSON.stringify({ticks:symbol,subscribe:1,symbol}));ws.send(JSON.stringify({action:'subscribe',symbol}));}catch(e){} document.getElementById('statusText').textContent='CONECTADO — ESPERANDO TICKS';document.getElementById('liveDot').style.background='#ffe600';systemToast.textContent=`ESPERANDO TICKS: ${symbol}`;clearTimeout(window.__tickTimeout);window.__tickTimeout=setTimeout(()=>{if(window.__g2ludeLastTickEpochMs && Date.now()-window.__g2ludeLastTickEpochMs>5000){document.getElementById('statusText').textContent='SIN TICKS RECIBIDOS';}},5000);};
-    ws.onmessage=event=>{try{const data=JSON.parse(event.data);if(data.error){systemToast.textContent='DERIV: '+(data.error.message||'ERROR');return;}const tick=data.tick||((data.status==='TICK RECIBIDO')?data:null);if(tick&&tick.quote!==undefined){document.getElementById('statusText').textContent='LIVE';document.getElementById('liveDot').style.background='#00ffcc';window.__g2ludeLastTickEpochMs=Date.now();processTickForCandle(tick); const liveMarket=document.getElementById("liveMarket"); if(liveMarket) liveMarket.innerHTML=`PRECIO EN VIVO: <strong>${tick.quote}</strong> &nbsp; | &nbsp; ÚLTIMO DÍGITO: <strong id="liveDigitBig" style="font-size:28px;color:#00ffcc">—</strong>`; const digit=extractLastDigit(tick);if(digit!==null){window.__g2ludeLastTickEpochMs=Number.isFinite(Number(tick.epoch))?Number(tick.epoch)*1000:Date.now();processTick(digit,tick);}}}catch(error){console.error('Error procesando tick',error)}};
+    ws.onopen=()=>{try{ws.send(JSON.stringify({ticks:symbol,subscribe:1,symbol}))}catch(e){} document.getElementById('statusText').textContent='LIVE';document.getElementById('liveDot').style.background='#00ffcc';systemToast.textContent=`RECIBIENDO TICKS: ${symbol}`;};
+    ws.onmessage=event=>{try{const data=JSON.parse(event.data);if(data.error){systemToast.textContent='DERIV: '+(data.error.message||'ERROR');return;}const tick=data.tick||((data.status==='TICK RECIBIDO')?data:null);if(tick&&tick.quote!==undefined){processTickForCandle(tick); const liveMarket=document.getElementById("liveMarket"); if(liveMarket) liveMarket.innerHTML=`PRECIO EN VIVO: <strong>${tick.quote}</strong> &nbsp; | &nbsp; ÚLTIMO DÍGITO: <strong id="liveDigitBig" style="font-size:28px;color:#00ffcc">—</strong>`; const digit=extractLastDigit(tick);if(digit!==null)processTick(digit);}}catch(error){console.error('Error procesando tick',error)}};
     ws.onerror=()=>{document.getElementById('statusText').textContent='ERROR';document.getElementById('liveDot').style.background='#ff3355';systemToast.textContent='ERROR DE CONEXIÓN CON EL SERVIDOR';};
-    ws.onclose=()=>{document.getElementById('statusText').textContent='DESCONECTADO — REINTENTANDO';document.getElementById('liveDot').style.background='#ff3355';clearTimeout(window.__reconnectTimer);window.__reconnectTimer=setTimeout(()=>connectDeriv(symbol),3000);};
+    ws.onclose=()=>{document.getElementById('statusText').textContent='DESCONECTADO';document.getElementById('liveDot').style.background='#ff3355';};
 }
 
 
@@ -3818,6 +3768,11 @@ document.getElementById(
             timerInterval
         );
 
+        resetTimingSession();
+        timingStats=Array.from({length:TIMING_SECONDS},()=>({signals:0,wins:0,losses:0}));
+        loadTimingStats();
+        loadMultiStats();
+
 
         document.getElementById(
             "signalCount"
@@ -3850,6 +3805,10 @@ document.getElementById(
         renderHistory();
 
         renderSignalLog();
+        if(botAuto){
+          renderBotState('BOT ACTIVO · SIN SEÑAL, REINTENTANDO');
+          scheduleBotCycle(1000);
+        }
 
 
         connectDeriv(
@@ -3859,12 +3818,29 @@ document.getElementById(
 );
 
 
+document.getElementById("modeSelector").addEventListener("change",()=>{
+  if(multiActive){systemToast.textContent="FINALIZA EL CICLO ACTUAL ANTES DE CAMBIAR EL MODO.";return;}
+  loadMultiStats();
+});
+
 /* =========================================================
    BOTÓN
    ========================================================= */
 
 document.getElementById("voiceButton").addEventListener("click",()=>{voiceEnabled=!voiceEnabled;document.getElementById("voiceButton").textContent=voiceEnabled?"🔊 VOZ ACTIVADA":"🔇 VOZ DESACTIVADA";if(voiceEnabled)hablar("Voz activada. Sistema listo.");});
-document.getElementById("predictButton").addEventListener("click",()=>{hablar("Ejecutando análisis matemático");generatePrediction();});
+document.getElementById("predictButton").addEventListener("click",()=>{
+  if(botAuto){botAuto=false;if(botTimer){clearTimeout(botTimer);botTimer=null;}renderBotState('BOT DETENIDO · MODO MANUAL');}
+  hablar("Ejecutando análisis matemático en cuatro, cinco, siete y diez segundos");
+  generatePrediction(false);
+});
+document.getElementById("botToggleButton").addEventListener("click",toggleAutoBot);
+document.getElementById("botDelaySelect").addEventListener("change",()=>{
+  if(botAuto){if(botTimer){clearTimeout(botTimer);botTimer=null;}renderBotState('BOT ACTIVO · PAUSA ACTUALIZADA');scheduleBotCycle(Number(document.getElementById('botDelaySelect').value||3000));}
+});
+document.getElementById("resetMultiButton").addEventListener("click",()=>{
+  resetMultiStats();
+  if(botAuto){if(botTimer){clearTimeout(botTimer);botTimer=null;}renderBotState('BOT ACTIVO · ESTADÍSTICAS REINICIADAS');scheduleBotCycle(500);}
+});
 
 
 /* =========================================================
@@ -3873,7 +3849,9 @@ document.getElementById("predictButton").addEventListener("click",()=>{hablar("E
 
 function iniciarFondoNumeros(){const c=document.getElementById('scannerBg'),x=c.getContext('2d');let fs=22,cols,ys=[];function size(){c.width=innerWidth;c.height=innerHeight;cols=Math.ceil(c.width/fs);ys=Array(cols).fill(0).map(()=>Math.random()*c.height)}size();addEventListener('resize',size);(function loop(){x.fillStyle='rgba(2,10,30,.20)';x.fillRect(0,0,c.width,c.height);x.font=fs+'px monospace';for(let i=0;i<cols;i++){x.fillStyle=i%6===0?'rgba(30,120,255,.72)':'rgba(10,70,220,.50)';x.fillText(Math.floor(Math.random()*10),i*fs,ys[i]);ys[i]+=fs;if(ys[i]>c.height&&Math.random()>.94)ys[i]=0}requestAnimationFrame(loop)})()}iniciarFondoNumeros();
 initUI();
-initTimingUI();
+loadTimingStats();
+loadMultiStats();
+renderBotState();
 
 resizeCandleCanvas();
 
@@ -3885,28 +3863,6 @@ window.addEventListener(
 connectDeriv(
     "R_100"
 );
-
-
-/* =========================================================
-   VENTANAS DE PRUEBA: 10 / 7 / 5 SEGUNDOS
-   ========================================================= */
-window.__G2LUDE_TEST_WINDOW = 7;
-
-document.querySelectorAll('.timing-mode').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-        window.__G2LUDE_TEST_WINDOW = Number(btn.dataset.window || 10);
-        document.querySelectorAll('.timing-mode').forEach(b=>{
-            b.classList.toggle('active', b===btn);
-        });
-        if(typeof timingLive !== 'undefined' && timingLive){
-            timingLive.textContent = `PRUEBA ${window.__G2LUDE_TEST_WINDOW}s`;
-        }
-        if(typeof timerCount !== 'undefined' && timerCount){
-            timerCount.textContent = `${window.__G2LUDE_TEST_WINDOW}s · S1`;
-        }
-    });
-});
-document.querySelector('.timing-mode[data-window="7"]')?.classList.add('active');
 
 </script>
 
