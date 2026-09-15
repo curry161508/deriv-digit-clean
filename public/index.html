@@ -3629,7 +3629,7 @@ function startTimer(){
     );
 
 
-    let seconds=10;
+    let seconds=Number(window.__G2LUDE_TEST_WINDOW||7);
 
 
     timerCount.textContent =
@@ -3890,7 +3890,7 @@ connectDeriv(
 /* =========================================================
    VENTANAS DE PRUEBA: 10 / 7 / 5 SEGUNDOS
    ========================================================= */
-window.__G2LUDE_TEST_WINDOW = 10;
+window.__G2LUDE_TEST_WINDOW = 7;
 
 document.querySelectorAll('.timing-mode').forEach(btn=>{
     btn.addEventListener('click', ()=>{
@@ -3906,7 +3906,7 @@ document.querySelectorAll('.timing-mode').forEach(btn=>{
         }
     });
 });
-document.querySelector('.timing-mode[data-window="10"]')?.classList.add('active');
+document.querySelector('.timing-mode[data-window="7"]')?.classList.add('active');
 
 </script>
 
