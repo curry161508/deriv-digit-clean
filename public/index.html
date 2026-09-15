@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -870,6 +871,7 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
         <strong>MEJOR MOMENTO:</strong> -- &nbsp; | &nbsp; RENDIMIENTO: --
     </div>
     <div class="timing-grid" id="timingGrid"></div>
+    <div id="timingHistory" style="margin-top:10px;font-size:11px;color:#9ec8e6;max-height:120px;overflow:auto"></div>
     <div class="timing-note">Cada segundo se evalúa contra el siguiente tick. El resultado es estadístico y necesita varias muestras; no garantiza el próximo dígito.</div>
 </div>
 
@@ -1973,100 +1975,89 @@ function renderTimingStats(activeSecond=0){
     }).join("");
 }
 
-function resetTimingSession(){
-    timingSession=null;
-    timingLastSecond=0;
-    renderTimingStats();
+function timingConfidence(best, secondBest){
+    if(!best) return {level:'débil', strong:false, gap:0};
+    const gap=secondBest ? best.score-secondBest.score : best.score;
+    const rate=timingRate(best.stat);
+    if(best.stat.signals>=TIMING_MIN_SAMPLES && rate>=65 && gap>=8) return {level:'fuerte',strong:true,gap};
+    if(best.stat.signals>=TIMING_MIN_SAMPLES && rate>=55 && gap>=4) return {level:'media',strong:false,gap};
+    return {level:'débil',strong:false,gap};
 }
 
+function getAvailableTimingCandidates(){
+    return timingStats.map((stat,index)=>({stat,index,score:timingScore(stat)}))
+      .filter(x=>x.stat.signals>0).sort((a,b)=>b.score-a.score);
+}
+
+function getBestTimingSecond(){
+    const candidates=getAvailableTimingCandidates().filter(x=>x.stat.signals>=TIMING_MIN_SAMPLES);
+    return candidates.length ? candidates[0] : null;
+}
+
+function renderTimingHistory(){
+    const el=document.getElementById('timingHistory');
+    if(!el || !timingSession){ if(el) el.textContent=''; return; }
+    el.innerHTML='<b>HISTORIAL DE CAMBIOS</b><br>'+timingSession.changeHistory.slice(-12).map(x=>
+      `${x.time} → segundo ${x.second}, ${x.probability.toFixed(1)}% (${x.level})`).join('<br>');
+}
+
+function renderTimingStats(activeSecond=0){
+    const grid=document.getElementById('timingGrid'), bestEl=document.getElementById('timingBest'), liveEl=document.getElementById('timingLive');
+    if(!grid || !bestEl || !liveEl) return;
+    const candidates=getAvailableTimingCandidates(), best=getBestTimingSecond(), secondBest=candidates[1];
+    const conf=timingConfidence(best,secondBest);
+    liveEl.textContent=activeSecond>0 ? `SEGUNDO ${activeSecond}/10 · EVALUANDO` : (best ? 'MOMENTO APRENDIDO' : 'ESPERANDO DATOS');
+    if(best){
+      const st=best.stat;
+      bestEl.innerHTML=`<strong>MEJOR MOMENTO: S${best.index+1}</strong> | PROBABILIDAD ESTIMADA: ${timingRate(st).toFixed(1)}% | CONFIANZA: ${conf.level.toUpperCase()} | VENTAJA: ${conf.gap.toFixed(1)} puntos`;
+    }else bestEl.innerHTML='<strong>MEJOR MOMENTO: --</strong> | ESPERANDO DATOS SUFICIENTES';
+    grid.innerHTML=timingStats.map((st,i)=>{const rate=st.signals?timingRate(st):null;return `<div class="timing-cell ${activeSecond===i+1?'active':''} ${best&&best.index===i?'best':''}"><div class="timing-sec">S${i+1}</div><div class="timing-rate">${rate===null?'--':rate.toFixed(0)+'%'}</div><div class="timing-sample">${st.signals?st.wins+'/'+st.signals:'--'}</div></div>`}).join('');
+    renderTimingHistory();
+}
+
+function resetTimingSession(){ timingSession=null; timingLastSecond=0; renderTimingStats(); }
+
 function startTimingSession(){
-    const mode=pendingMode || document.getElementById("modeSelector")?.value || "matches";
-    const currentModeMetrics=mode==='matches' ? null : calculateModeMetrics(mode);
+    const mode=pendingMode || document.getElementById('modeSelector')?.value || 'matches';
     const currentCandidate=mode==='matches' ? (pendingPrediction?.digit ?? null) : mode;
-    timingSession={
-        startMs:Date.now(),
-        startEpochMs:Date.now(),
-        snapshots:{},
-        pendingBySecond:{},
-        mode,
-        candidate:currentCandidate
-    };
-    timingLastSecond=0;
-    renderTimingStats(1);
-    updateEntryPanel(1);
-    const learned=getBestTimingSecond();
-    const basePct=(timingBaseline(mode)*100).toFixed(0);
-    if(learned){
-        hablar(`Motor de momento óptimo: modo ${modeLabel(mode)}. Mejor momento histórico, segundo ${learned.index+1}, con rendimiento de ${timingRate(learned.stat).toFixed(1)} por ciento, frente a una base teórica de ${basePct} por ciento. La sesión de momento comienza ahora.`);
-    }else{
-        hablar(`Motor de momento óptimo: modo ${modeLabel(mode)}. Todavía aprendiendo. La base teórica es ${basePct} por ciento. La sesión comienza ahora y medirá el rendimiento por segundo.`);
-    }
+    timingSession={startMs:Date.now(),startEpochMs:Date.now(),snapshots:{},pendingBySecond:{},mode,candidate:currentCandidate,lastAnnouncedSecond:null,lastAnnouncedScore:-Infinity,stableCount:0,lastBestKey:null,changeHistory:[],voiceTest:!voiceEnabled};
+    timingLastSecond=0; renderTimingStats(1); updateEntryPanel(1);
+    hablar(`Motor de momento óptimo iniciado. Evaluando datos y comparando los segundos disponibles. No es una garantía.`);
 }
 
 function processTimingTick(digit){
     if(!timingSession) return;
-
-    const elapsed=(Date.now()-timingSession.startMs)/1000;
-    const second=Math.floor(elapsed)+1;
-
-    const resolveSecond=second-1;
+    const elapsed=(Date.now()-timingSession.startMs)/1000, second=Math.floor(elapsed)+1, resolveSecond=second-1;
     if(resolveSecond>=1 && resolveSecond<=TIMING_SECONDS && timingSession.pendingBySecond[resolveSecond]){
-        const candidate=timingSession.pendingBySecond[resolveSecond];
-        const st=timingStats[resolveSecond-1];
-        st.signals++;
-        if(timingConditionMatches(timingSession.mode,digit,candidate.candidate)) st.wins++; else st.losses++;
-        delete timingSession.pendingBySecond[resolveSecond];
-        saveTimingStats();
-        renderTimingStats(Math.min(Math.max(second,1),TIMING_SECONDS));
-        if(resolveSecond===TIMING_SECONDS){
-            const completedMode=timingSession.mode;
-            const bestAfter=getBestTimingSecond();
-            if(bestAfter){
-                hablar(`Motor de momento óptimo: sesión de ${modeLabel(completedMode)} finalizada. El mejor momento aprendido es el segundo ${bestAfter.index+1}, con ${timingRate(bestAfter.stat).toFixed(1)} por ciento de acierto en ${bestAfter.stat.signals} muestras.`);
-            }else{
-                hablar(`Motor de momento óptimo: sesión de ${modeLabel(completedMode)} finalizada. Todavía no hay suficientes muestras para declarar un mejor segundo.`);
-            }
-            timingSession=null;
-            timingLastSecond=0;
-            renderTimingStats();
-            return;
-        }
+      const candidate=timingSession.pendingBySecond[resolveSecond], st=timingStats[resolveSecond-1]; st.signals++;
+      if(timingConditionMatches(timingSession.mode,digit,candidate.candidate)) st.wins++; else st.losses++;
+      delete timingSession.pendingBySecond[resolveSecond]; saveTimingStats();
     }
-
     if(second<1 || second>TIMING_SECONDS) return;
-
-    if(!timingSession.snapshots[second]){
-        const mode=timingSession.mode;
-        let candidate;
-        let score=0;
-        if(mode==='matches'){
-            const results=analyzeAllDigits();
-            if(results.length){candidate=results[0].digit;score=results[0].score;}
-        }else{
-            const m=calculateModeMetrics(mode);
-            candidate=mode;
-            score=m.score;
-        }
-        if(candidate!==undefined && candidate!==null){
-            timingSession.snapshots[second]={candidate,score,createdAt:Date.now()};
-            timingSession.pendingBySecond[second]=timingSession.snapshots[second];
-            timingLastSecond=second;
-            renderTimingStats(second);
-            updateEntryPanel(second);
-            const learnedNow=getBestTimingSecond();
-            if(learnedNow && second===learnedNow.index+1){
-                hablarPantalla(`Motor de momento óptimo: el segundo ${second} destaca para ${modeLabel(mode)}. Continúo comprobándolo con datos reales.`);
-            }
-            if(voiceEnabled && vozDetalle()==='full') hablar(`Momento ${second} de 10 evaluado para ${modeLabel(mode)}.`);
-            const timingText=document.getElementById("timingBest");
-            if(timingText){
-                const learned=getBestTimingSecond();
-                const learnedText=learned ? `MEJOR HISTÓRICO S${learned.index+1}` : "AÚN APRENDIENDO";
-                const candidateText=mode==='matches' ? `D${candidate}` : modeLabel(mode);
-                timingText.innerHTML=`<strong>${learnedText}</strong> &nbsp; | &nbsp; AHORA S${second}: ${candidateText} · SCORE ${Number(score).toFixed(1)}`;
-            }
-        }
-    }
+    const mode=timingSession.mode;
+    let candidate,score=0;
+    if(mode==='matches'){const results=analyzeAllDigits(); if(results.length){candidate=results[0].digit;score=results[0].score;}}
+    else {const m=calculateModeMetrics(mode);candidate=mode;score=m.score;}
+    if(candidate===undefined || candidate===null) return;
+    timingSession.snapshots[second]={candidate,score,createdAt:Date.now()}; timingSession.pendingBySecond[second]=timingSession.snapshots[second]; timingLastSecond=second;
+    const candidates=getAvailableTimingCandidates(), best=getBestTimingSecond(), secondBest=candidates[1], conf=timingConfidence(best,secondBest);
+    if(best){
+      const key=`${best.index+1}`, materiallyChanged=timingSession.lastBestKey!==key && conf.gap>=4;
+      if(timingSession.lastBestKey===key) timingSession.stableCount++; else timingSession.stableCount=1;
+      if(materiallyChanged || (conf.gap>=4 && timingSession.stableCount>=2)){
+        const prob=timingRate(best.stat), now=new Date().toLocaleTimeString('es-CL',{hour12:false});
+        timingSession.changeHistory.push({time:now,second:best.index+1,probability:prob,level:conf.level}); timingSession.lastBestKey=key;
+        if(voiceEnabled && !timingSession.voiceTest) hablar(`Actualización: el mejor punto estimado ahora es el segundo ${best.index+1}. Probabilidad actual ${prob.toFixed(1)} por ciento.`);
+      }
+      const margin=best.index<9?`segundos ${best.index+1} a ${best.index+2}`:`segundo ${best.index+1}`;
+      if(conf.strong && conf.gap>=8 && voiceEnabled && !timingSession.voiceTest && timingSession.lastAnnouncedSecond!==best.index+1){
+        hablar(`Entrada estimada confirmada por los datos: ${margin}. Confianza fuerte, ${timingRate(best.stat).toFixed(1)} por ciento.`); timingSession.lastAnnouncedSecond=best.index+1;
+      }
+      document.getElementById('timingBest').innerHTML=`<strong>MEJOR PROBABILIDAD ACTUAL: S${best.index+1}</strong> | ${timingRate(best.stat).toFixed(1)}% | CONFIANZA ${conf.level.toUpperCase()} | ENTRADA ESTIMADA: ${margin}`;
+    } else document.getElementById('timingBest').innerHTML='<strong>EVALUANDO…</strong> | ESPERANDO DATOS SUFICIENTES';
+    renderTimingStats(second); updateEntryPanel(second);
+    if(voiceEnabled && vozDetalle()==='full' && !timingSession.voiceTest) hablarCuenta(second);
+    if(second===TIMING_SECONDS){hablar(`Sesión finalizada. El resultado es una estimación estadística, no una garantía.`); resetTimingSession();}
 }
 
 const digitMemory =
@@ -3984,10 +3975,14 @@ document.addEventListener('click',e=>{
   window.analyzeAllDigits=function(){return Array.from({length:10},(_,d)=>metrics18(d)).sort((a,b)=>b.score-a.score);};
   function addPanel18(){
     if(document.getElementById('mathUpgradePanel'))return;
-    const host=document.getElementById('syncPanel')||document.querySelector('#analysisPanel,#analysis,#rankingPanel')||document.body;
-    const box=document.createElement('section');box.id='mathUpgradePanel';box.className='panel';box.style.cssText='margin:10px 0 0;padding:10px;border:1px solid rgba(22,140,255,.35);border-radius:10px;background:rgba(4,20,55,.55);color:#dceaff;width:100%;box-sizing:border-box;position:static;';
+    const box=document.createElement('section');
+    box.id='mathUpgradePanel';
+    box.className='panel';
+    box.style.cssText='margin:12px 0 14px;padding:16px;border:1px solid #1677ff;border-radius:14px;background:rgba(4,20,55,.78);color:#dceaff';
     box.innerHTML='<h3 style="margin:0 0 10px">MOTOR MATEMÁTICO V18</h3><div id="mathUpgradeText">Acumulando datos...</div>';
-    host.appendChild(box);
+    const topHud=document.querySelector('.top-hud');
+    if(topHud && topHud.parentNode) topHud.parentNode.insertBefore(box,topHud.nextSibling);
+    else document.querySelector('.phone-frame')?.prepend(box);
   }
   function render18(){
     addPanel18();const el=document.getElementById('mathUpgradeText');if(!el)return;
