@@ -498,6 +498,14 @@ button:active{
 .chart-panel .chart-wrap{height:220px!important}
 .chart-info{font-size:8px}
 
+
+/* =========================================================
+   V17 · SINCRONIZACIÓN + ENTRADA FAVORABLE
+   ========================================================= */
+.sync-panel{margin:0 0 14px;padding:14px;border:1px solid rgba(0,210,255,.45);border-radius:16px;background:linear-gradient(145deg,rgba(5,28,52,.99),rgba(2,14,28,.99));box-shadow:0 0 28px rgba(0,130,255,.12)}
+.sync-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:10px}.sync-state{font-size:22px;font-weight:1000;letter-spacing:1px;padding:14px;border-radius:12px;text-align:center;border:1px solid rgba(255,230,0,.35);background:rgba(255,230,0,.06);color:#ffe600}.sync-state.syncing{color:#ffd84d;border-color:#ffd84d;background:rgba(255,216,77,.08)}.sync-state.live{color:#19f5a5;border-color:#19f5a5;background:rgba(25,245,165,.08);box-shadow:0 0 22px rgba(25,245,165,.14)}.sync-state.error{color:#ff496d;border-color:#ff496d;background:rgba(255,73,109,.08)}
+.sync-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.sync-metric{padding:9px;border-radius:9px;background:#061a2e;border:1px solid rgba(22,140,255,.22);text-align:center}.sync-metric span{display:block;font-size:9px;color:#78bde6}.sync-metric b{display:block;margin-top:3px;font-size:15px;color:#fff}.sync-note{margin-top:8px;font-size:9px;color:#7199b8;text-align:center}
+.entry-panel{margin:0 0 14px;padding:20px;border-radius:18px;border:2px solid #168cff;background:radial-gradient(circle at 50% 35%,rgba(0,180,255,.20),rgba(3,18,34,.99) 65%);box-shadow:0 0 36px rgba(0,140,255,.20);text-align:center}.entry-kicker{font-size:13px;font-weight:1000;letter-spacing:2px;color:#9edcff}.entry-second{font-size:68px;line-height:.95;font-weight:1000;margin:8px 0;color:#fff;text-shadow:0 0 25px rgba(0,190,255,.65)}.entry-second small{font-size:22px}.entry-confidence{font-size:19px;font-weight:1000;color:#8fe1ff}.entry-history{font-size:14px;font-weight:900;color:#cdeaff;margin-top:6px}.entry-status{margin:12px auto 0;padding:11px 15px;max-width:680px;border-radius:12px;font-size:22px;font-weight:1000;letter-spacing:1px;background:#10283e;color:#fff;border:2px solid #3a6280}.entry-status.green{color:#071c13;background:#19f5a5;border-color:#19f5a5;box-shadow:0 0 24px rgba(25,245,165,.35)}.entry-status.yellow{color:#241d00;background:#ffe600;border-color:#ffe600}.entry-status.red{color:#fff;background:#d91e45;border-color:#ff496d}.entry-details{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.entry-details div{padding:8px;border-radius:8px;background:rgba(0,20,40,.7);border:1px solid rgba(22,140,255,.25);font-size:10px;color:#9ec8e6}.entry-details b{display:block;color:#fff;font-size:12px;margin-top:2px}.smart-countdown{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:11px}.smart-countdown div{padding:7px 2px;border-radius:7px;border:1px solid rgba(22,140,255,.25);background:#061a2e;color:#789bb7;font-size:9px;font-weight:900}.smart-countdown div.active{color:#fff;border-color:#00d9ff;box-shadow:0 0 12px rgba(0,217,255,.2)}.smart-countdown div.target{color:#071c13;background:#19f5a5;border-color:#19f5a5}.smart-countdown div.past{opacity:.55}.smart-countdown b{display:block;font-size:15px;margin-bottom:2px}@media(max-width:700px){.sync-grid{grid-template-columns:1fr}.entry-second{font-size:54px}.entry-status{font-size:18px}.entry-details{grid-template-columns:1fr}.smart-countdown{grid-template-columns:repeat(5,1fr)}}
 </style>
 <style>
 /* Mejor legibilidad en celular */
@@ -766,6 +774,34 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 
 </div>
 
+
+<!-- V17 · ESTADO REAL DE CONEXIÓN -->
+<div class="sync-panel" id="syncPanel">
+  <div class="sync-grid">
+    <div class="sync-state" id="syncState">🔴 CONECTANDO...</div>
+    <div class="sync-metrics">
+      <div class="sync-metric"><span>TICKS VÁLIDOS</span><b id="syncTickCount">0/5</b></div>
+      <div class="sync-metric"><span>LATENCIA</span><b id="latencyValue">--</b></div>
+      <div class="sync-metric"><span>FLUJO</span><b id="flowValue">ESPERANDO</b></div>
+    </div>
+  </div>
+  <div class="sync-note">LIVE CONFIRMADO solo después de 5 ticks válidos consecutivos. La latencia es una estimación basada en la marca temporal del tick y puede incluir desfase de reloj.</div>
+</div>
+
+<!-- V17 · PANEL GIGANTE DE ENTRADA -->
+<div class="entry-panel" id="entryPanel">
+  <div class="entry-kicker">ENTRADA MÁS FAVORABLE</div>
+  <div class="entry-second" id="entrySecond">-- <small>SEGUNDO</small></div>
+  <div class="entry-confidence" id="entryConfidence">CONFIRMACIÓN: ESPERANDO DATOS</div>
+  <div class="entry-history" id="entryHistory">RENDIMIENTO HISTÓRICO: --</div>
+  <div class="entry-status red" id="entryStatus">🔴 NO ENTRAR</div>
+  <div class="entry-details">
+    <div>MOTOR PRINCIPAL<b id="entryMotor">—</b></div>
+    <div>MEJOR VENTANA<b id="entryWindow">—</b></div>
+    <div>DIFERENCIA<b id="entryGap">—</b></div>
+  </div>
+  <div class="smart-countdown" id="smartCountdown"></div>
+</div>
 
 <!-- PREDICCIÓN -->
 
@@ -1472,6 +1508,76 @@ const VOICE_ONLY_ON_ACTION = true;
 let voiceSpeaking = false;
 let voiceLastMilestone = 0;
 
+/* V17 · sincronización y puerta de confirmación */
+const LIVE_MIN_TICKS=5;
+let liveValidTicks=0;
+let lastTickReceiveMs=0;
+let lastTickEpochMs=0;
+let clockOffsetMs=null;
+let estimatedLatencyMs=null;
+let flowStatus='ESPERANDO';
+let entryGate={confirmed:false,bestSecond:null,bestWindow:null,confidence:0,historyRate:null,gap:0};
+function setSyncState(kind,text){const el=document.getElementById('syncState');if(!el)return;el.className='sync-state '+kind;el.textContent=text;}
+function updateSyncUI(){
+  const c=document.getElementById('syncTickCount'); if(c)c.textContent=Math.min(liveValidTicks,LIVE_MIN_TICKS)+'/'+LIVE_MIN_TICKS;
+  const lv=document.getElementById('latencyValue'); if(lv)lv.textContent=estimatedLatencyMs===null?'--':(estimatedLatencyMs/1000).toFixed(1)+'s';
+  const fv=document.getElementById('flowValue'); if(fv)fv.textContent=flowStatus;
+}
+function registerTickSync(tick){
+  const now=Date.now(); const epoch=Number(tick?.epoch)*1000;
+  if(Number.isFinite(epoch)&&epoch>0){
+    const raw=now-epoch;
+    if(clockOffsetMs===null)clockOffsetMs=raw; else clockOffsetMs=clockOffsetMs*.9+raw*.1;
+    estimatedLatencyMs=Math.max(0,raw-clockOffsetMs);
+  }
+  const gap=lastTickReceiveMs?now-lastTickReceiveMs:null;
+  lastTickReceiveMs=now; lastTickEpochMs=Number.isFinite(epoch)?epoch:lastTickEpochMs;
+  /* En símbolos Volatility 1s, el exceso sobre ~1s entre recepciones
+     sirve como indicador práctico de retraso del flujo. */
+  if(gap!==null) estimatedLatencyMs=Math.max(0,gap-1000);
+  if(gap!==null && gap>2500){ liveValidTicks=0; flowStatus='INTERRUMPIDO'; setSyncState('syncing','🟡 SINCRONIZANDO TICKS...'); }
+  else {
+    liveValidTicks=Math.min(LIVE_MIN_TICKS,liveValidTicks+1);
+    if(liveValidTicks>=LIVE_MIN_TICKS){
+      setSyncState('live','🟢 LIVE CONFIRMADO');
+      const st=document.getElementById('statusText'); if(st)st.textContent='LIVE CONFIRMADO';
+      if(estimatedLatencyMs!==null) flowStatus=estimatedLatencyMs<=800?'ÓPTIMO':estimatedLatencyMs<=1500?'ACEPTABLE':'RETRASADO';
+      else flowStatus='ESTABLE';
+    }else{setSyncState('syncing','🟡 SINCRONIZANDO TICKS...');flowStatus='ACUMULANDO';}
+  }
+  updateSyncUI();
+  updateEntryPanel();
+}
+function bestHistoricalTiming(){const b=getBestTimingSecond();return b?{second:b.index+1,rate:timingRate(b.stat),score:b.score,samples:b.stat.signals}:null;}
+function bestWindowCandidate(){const arr=MULTI_WINDOWS.map(w=>({w,st:multiWindows[w]?.stats})).filter(x=>x.st&&x.st.signals>0);arr.sort((a,b)=>multiRate(b.st)-multiRate(a.st));return arr[0]||null;}
+function updateEntryPanel(activeSecond=0){
+  const secondEl=document.getElementById('entrySecond'), confEl=document.getElementById('entryConfidence'), histEl=document.getElementById('entryHistory'), statusEl=document.getElementById('entryStatus');
+  const motorEl=document.getElementById('entryMotor'), winEl=document.getElementById('entryWindow'), gapEl=document.getElementById('entryGap');
+  if(!secondEl||!statusEl)return;
+  const learned=bestHistoricalTiming(); const bp=bestWindowCandidate();
+  const p=pendingPrediction;
+  const mainOk=!!p && Number(p.quality)>=55;
+  const windowOk=!!bp && bp.st.signals>=3;
+  const learnedOk=!!learned;
+  const gapOk=!p || p.mode!=='matches' ? (!!p && Number(p.quality)>=55) : Number(p.difference)>=3;
+  const liveOk=liveValidTicks>=LIVE_MIN_TICKS;
+  const latencyOk=estimatedLatencyMs===null || estimatedLatencyMs<=1500;
+  const stable=mainOk&&windowOk&&learnedOk&&gapOk&&liveOk&&latencyOk;
+  entryGate={confirmed:stable,bestSecond:learned?.second||null,bestWindow:bp?.w||null,confidence:p?.quality||0,historyRate:learned?.rate||null,gap:p?.difference||0};
+  secondEl.innerHTML=learned?`${learned.second} <small>SEGUNDO</small>`:'-- <small>SEGUNDO</small>';
+  confEl.textContent=stable?`CONFIRMACIÓN: ${Number(p.quality).toFixed(0)}% · ESTABLE`:`CONFIRMACIÓN: ${mainOk?Number(p.quality).toFixed(0)+'%':'ESPERANDO ANÁLISIS'} · ${liveOk?'LIVE':'SIN LIVE'}`;
+  histEl.textContent=learned?`RENDIMIENTO HISTÓRICO: ${learned.rate.toFixed(1)}% · ${learned.samples} muestras`:'RENDIMIENTO HISTÓRICO: AÚN APRENDIENDO';
+  motorEl.textContent=p?(p.mode==='matches'?'D'+p.digit:modeLabel(p.mode)):'—';
+  winEl.textContent=bp?`${bp.w}S · ${multiRate(bp.st).toFixed(1)}%`:'—';
+  gapEl.textContent=p?(p.mode==='matches'?p.difference.toFixed(2):'CONF. BINARIA'):'—';
+  if(!stable){statusEl.className='entry-status '+(liveOk&&mainOk?'yellow':'red');statusEl.textContent=liveOk&&mainOk?'🟡 ESPERAR':'🔴 NO ENTRAR';}
+  else if(activeSecond && learned && activeSecond===learned.second){statusEl.className='entry-status green';statusEl.textContent='🟢 ENTRAR · SEGUNDO OBJETIVO';}
+  else{statusEl.className='entry-status yellow';statusEl.textContent='🟡 PREPARAR · ESPERAR SEGUNDO '+learned.second;}
+  renderSmartCountdown(activeSecond,learned?.second||null);
+}
+function renderSmartCountdown(active,target){const box=document.getElementById('smartCountdown');if(!box)return;box.innerHTML='';for(let i=1;i<=10;i++){const d=document.createElement('div');let label='ESPERAR';if(target){if(i===target)label='ENTRAR';else if(i===target-1)label='PREPARAR';else if(i>target)label='EJECUTAR';}d.className=(i===active?'active ':'')+(target&&i===target?'target ':'')+(active&&i<active?'past':'');d.innerHTML=`<b>${i}</b>${label}`;box.appendChild(d);}}
+
+
 function vozDetalle(){return document.getElementById('voiceDetailSelect')?.value||'full';}
 function hablarTick(digit,count){if(vozDetalle()!=='full')return; if(count<=20 || count%10===0) hablar(`Tick ${count}. Último dígito ${digit}.`);}
 function hablarPantalla(texto){if(vozDetalle()==='full')hablar(texto);}
@@ -1701,6 +1807,8 @@ function updateMultiEngine(){
   });
   const o10=multiWindows[10];
   if(o10?.state==='active'&&timerCount)timerCount.textContent=formatRemaining(o10)+' · 10S';
+  const activeSecond=o10?.state==='active'?Math.min(10,Math.max(1,Math.floor((Date.now()-o10.start)/1000)+1)):0;
+  updateEntryPanel(activeSecond);
   renderMultiStats();
   renderPredictionTrace();
   if(finished===4){
@@ -1885,6 +1993,7 @@ function startTimingSession(){
     };
     timingLastSecond=0;
     renderTimingStats(1);
+    updateEntryPanel(1);
     const learned=getBestTimingSecond();
     const basePct=(timingBaseline(mode)*100).toFixed(0);
     if(learned){
@@ -1943,6 +2052,7 @@ function processTimingTick(digit){
             timingSession.pendingBySecond[second]=timingSession.snapshots[second];
             timingLastSecond=second;
             renderTimingStats(second);
+            updateEntryPanel(second);
             const learnedNow=getBestTimingSecond();
             if(learnedNow && second===learnedNow.index+1){
                 hablarPantalla(`Motor de momento óptimo: el segundo ${second} destaca para ${modeLabel(mode)}. Continúo comprobándolo con datos reales.`);
@@ -3155,6 +3265,7 @@ function generatePrediction(fromBot=false){
   predGap.textContent=mode==='matches'?`Ventaja sobre #2: ${difference.toFixed(2)}`:`PROB. 100T: ${(best.p100*100).toFixed(1)}% · BASE ${(modeBaseline*100).toFixed(0)}%`;
 
   pendingPrediction={digit:best.digit,score:best.score,quality,difference,metrics:{frequency:best.frequencyScore,momentum:best.momentumScore,consistency:best.consistencyScore,stability:best.stabilityScore,recency:best.recencyScore},createdAt:Date.now(),matched:false,matchDigit:null,mode:pendingMode};
+  updateEntryPanel();
   startTimingSession();signals++;digitMemory[best.digit].signals++;document.getElementById("signalCount").textContent=signals;
   addSignalLog(best,"PENDIENTE");startMultiEngine(best.digit,best.score,pendingMode);startTimer();
   systemToast.textContent=fromBot?`BOT · ${modeLabel(mode)} · CICLO ${botRuns} · 4S / 5S / 7S / 10S`:`${modeLabel(mode)} · PREDICCIÓN INICIADA · 4S / 5S / 7S / 10S`;
@@ -3599,15 +3710,17 @@ function requestVolatilityCatalog(socket){
 function connectDeriv(symbol){
     if(ws){try{ws.close()}catch(e){}}
     recentDigits=[]; pendingPrediction=null; clearInterval(timerInterval); resetTimingSession(); resetCandleChart();
-    document.getElementById('statusText').textContent='CONECTANDO';
+    document.getElementById('statusText').textContent='CONECTANDO...';
     document.getElementById('liveDot').style.background='#ffe600';
+    liveValidTicks=0; lastTickReceiveMs=0; clockOffsetMs=null; estimatedLatencyMs=null; flowStatus='ESPERANDO'; updateSyncUI(); setSyncState('','🔴 CONECTANDO...'); updateEntryPanel();
     const proto=location.protocol==='https:'?'wss':'ws';
     ws=new WebSocket(proto+'://'+location.host);
     ws.onopen=()=>{
       requestVolatilityCatalog(ws);
       try{ws.send(JSON.stringify({ticks:symbol,subscribe:1,symbol}))}catch(e){}
-      document.getElementById('statusText').textContent='LIVE';
-      document.getElementById('liveDot').style.background='#00ffcc';
+      document.getElementById('statusText').textContent='SINCRONIZANDO...';
+      document.getElementById('liveDot').style.background='#ffe600';
+      liveValidTicks=0; flowStatus='ACUMULANDO'; updateSyncUI(); setSyncState('syncing','🟡 SINCRONIZANDO TICKS...');
       systemToast.textContent=`RECIBIENDO TICKS: ${symbol}`; voiceLastMilestone=0; hablar(`Conexión en vivo establecida. Activo ${symbol}. Recibiendo ticks. El escáner está escuchando el mercado y acumulando datos.`);
     };
     ws.onmessage=event=>{
@@ -3620,6 +3733,7 @@ function connectDeriv(symbol){
         if(data.error){systemToast.textContent='DERIV: '+(data.error.message||'ERROR');return;}
         const tick=data.tick||((data.status==='TICK RECIBIDO')?data:null);
         if(tick&&tick.quote!==undefined){
+          registerTickSync(tick);
           processTickForCandle(tick);
           const liveMarket=document.getElementById("liveMarket");
           if(liveMarket) liveMarket.innerHTML=`PRECIO EN VIVO: <strong>${tick.quote}</strong> &nbsp; | &nbsp; ÚLTIMO DÍGITO: <strong id="liveDigitBig" style="font-size:28px;color:#00ffcc">—</strong>`;
@@ -3628,8 +3742,8 @@ function connectDeriv(symbol){
         }
       }catch(error){console.error('Error procesando tick',error)}
     };
-    ws.onerror=()=>{document.getElementById('statusText').textContent='ERROR';document.getElementById('liveDot').style.background='#ff3355';systemToast.textContent='ERROR DE CONEXIÓN CON EL SERVIDOR';hablar('Error de conexión. El escáner no está recibiendo datos en este momento.');};
-    ws.onclose=()=>{document.getElementById('statusText').textContent='DESCONECTADO';document.getElementById('liveDot').style.background='#ff3355';hablar('Conexión cerrada. El escáner quedó desconectado.');};
+    ws.onerror=()=>{document.getElementById('statusText').textContent='ERROR';document.getElementById('liveDot').style.background='#ff3355';setSyncState('error','🔴 CONEXIÓN CON ERROR');flowStatus='ERROR';updateSyncUI();systemToast.textContent='ERROR DE CONEXIÓN CON EL SERVIDOR';hablar('Error de conexión. El escáner no está recibiendo datos en este momento.');};
+    ws.onclose=()=>{document.getElementById('statusText').textContent='DESCONECTADO';document.getElementById('liveDot').style.background='#ff3355';setSyncState('error','🔴 DESCONECTADO');flowStatus='DESCONECTADO';updateSyncUI();hablar('Conexión cerrada. El escáner quedó desconectado.');};
 }
 
 
@@ -3790,7 +3904,7 @@ if(voiceButton) voiceButton.onclick=()=>{
   if(voiceEnabled){
     // Voz iniciada directamente por el toque del usuario.
     try{speechSynthesis.cancel();speechSynthesis.resume();}catch(e){}
-    setTimeout(()=>hablar("Voz activada.",true),30);
+    hablar("Voz activada.",true);
   }else detenerVoz();
 };
 const predictButton=document.getElementById("predictButton");
@@ -3840,6 +3954,51 @@ document.addEventListener('click',e=>{
   const t=(b.innerText||b.textContent||'').trim().replace(/\s+/g,' ');
   if(t && typeof hablar==='function') hablar(t,true);
 },{capture:true});
+
+/* =========================================================
+   MEJORA MATEMÁTICA V18 — SUAVIZADO, ENTROPÍA Y CONSENSO
+   ========================================================= */
+(function(){
+  const clamp18=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
+  const mean18=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+  const sd18=a=>{if(a.length<2)return 0;const m=mean18(a);return Math.sqrt(mean18(a.map(x=>(x-m)**2)));};
+  const entropy18=a=>{if(!a.length)return 0;const c=Array(10).fill(0);a.forEach(d=>{if(Number.isInteger(d)&&d>=0&&d<=9)c[d]++});return -c.filter(Boolean).reduce((s,n)=>{const q=n/a.length;return s+q*Math.log2(q)},0)/Math.log2(10);};
+  const window18=(n)=>recentDigits.slice(-n);
+  function metrics18(d){
+    const all=recentDigits, w20=window18(20),w50=window18(50),w100=window18(100);
+    const count=a=>a.filter(x=>x===d).length;
+    const rates=[w20,w50,w100].map(a=>(count(a)+1)/(a.length+10));
+    const base=.1, z=rates.map((p,i)=>a=>0);
+    const z20=(rates[0]-base)/Math.sqrt(base*(1-base)/Math.max(1,w20.length));
+    const z50=(rates[1]-base)/Math.sqrt(base*(1-base)/Math.max(1,w50.length));
+    const z100=(rates[2]-base)/Math.sqrt(base*(1-base)/Math.max(1,w100.length));
+    const recent=clamp18(50+z20*14), historical=clamp18(50+z100*12);
+    const momentum=clamp18(50+(rates[0]-rates[2])*180);
+    const consistency=clamp18(100-sd18(rates)*260);
+    const gap=all.length-lastIndex18(d,all);
+    const gapScore=gap===all.length?25:clamp18(75-Math.abs(gap-9)*5);
+    const score=clamp18(recent*.30+historical*.25+momentum*.18+consistency*.17+gapScore*.10);
+    return {digit:d,p20:rates[0],p50:rates[1],p100:rates[2],z20,z50,z100,frequencyScore:historical,momentumScore:momentum,consistencyScore:consistency,stabilityScore:consistency,recencyScore:recent,gap,entropy:entropy18(all),score};
+  }
+  function lastIndex18(d,a){for(let i=a.length-1;i>=0;i--)if(a[i]===d)return a.length-1-i;return a.length;}
+  window.analyzeAllDigits=function(){return Array.from({length:10},(_,d)=>metrics18(d)).sort((a,b)=>b.score-a.score);};
+  function addPanel18(){
+    if(document.getElementById('mathUpgradePanel'))return;
+    const host=document.querySelector('#analysisPanel,#analysis,#rankingPanel')||document.body;
+    const box=document.createElement('section');box.id='mathUpgradePanel';box.className='panel';box.style.cssText='margin:14px 0;padding:16px;border:1px solid #1677ff;border-radius:14px;background:rgba(4,20,55,.78);color:#dceaff';
+    box.innerHTML='<h3 style="margin:0 0 10px">MOTOR MATEMÁTICO V18</h3><div id="mathUpgradeText">Acumulando datos...</div>';
+    host.appendChild(box);
+  }
+  function render18(){
+    addPanel18();const el=document.getElementById('mathUpgradeText');if(!el)return;
+    const n=recentDigits.length;if(!n){el.textContent='Esperando ticks reales.';return;}
+    const r=window.analyzeAllDigits(),b=r[0],s=r[1];
+    el.innerHTML=`<b>Consenso:</b> ${b.digit} · <b>Score:</b> ${b.score.toFixed(1)}/100 · <b>Ventaja:</b> ${(b.score-s.score).toFixed(1)}<br><b>Probabilidad suavizada:</b> ${(b.p100*100).toFixed(1)}% · <b>Entropía:</b> ${(b.entropy*100).toFixed(1)}% · <b>Muestra:</b> ${n} ticks<br><small>La señal se considera débil si la ventaja es pequeña, la entropía es alta o la muestra es insuficiente.</small>`;
+  }
+  const oldProcess=window.processTick; if(typeof oldProcess==='function'){window.processTick=function(d){const out=oldProcess.apply(this,arguments);render18();return out;};}
+  setTimeout(render18,300);
+})();
+
 </script>
 
 </body>
