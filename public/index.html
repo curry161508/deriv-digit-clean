@@ -3955,15 +3955,6 @@ document.addEventListener('click',e=>{
   if(t && typeof hablar==='function') hablar(t,true);
 },{capture:true});
 
-
-/* V18 · PANEL MATEMÁTICO INTEGRADO AL ESTADO DE CONEXIÓN — NO FLOTA SOBRE EL GRÁFICO */
-.math-upgrade-inline{margin-top:10px;padding:9px 10px;border:1px solid rgba(22,140,255,.28);border-radius:10px;background:rgba(2,18,38,.72);color:#dceaff;position:static;width:100%;max-width:none;box-sizing:border-box}
-.math-upgrade-head{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:5px;font-size:10px;font-weight:1000;letter-spacing:.8px;color:#79cfff}
-.math-upgrade-badge{font-size:8px;padding:3px 6px;border-radius:5px;border:1px solid rgba(25,245,165,.35);color:#19f5a5;background:rgba(25,245,165,.05)}
-#mathUpgradeText{font-size:10px;line-height:1.4;color:#b8d8ed}
-#mathUpgradeText small{font-size:9px;color:#789db8}
-@media(max-width:700px){.math-upgrade-inline{margin-top:8px;padding:8px}.math-upgrade-head{font-size:9px}.math-upgrade-badge{font-size:7px}#mathUpgradeText{font-size:9px;line-height:1.35}#mathUpgradeText small{font-size:8px}}
-
 /* =========================================================
    MEJORA MATEMÁTICA V18 — SUAVIZADO, ENTROPÍA Y CONSENSO
    ========================================================= */
@@ -3993,10 +3984,9 @@ document.addEventListener('click',e=>{
   window.analyzeAllDigits=function(){return Array.from({length:10},(_,d)=>metrics18(d)).sort((a,b)=>b.score-a.score);};
   function addPanel18(){
     if(document.getElementById('mathUpgradePanel'))return;
-    const host=document.getElementById('syncPanel');
-    if(!host)return;
-    const box=document.createElement('div');box.id='mathUpgradePanel';box.className='math-upgrade-inline';
-    box.innerHTML='<div class="math-upgrade-head"><span>MOTOR MATEMÁTICO V18</span><span class="math-upgrade-badge">ANÁLISIS</span></div><div id="mathUpgradeText">Acumulando datos...</div>';
+    const host=document.getElementById('syncPanel')||document.querySelector('#analysisPanel,#analysis,#rankingPanel')||document.body;
+    const box=document.createElement('section');box.id='mathUpgradePanel';box.className='panel';box.style.cssText='margin:10px 0 0;padding:10px;border:1px solid rgba(22,140,255,.35);border-radius:10px;background:rgba(4,20,55,.55);color:#dceaff;width:100%;box-sizing:border-box;position:static;';
+    box.innerHTML='<h3 style="margin:0 0 10px">MOTOR MATEMÁTICO V18</h3><div id="mathUpgradeText">Acumulando datos...</div>';
     host.appendChild(box);
   }
   function render18(){
