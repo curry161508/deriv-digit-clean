@@ -517,7 +517,7 @@ body{min-height:100vh;background:radial-gradient(circle at 50% 0%,#0b4f91 0%,#06
 .brand{font-size:24px;letter-spacing:2px;color:#fff;font-weight:900}.status{font-size:12px;color:#9dcced}.dot{background:var(--verde);box-shadow:0 0 12px var(--verde)}
 .filter-row{display:grid;grid-template-columns:110px minmax(210px,300px) 1fr;gap:12px;align-items:center;margin-bottom:14px;padding:12px 14px;background:linear-gradient(90deg,#08294b,#061b32);border:1px solid rgba(22,140,255,.35);border-radius:14px}.filter-row span:first-child{color:#7fc5ff;font-size:12px;font-weight:900;letter-spacing:1px}.filter-row select{height:42px;border:1px solid #168cff;border-radius:9px;background:#061b31;color:#fff;padding:0 12px;font-weight:900}.filter-row #lastTickDisplay{justify-self:end;color:#fff;font-size:20px!important;font-weight:900}
 .panel,.timing-panel,.prediction{background:linear-gradient(145deg,rgba(8,36,65,.98),rgba(4,20,38,.98));border:1px solid rgba(22,140,255,.35);border-radius:16px;box-shadow:0 10px 30px rgba(0,0,0,.22);padding:15px;margin:0 0 14px}.panel-title{color:#75c8ff!important;font-size:13px!important;font-weight:900;letter-spacing:1.2px;border-bottom:1px solid rgba(22,140,255,.2);padding-bottom:9px;margin-bottom:12px}
-.chart-panel{padding:15px}.chart-title{color:#8bd4ff!important;font-weight:900}.chart-live{color:var(--verde)!important}.chart-wrap{height:220px!important;background:#020c18!important;border:1px solid rgba(22,140,255,.28)!important;border-radius:12px!important}.chart-info{color:#80a9c8!important}
+.chart-panel{padding:15px}.chart-title{color:#8bd4ff!important;font-weight:900}.chart-live{color:var(--verde)!important}.chart-wrap{height:330px!important;background:#020c18!important;border:1px solid rgba(22,140,255,.28)!important;border-radius:12px!important}.chart-info{color:#80a9c8!important}
 .hot-ranking{display:grid!important;grid-template-columns:repeat(3,1fr);gap:12px}.hot{background:linear-gradient(180deg,#0b3158,#061b31)!important;border:1px solid rgba(22,140,255,.45)!important;border-radius:14px!important;padding:15px!important}.hot-digit{font-size:38px!important;color:#fff!important}.hot-score{color:#55b9ff!important;font-size:13px!important}
 .digits-grid{display:grid!important;grid-template-columns:repeat(10,1fr);gap:7px}.digit-cell,.digit-item{background:#061b31!important;border:1px solid rgba(22,140,255,.28)!important;border-radius:8px!important}
 .analysis{color:#bdd9ef!important;line-height:1.55}.rankTable,#rankTable{background:#061525!important;border-color:rgba(22,140,255,.25)!important}.rankTable th,#rankTable th{color:#72c5ff!important;background:#09294a!important}.rankTable td,#rankTable td{border-color:rgba(22,140,255,.14)!important;color:#d9efff!important}
@@ -533,7 +533,7 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 .timer-trace{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-top:9px;font-size:10px;font-weight:900;color:#ccecff}
 .timer-trace span{padding:6px 5px;border:1px solid rgba(22,140,255,.28);border-radius:7px;background:rgba(0,30,65,.45);text-align:center}
 @media(max-width:700px){.timer-trace{grid-template-columns:1fr;gap:4px}.analyze-near-timer{min-height:48px!important;font-size:15px!important}}
-@media(max-width:700px){body{padding:8px 5px}.phone-frame{padding:11px;border-radius:18px}.brand{font-size:17px}.filter-row{grid-template-columns:1fr 1fr}.filter-row span:first-child{display:none}.filter-row #lastTickDisplay{grid-column:1/-1;justify-self:start}.chart-wrap{height:210px!important}.digits-grid{grid-template-columns:repeat(5,1fr)}.history-grid{grid-template-columns:repeat(5,1fr)}.timing-grid{grid-template-columns:repeat(5,1fr)!important}.prediction{grid-template-columns:1fr 115px;grid-template-areas:"title digit" "market digit" "current digit" "score digit" "quality digit" "gap gap" "timer timer"}.pred-digit{font-size:78px!important}.timer strong{font-size:36px!important}}
+@media(max-width:700px){body{padding:8px 5px}.phone-frame{padding:11px;border-radius:18px}.brand{font-size:17px}.filter-row{grid-template-columns:1fr 1fr}.filter-row span:first-child{display:none}.filter-row #lastTickDisplay{grid-column:1/-1;justify-self:start}.chart-wrap{height:245px!important}.digits-grid{grid-template-columns:repeat(5,1fr)}.history-grid{grid-template-columns:repeat(5,1fr)}.timing-grid{grid-template-columns:repeat(5,1fr)!important}.prediction{grid-template-columns:1fr 115px;grid-template-areas:"title digit" "market digit" "current digit" "score digit" "quality digit" "gap gap" "timer timer"}.pred-digit{font-size:78px!important}.timer strong{font-size:36px!important}}
 
 
 /* BOT AUTOMÁTICO — SOLO ANÁLISIS / OBSERVACIÓN */
@@ -557,7 +557,7 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 </head>
 
 <body>
-<canvas id="scannerBg" class="scanner-bg"></canvas>
+<div id="countdown10" style="font-size:52px;font-weight:900;text-align:center;line-height:1;margin:8px 0">10</div><canvas id="scannerBg" class="scanner-bg"></canvas>
 
 <div class="phone-frame">
 
@@ -3407,7 +3407,6 @@ function startTimer(){
 
     timerCount.textContent =
         `${seconds}s · S1`;
-    
 
 
     timerInterval =
@@ -3423,7 +3422,6 @@ function startTimer(){
 
                     timerCount.textContent =
                         `${seconds}s · S${Math.max(1,11-seconds)}`;
-                    
 
                 }else{
 
@@ -3433,7 +3431,6 @@ function startTimer(){
 
                     timerCount.textContent =
                         "FIN";
-                    
                     finalizePendingPrediction();
                 }
 
