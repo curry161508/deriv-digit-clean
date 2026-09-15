@@ -1620,7 +1620,14 @@ function hablar(texto,forzado=false){
     return true;
   }catch(e){ return false; }
 }
-function hablarCuenta(){ return; }
+function hablarCuenta(segundo){
+  if(!voiceEnabled || !('speechSynthesis' in window) || !timingSession) return;
+  const n=Number(segundo);
+  if(!Number.isFinite(n) || n<1 || n>TIMING_SECONDS) return;
+  if(timingSession.lastSpokenSecond===n) return;
+  timingSession.lastSpokenSecond=n;
+  hablar(String(n));
+}
 function detenerVoz(){
   voiceQueue=[];
   voiceSpeaking=false;
@@ -1960,7 +1967,7 @@ function renderTimingStats(activeSecond=0){
         bestEl.innerHTML=`<strong>MEJOR MOMENTO: S${best.index+1}</strong> &nbsp; | &nbsp; RENDIMIENTO: ${timingRate(st).toFixed(1)}% (${st.wins}/${st.signals}) &nbsp; | &nbsp; SCORE MOMENTO: ${best.score.toFixed(1)}`;
     }else{
         const total=timingStats.reduce((a,x)=>a+x.signals,0);
-        bestEl.innerHTML=`<strong>MEJOR MOMENTO: --</strong> &nbsp; | &nbsp; ACUMULANDO DATOS (${total} muestras; mínimo ${TIMING_MIN_SAMPLES} por segundo)`;
+        bestEl.innerHTML=`<strong>MEJOR MOMENTO: --</strong> &nbsp; | &nbsp; ACUMULANDO DATOS DESDE S4 (${total} muestras; mínimo ${TIMING_MIN_SAMPLES} por segundo)`;
     }
 
     grid.innerHTML=timingStats.map((st,i)=>{
@@ -1986,7 +1993,7 @@ function timingConfidence(best, secondBest){
 
 function getAvailableTimingCandidates(){
     return timingStats.map((stat,index)=>({stat,index,score:timingScore(stat)}))
-      .filter(x=>x.stat.signals>0).sort((a,b)=>b.score-a.score);
+      .filter(x=>x.stat.signals>0 && x.index>=3).sort((a,b)=>b.score-a.score);
 }
 
 function getBestTimingSecond(){
@@ -2006,11 +2013,11 @@ function renderTimingStats(activeSecond=0){
     if(!grid || !bestEl || !liveEl) return;
     const candidates=getAvailableTimingCandidates(), best=getBestTimingSecond(), secondBest=candidates[1];
     const conf=timingConfidence(best,secondBest);
-    liveEl.textContent=activeSecond>0 ? `SEGUNDO ${activeSecond}/10 · EVALUANDO` : (best ? 'MOMENTO APRENDIDO' : 'ESPERANDO DATOS');
+    liveEl.textContent=activeSecond>0 ? `SEGUNDO ${activeSecond}/10 · EVALUANDO DESDE S4` : (best ? 'MOMENTO APRENDIDO' : 'ESPERANDO DATOS');
     if(best){
       const st=best.stat;
       bestEl.innerHTML=`<strong>MEJOR MOMENTO: S${best.index+1}</strong> | PROBABILIDAD ESTIMADA: ${timingRate(st).toFixed(1)}% | CONFIANZA: ${conf.level.toUpperCase()} | VENTAJA: ${conf.gap.toFixed(1)} puntos`;
-    }else bestEl.innerHTML='<strong>MEJOR MOMENTO: --</strong> | ESPERANDO DATOS SUFICIENTES';
+    }else bestEl.innerHTML='<strong>MEJOR MOMENTO: --</strong> | ESPERANDO DATOS SUFICIENTES DESDE S4';
     grid.innerHTML=timingStats.map((st,i)=>{const rate=st.signals?timingRate(st):null;return `<div class="timing-cell ${activeSecond===i+1?'active':''} ${best&&best.index===i?'best':''}"><div class="timing-sec">S${i+1}</div><div class="timing-rate">${rate===null?'--':rate.toFixed(0)+'%'}</div><div class="timing-sample">${st.signals?st.wins+'/'+st.signals:'--'}</div></div>`}).join('');
     renderTimingHistory();
 }
@@ -2020,7 +2027,7 @@ function resetTimingSession(){ timingSession=null; timingLastSecond=0; renderTim
 function startTimingSession(){
     const mode=pendingMode || document.getElementById('modeSelector')?.value || 'matches';
     const currentCandidate=mode==='matches' ? (pendingPrediction?.digit ?? null) : mode;
-    timingSession={startMs:Date.now(),startEpochMs:Date.now(),snapshots:{},pendingBySecond:{},mode,candidate:currentCandidate,lastAnnouncedSecond:null,lastAnnouncedScore:-Infinity,stableCount:0,lastBestKey:null,changeHistory:[],voiceTest:!voiceEnabled};
+    timingSession={startMs:Date.now(),startEpochMs:Date.now(),snapshots:{},pendingBySecond:{},mode,candidate:currentCandidate,lastAnnouncedSecond:null,lastAnnouncedScore:-Infinity,stableCount:0,lastBestKey:null,changeHistory:[],lastSpokenSecond:0,voiceTest:!voiceEnabled};
     timingLastSecond=0; renderTimingStats(1); updateEntryPanel(1);
     hablar(`Motor de momento óptimo iniciado. Evaluando datos y comparando los segundos disponibles. No es una garantía.`);
 }
@@ -2054,9 +2061,9 @@ function processTimingTick(digit){
         hablar(`Entrada estimada confirmada por los datos: ${margin}. Confianza fuerte, ${timingRate(best.stat).toFixed(1)} por ciento.`); timingSession.lastAnnouncedSecond=best.index+1;
       }
       document.getElementById('timingBest').innerHTML=`<strong>MEJOR PROBABILIDAD ACTUAL: S${best.index+1}</strong> | ${timingRate(best.stat).toFixed(1)}% | CONFIANZA ${conf.level.toUpperCase()} | ENTRADA ESTIMADA: ${margin}`;
-    } else document.getElementById('timingBest').innerHTML='<strong>EVALUANDO…</strong> | ESPERANDO DATOS SUFICIENTES';
+    } else document.getElementById('timingBest').innerHTML='<strong>EVALUANDO…</strong> | ESPERANDO DATOS SUFICIENTES DESDE S4';
     renderTimingStats(second); updateEntryPanel(second);
-    if(voiceEnabled && vozDetalle()==='full' && !timingSession.voiceTest) hablarCuenta(second);
+    if(voiceEnabled && !timingSession.voiceTest) hablarCuenta(second);
     if(second===TIMING_SECONDS){hablar(`Sesión finalizada. El resultado es una estimación estadística, no una garantía.`); resetTimingSession();}
 }
 
