@@ -3773,7 +3773,7 @@ function connectDeriv(symbol){
     ws.onopen=()=>{try{ws.send(JSON.stringify({ticks:symbol,subscribe:1,symbol}))}catch(e){} document.getElementById('statusText').textContent='LIVE';document.getElementById('liveDot').style.background='#00ffcc';systemToast.textContent=`RECIBIENDO TICKS: ${symbol}`;};
     ws.onmessage=event=>{try{const data=JSON.parse(event.data);if(data.error){systemToast.textContent='DERIV: '+(data.error.message||'ERROR');return;}const tick=data.tick||((data.status==='TICK RECIBIDO')?data:null);if(tick&&tick.quote!==undefined){processTickForCandle(tick); const liveMarket=document.getElementById("liveMarket"); if(liveMarket) liveMarket.innerHTML=`PRECIO EN VIVO: <strong>${tick.quote}</strong> &nbsp; | &nbsp; ÚLTIMO DÍGITO: <strong id="liveDigitBig" style="font-size:28px;color:#00ffcc">—</strong>`; const digit=extractLastDigit(tick);if(digit!==null){window.__g2ludeLastTickEpochMs=Number.isFinite(Number(tick.epoch))?Number(tick.epoch)*1000:Date.now();processTick(digit,tick);}}}catch(error){console.error('Error procesando tick',error)}};
     ws.onerror=()=>{document.getElementById('statusText').textContent='ERROR';document.getElementById('liveDot').style.background='#ff3355';systemToast.textContent='ERROR DE CONEXIÓN CON EL SERVIDOR';};
-    ws.onclose=()=>{document.getElementById('statusText').textContent='DESCONECTADO';document.getElementById('liveDot').style.background='#ff3355';};
+    ws.onclose=()=>{document.getElementById('statusText').textContent='DESCONECTADO — REINTENTANDO';document.getElementById('liveDot').style.background='#ff3355';clearTimeout(window.__reconnectTimer);window.__reconnectTimer=setTimeout(()=>connectDeriv(symbol),3000);};
 }
 
 
