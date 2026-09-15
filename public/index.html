@@ -1014,7 +1014,7 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 <script>
 
 /* =========================================================
-   G2LUDE MATH ENGINE PRO v3 + OHLC
+   G2LUDE MATH ENGINE PRO v3 + OHLC · MODE DISPLAY FIX v6
    ========================================================= */
 
 
@@ -2996,7 +2996,7 @@ function showNoSignal(
     minimum
 ){
 
-    prediction.style.display="block"; prediction.classList.remove("signal-good"); prediction.classList.add("signal-bad"); document.querySelector(".pred-title").textContent="SEÑAL DÉBIL — ESPERAR / NO ENTRAR";
+    prediction.style.display="block"; prediction.classList.remove("signal-good"); prediction.classList.add("signal-bad"); document.querySelector(".pred-title").textContent=`SEÑAL DÉBIL — ${modeLabel(pendingMode)} · ESPERAR / NO ENTRAR`;
 
     predDigit.textContent =
         "—";
@@ -3555,7 +3555,24 @@ const initialMultiplier=document.getElementById('multiplierSelector');
 if(initialMultiplier) initialMultiplier.disabled=(initialProduct?.value==='analysis');
 
 document.getElementById("modeSelector").addEventListener("change",()=>{
-  if(multiActive){systemToast.textContent="FINALIZA EL CICLO ACTUAL ANTES DE CAMBIAR EL MODO.";return;}
+  const mode=document.getElementById("modeSelector")?.value||"matches";
+  const label=modeLabel(mode);
+  if(multiActive){
+    systemToast.textContent=`FINALIZA EL CICLO ACTUAL ANTES DE CAMBIAR EL MODO · ACTUAL: ${modeLabel(pendingMode)}`;
+    document.getElementById("modeSelector").value=pendingMode;
+    return;
+  }
+  pendingMode=mode;
+  // Al cambiar de modo, nunca dejamos visible una señal del modo anterior.
+  pendingPrediction=null;
+  prediction.style.display="block";
+  prediction.classList.remove("signal-good","signal-bad");
+  document.querySelector(".pred-title").textContent=`MODO ${label} SELECCIONADO · SIN SEÑAL ACTIVA`;
+  predDigit.textContent=mode==='matches'?"—":label;
+  predScore.textContent="ESPERANDO ANÁLISIS";
+  predQuality.textContent=`CONDICIÓN: ${label}`;
+  predGap.textContent=mode==='matches'?"El próximo análisis elegirá un dígito":"El próximo análisis evaluará la condición completa";
+  systemToast.textContent=`MODO CAMBIADO → ${label} · EJECUTA EL ANÁLISIS PARA GENERAR UNA NUEVA SEÑAL`;
   loadMultiStats();
 });
 
