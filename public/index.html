@@ -1,4 +1,6 @@
 
+
+</html>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -3126,6 +3128,8 @@ function getQualityShort(
    PROCESAR TICK
    ========================================================= */
 
+let lastModeEvaluationAt=0;
+
 function processTick(
     digit
 ){
@@ -3158,6 +3162,13 @@ function processTick(
 
 
     updateAnalysis();
+
+    const selectedMode=document.getElementById("modeSelector")?.value||"matches";
+    const now=Date.now();
+    if(selectedMode!=="matches" && recentDigits.length>=20 && !multiActive && pendingPrediction===null && now-lastModeEvaluationAt>=2000){
+      lastModeEvaluationAt=now;
+      generatePrediction(false);
+    }
 }
 
 
