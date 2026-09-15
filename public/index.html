@@ -551,6 +551,7 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 .multi-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.multi-title{font-size:15px;font-weight:900;color:#76ceff;letter-spacing:1px}.multi-state{font-size:11px;font-weight:900;color:#19f5a5;text-align:right}
 .multi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.multi-card{position:relative;overflow:hidden;border:1px solid rgba(22,140,255,.35);border-radius:13px;padding:12px;background:linear-gradient(180deg,#092744,#051a30)}.multi-card.live{border-color:#00d9ff;box-shadow:0 0 18px rgba(0,217,255,.18)}.multi-card.win{border-color:#19f5a5}.multi-card.loss{border-color:#ff496d}.multi-card.wait{border-color:#ffd84d}.multi-window{font-size:12px;color:#69c6ff;font-weight:900}.multi-count{font-size:34px;line-height:1;font-weight:900;color:#fff;margin:8px 0}.multi-target{font-size:12px;color:#cbe9ff}.multi-score{font-size:12px;color:#76ceff;margin-top:5px}.multi-result{font-size:12px;font-weight:900;margin-top:8px;min-height:18px}.multi-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-top:9px}.multi-meta div{background:#061a2e;border:1px solid rgba(22,140,255,.2);border-radius:7px;padding:5px;text-align:center;font-size:9px;color:#8fb3cf}.multi-meta strong{display:block;color:#fff;font-size:11px;margin-top:2px}.multi-progress{height:5px;border-radius:5px;background:#02101d;overflow:hidden;margin-top:10px}.multi-progress span{display:block;height:100%;width:0;background:#168cff;transition:width .15s linear}.multi-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:10px}.multi-stat{padding:8px;text-align:center;background:#061a2e;border:1px solid rgba(22,140,255,.2);border-radius:9px}.multi-stat b{display:block;color:#fff;font-size:14px}.multi-stat small{color:#73b9e8;font-size:8px}.multi-diagnostics{margin-top:8px;padding:8px 9px;border:1px solid rgba(0,217,255,.18);border-radius:8px;background:rgba(0,120,255,.05);color:#9bc8e6;font-size:10px;line-height:1.45}.multi-note{margin-top:9px;color:#7295b1;font-size:10px;line-height:1.4}
 @media(max-width:700px){.multi-grid{grid-template-columns:1fr}.multi-summary{grid-template-columns:repeat(2,1fr)}}
+.full-result{margin-top:10px;padding:11px;border:1px solid rgba(25,245,165,.35);border-radius:10px;background:linear-gradient(180deg,rgba(0,90,70,.12),rgba(0,30,65,.25))}.full-result-title{font-size:12px;font-weight:1000;color:#7fffdc;letter-spacing:.8px;margin-bottom:8px}.full-result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.full-result-grid>div{padding:7px 4px;text-align:center;border:1px solid rgba(22,140,255,.22);border-radius:7px;background:#061a2e}.full-result-grid span{display:block;font-size:8px;color:#73b9e8}.full-result-grid b{display:block;margin-top:3px;font-size:13px;color:#fff}.full-result-text{margin-top:8px;font-size:11px;line-height:1.5;color:#ccecff}.voice-mode-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-top:7px}.voice-mode-row label{padding:7px 8px;border:1px solid rgba(22,140,255,.25);border-radius:7px;background:rgba(0,30,65,.45);font-size:9px;font-weight:900;color:#8fc9ec}.voice-mode-row select{height:30px}.voice-note{margin-top:5px;text-align:center;font-size:9px;color:#789cba}@media(max-width:700px){.full-result-grid{grid-template-columns:repeat(2,1fr)}.voice-mode-row{grid-template-columns:1fr}.voice-mode-row select{width:100%}}
 
 </style>
 </head>
@@ -888,6 +889,20 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
     <div class="multi-stat"><b id="agreementLabel">—</b><small>ESTABILIDAD</small></div>
   </div>
   <div class="multi-diagnostics" id="multiDiagnostics">DIAGNÓSTICO: esperando muestras…</div>
+  <div class="full-result" id="fullResultPanel">
+    <div class="full-result-title">RESULTADO COMPLETO DEL CICLO</div>
+    <div class="full-result-grid">
+      <div><span>SEÑAL</span><b id="fullSignalResult">—</b></div>
+      <div><span>4S</span><b id="fullResult4">—</b></div>
+      <div><span>5S</span><b id="fullResult5">—</b></div>
+      <div><span>7S</span><b id="fullResult7">—</b></div>
+      <div><span>10S</span><b id="fullResult10">—</b></div>
+      <div><span>POSITIVAS</span><b id="fullPositiveCount">—</b></div>
+      <div><span>MEJOR VENTANA</span><b id="fullBestWindow">—</b></div>
+      <div><span>ACUERDO</span><b id="fullAgreement">—</b></div>
+    </div>
+    <div class="full-result-text" id="fullResultText">Esperando el primer ciclo completo.</div>
+  </div>
   <div class="multi-note">Las cuatro ventanas usan el mismo candidato y comienzan en el mismo instante. Cada una gana si su condición aparece en cualquier tick dentro de su propia duración. Se registra el primer tick que acierta y el tiempo aproximado hasta el acierto para comparar 4S, 5S, 7S y 10S.</div>
 </div>
 
@@ -993,6 +1008,16 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 
 </div>
 
+
+<div class="voice-mode-row">
+  <label>VOZ DEL ESCÁNER · NIVEL DE DETALLE
+    <select id="voiceDetailSelect">
+      <option value="full" selected>TODO · ANÁLISIS Y RESULTADOS</option>
+      <option value="summary">RESUMEN · MENOS HABLA</option>
+    </select>
+  </label>
+  <div class="voice-note">La voz importante tiene prioridad sobre la cuenta regresiva.</div>
+</div>
 
 <div class="control-launch-panel">
   <button id="startPredictionButton" class="primary-launch" type="button">▶ INICIAR PREDICCIÓN</button>
@@ -1439,7 +1464,47 @@ let recentDigits = [];
 
 let ws = null;
 let voiceEnabled = false;
-function hablar(texto){if(!voiceEnabled || !("speechSynthesis" in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(texto);u.lang="es-CL";u.rate=1;speechSynthesis.speak(u);}
+let voiceQueue = [];
+let voiceSpeaking = false;
+let voiceLastMilestone = 0;
+
+function vozDetalle(){return document.getElementById('voiceDetailSelect')?.value||'full';}
+function hablarTick(digit,count){if(vozDetalle()!=='full')return; if(count<=20 || count%10===0) hablar(`Tick ${count}. Último dígito ${digit}.`);}
+function hablarPantalla(texto){if(vozDetalle()==='full')hablar(texto);}
+
+/* Voz inteligente: los avisos importantes se ponen en cola y nunca se pisan.
+   La cuenta regresiva visual sigue corriendo mientras habla, pero su voz espera
+   a que termine el aviso actual; así no se corta una coincidencia o un resultado. */
+function procesarVoz(){
+  if(!voiceEnabled || !("speechSynthesis" in window) || voiceSpeaking || !voiceQueue.length)return;
+  const texto=voiceQueue.shift();
+  voiceSpeaking=true;
+  const u=new SpeechSynthesisUtterance(texto);
+  u.lang="es-CL";
+  u.rate=0.96;
+  u.pitch=1;
+  u.onend=()=>{voiceSpeaking=false;procesarVoz();};
+  u.onerror=()=>{voiceSpeaking=false;procesarVoz();};
+  speechSynthesis.speak(u);
+}
+function hablar(texto){
+  if(!voiceEnabled || !("speechSynthesis" in window))return;
+  voiceQueue.push(String(texto));
+  procesarVoz();
+}
+function hablarCuenta(texto){
+  if(!voiceEnabled || !("speechSynthesis" in window))return;
+  /* No guardamos segundos atrasados: cuando hay un aviso importante hablando,
+     la cuenta espera y retomará desde el segundo actual en el próximo tick. */
+  if(voiceSpeaking || voiceQueue.length)return;
+  voiceQueue.push(String(texto));
+  procesarVoz();
+}
+function detenerVoz(){
+  voiceQueue=[];
+  voiceSpeaking=false;
+  if("speechSynthesis" in window)speechSynthesis.cancel();
+}
 
 let timerInterval = null;
 
@@ -1524,6 +1589,21 @@ function renderMultiStats(){
     const totalSignals=MULTI_WINDOWS.reduce((a,w)=>a+(multiWindows[w]?.stats?.signals||0),0);
     diag.textContent=totalSignals ? 'DIAGNÓSTICO · '+parts.join('  |  ') : 'DIAGNÓSTICO: esperando muestras…';
   }
+  const fullText=document.getElementById('fullResultText');
+  const fullSignal=document.getElementById('fullSignalResult');
+  const positives=MULTI_WINDOWS.filter(w=>multiWindows[w]?.state==='win').length;
+  const finished=MULTI_WINDOWS.filter(w=>['win','loss'].includes(multiWindows[w]?.state)).length;
+  if(fullSignal) fullSignal.textContent=pendingPrediction ? `${modeLabel(pendingPrediction.mode)} · ${pendingPrediction.mode==='matches' ? 'D'+pendingPrediction.digit : 'CONDICIÓN'}` : '—';
+  MULTI_WINDOWS.forEach(w=>{const el=document.getElementById('fullResult'+w),o=multiWindows[w]; if(!el||!o)return; el.textContent=o.state==='win'?`POSITIVA · ${((o.matchElapsedMs||0)/1000).toFixed(1)}s`:o.state==='loss'?'NEGATIVA':o.state==='active'?'EN CURSO':'—';});
+  const fp=document.getElementById('fullPositiveCount');if(fp)fp.textContent=finished===4?`${positives}/4`:'EN CURSO';
+  const fb=document.getElementById('fullBestWindow');if(fb)fb.textContent=best?`${best.w}S · ${multiRate(best.st).toFixed(1)}%`:'—';
+  const fa=document.getElementById('fullAgreement');if(fa)fa.textContent=finished===4?(positives>=3?'FUERTE':positives===2?'MIXTO':'DÉBIL'):'—';
+  if(fullText){
+    if(finished===4){
+      const results=MULTI_WINDOWS.map(w=>{const o=multiWindows[w];return `Ventana ${w}: ${o.state==='win'?'positiva, coincidencia en '+((o.matchElapsedMs||0)/1000).toFixed(1)+' segundos':'negativa, sin coincidencia'}`;});
+      fullText.textContent=`Ciclo ${multiCycle} completo. ${results.join('. ')}. ${positives} de 4 ventanas positivas. ${best?'Mejor ventana estadística: '+best.w+' segundos con '+multiRate(best.st).toFixed(1)+' por ciento.':''} Nivel de acuerdo: ${positives>=3?'fuerte':positives===2?'mixto':'débil'}.`;
+    }
+  }
 }
 function renderBotState(message){
   const b=document.getElementById('botToggleButton');
@@ -1589,10 +1669,13 @@ function startMultiEngine(predicted,score,mode){
   if(timerCount)timerCount.textContent='10.0s';
   renderPredictionTrace();
   if(systemToast)systemToast.textContent=`CICLO ${multiCycle} · CANDIDATO ${predicted} · 4S / 5S / 7S / 10S ACTIVAS`;
+  const modoVoz=modeLabel(mode);
+  const candidatoVoz=mode==='matches' ? `dígito ${predicted}` : `condición ${modoVoz}`;
+  hablar(`Predicción multiventana iniciada. Modo ${modoVoz}. ${candidatoVoz}. Ventanas de 4, 5, 7 y 10 segundos activas. En pantalla quedan cuatro resultados independientes para comparar la estabilidad.`);
 }
 function processMultiTick(digit){
   if(!multiActive)return;
-  MULTI_WINDOWS.forEach(w=>{const o=multiWindows[w];if(!o||o.state!=='active')return;o.tickCount=(o.tickCount||0)+1;if(o.firstTick===null){o.firstTick=digit;o.firstTickTime=Date.now();}if(modeMatches(o.mode,digit,o.predicted)&&!o.matched){o.matched=true;o.matchDigit=digit;o.matchedAt=Date.now();o.matchElapsedMs=o.matchedAt-o.start;o.matchTickCount=o.tickCount;o.stats.hitTimeMsTotal=(Number(o.stats.hitTimeMsTotal)||0)+o.matchElapsedMs;o.stats.hitCount=(Number(o.stats.hitCount)||0)+1;document.getElementById('prediction')?.classList.add('signal-good');}});
+  MULTI_WINDOWS.forEach(w=>{const o=multiWindows[w];if(!o||o.state!=='active')return;o.tickCount=(o.tickCount||0)+1;if(o.firstTick===null){o.firstTick=digit;o.firstTickTime=Date.now();}if(modeMatches(o.mode,digit,o.predicted)&&!o.matched){o.matched=true;o.matchDigit=digit;o.matchedAt=Date.now();o.matchElapsedMs=o.matchedAt-o.start;o.matchTickCount=o.tickCount;o.stats.hitTimeMsTotal=(Number(o.stats.hitTimeMsTotal)||0)+o.matchElapsedMs;o.stats.hitCount=(Number(o.stats.hitCount)||0)+1;document.getElementById('prediction')?.classList.add('signal-good');const elapsed=(o.matchElapsedMs/1000).toFixed(1);const modo=modeLabel(o.mode);hablar(`Coincidencia en la ventana de ${w} segundos. Modo ${modo}. Salió el dígito ${digit} en el segundo ${elapsed}, en el tick número ${o.matchTickCount}.`);}});
   renderMultiStats();
   renderPredictionTrace();
 }
@@ -1614,6 +1697,9 @@ function updateMultiEngine(){
   saveMultiStats();
   const summary=`CICLO ${multiCycle} FINALIZADO · 4S ${statusText(4)} · 5S ${statusText(5)} · 7S ${statusText(7)} · 10S ${statusText(10)}`;
   setTimeout(()=>{if(systemToast)systemToast.textContent=summary;},0);
+  const positivos=MULTI_WINDOWS.filter(w=>multiWindows[w]?.state==='win').length;
+  const mejorCiclo=bestMultiWindow();
+  hablar(`Ciclo ${multiCycle} finalizado. Predicción multiventana: ${positivos} de 4 ventanas positivas. Ventana 4 segundos: ${voiceStatusText(4)}. Ventana 5 segundos: ${voiceStatusText(5)}. Ventana 7 segundos: ${voiceStatusText(7)}. Ventana 10 segundos: ${voiceStatusText(10)}. ${mejorCiclo?`Mejor ventana histórica: ${mejorCiclo.w} segundos, rendimiento ${multiRate(mejorCiclo.st).toFixed(1)} por ciento.`:''} ${positivos>=3?'Acuerdo fuerte entre ventanas.':positivos===2?'Resultado mixto entre ventanas.':'Acuerdo débil entre ventanas.'}`);
   if(botAuto){
     const delay=Number(document.getElementById('botDelaySelect')?.value||3000);
     renderBotState(`BOT ACTIVO · PRÓXIMO EN ${Math.max(0,delay)/1000}s`);
@@ -1622,6 +1708,16 @@ function updateMultiEngine(){
 }
 }
 function statusText(w){const o=multiWindows[w];return o?.state==='win'?'✓':o?.state==='loss'?'✕':'—';}
+function voiceStatusText(w){
+  const o=multiWindows[w];
+  if(!o)return 'sin resultado';
+  if(o.state==='win'){
+    const sec=((o.matchElapsedMs||0)/1000).toFixed(1);
+    return `no falló, acierto; la coincidencia salió en el segundo ${sec}`;
+  }
+  if(o.state==='loss')return 'falló; no hubo coincidencia';
+  return 'sin resultado';
+}
 function finalizeMultiWindow(w){
   const o=multiWindows[w];if(!o||o.state!=='active')return;
   const correct=!!o.matched;o.state=correct?'win':'loss';
@@ -1638,7 +1734,12 @@ function finalizeMultiWindow(w){
     updateLastLog(correct?'ACIERTO':'FALLO');renderHistory();
   }
   saveMultiStats();renderMultiStats();
-  if(voiceEnabled)hablar(`${w} segundos: ${correct?'acierto':'fallo'}`);
+  if(correct){
+    const sec=((o.matchElapsedMs||0)/1000).toFixed(1);
+    hablar(`Ventana ${w} segundos: no falló, acierto. La coincidencia salió en el segundo ${sec}.`);
+  }else{
+    hablar(`Ventana ${w} segundos: falló. No hubo coincidencia dentro de la ventana.`);
+  }
 }
 function stopMultiEngine(resetStates=true){if(multiTicker){clearInterval(multiTicker);multiTicker=null;}multiActive=false;if(resetStates)MULTI_WINDOWS.forEach(w=>{if(multiWindows[w])multiWindows[w].state='idle';});renderMultiStats();}
 
@@ -1658,9 +1759,17 @@ let timingStats = Array.from({length:TIMING_SECONDS},()=>({signals:0,wins:0,loss
 let timingSession = null;
 let timingLastSecond = 0;
 
+function timingMode(){return document.getElementById('modeSelector')?.value||'matches';}
+function timingBaseline(mode){return mode==='matches'?0.10:0.50;}
+function timingConditionMatches(mode,digit,candidate){
+  if(mode==='matches') return digit===Number(candidate);
+  return modeCondition(mode,digit);
+}
+
 function getTimingStorageKey(){
     const assetEl=document.getElementById("assetSelector");
-    return "g2lude_timing_v1_"+(assetEl ? assetEl.value : "R_100");
+    const modeEl=document.getElementById("modeSelector");
+    return "g2lude_timing_v2_"+(assetEl ? assetEl.value : "R_100")+"_"+(modeEl ? modeEl.value : "matches");
 }
 
 function loadTimingStats(){
@@ -1693,12 +1802,13 @@ function timingAdjustedRate(stat){
     /* Base teórica de acertar un dígito: 10%.
        Suavizado para que 1/1 no parezca mejor que 20/20. */
     if(!stat.signals) return 0;
-    return ((stat.wins+1)/(stat.signals+10))*100;
+    const base=timingBaseline(timingMode());
+     return ((stat.wins+1)/(stat.signals+(1/base-1)))*100;
 }
 
 function timingScore(stat){
     if(!stat.signals) return 0;
-    const edge=timingAdjustedRate(stat)-10;
+    const edge=timingAdjustedRate(stat)-(timingBaseline(timingMode())*100);
     const edgeScore=clamp(50+(edge/20)*50,0,100);
     const sampleFactor=clamp(stat.signals/30,0,1);
     return edgeScore*.75+sampleFactor*25;
@@ -1749,16 +1859,26 @@ function resetTimingSession(){
 }
 
 function startTimingSession(){
+    const mode=pendingMode || document.getElementById("modeSelector")?.value || "matches";
+    const currentModeMetrics=mode==='matches' ? null : calculateModeMetrics(mode);
+    const currentCandidate=mode==='matches' ? (pendingPrediction?.digit ?? null) : mode;
     timingSession={
         startMs:Date.now(),
         startEpochMs:Date.now(),
         snapshots:{},
-        pendingBySecond:{}
+        pendingBySecond:{},
+        mode,
+        candidate:currentCandidate
     };
     timingLastSecond=0;
     renderTimingStats(1);
     const learned=getBestTimingSecond();
-    if(learned) hablar(`Mejor momento observado: segundo ${learned.index+1}. La ventana comienza ahora.`);
+    const basePct=(timingBaseline(mode)*100).toFixed(0);
+    if(learned){
+        hablar(`Motor de momento óptimo: modo ${modeLabel(mode)}. Mejor momento histórico, segundo ${learned.index+1}, con rendimiento de ${timingRate(learned.stat).toFixed(1)} por ciento, frente a una base teórica de ${basePct} por ciento. La sesión de momento comienza ahora.`);
+    }else{
+        hablar(`Motor de momento óptimo: modo ${modeLabel(mode)}. Todavía aprendiendo. La base teórica es ${basePct} por ciento. La sesión comienza ahora y medirá el rendimiento por segundo.`);
+    }
 }
 
 function processTimingTick(digit){
@@ -1767,17 +1887,23 @@ function processTimingTick(digit){
     const elapsed=(Date.now()-timingSession.startMs)/1000;
     const second=Math.floor(elapsed)+1;
 
-    /* Primero resolvemos el candidato del segundo anterior con este tick. */
     const resolveSecond=second-1;
     if(resolveSecond>=1 && resolveSecond<=TIMING_SECONDS && timingSession.pendingBySecond[resolveSecond]){
         const candidate=timingSession.pendingBySecond[resolveSecond];
         const st=timingStats[resolveSecond-1];
         st.signals++;
-        if(digit===candidate.digit) st.wins++; else st.losses++;
+        if(timingConditionMatches(timingSession.mode,digit,candidate.candidate)) st.wins++; else st.losses++;
         delete timingSession.pendingBySecond[resolveSecond];
         saveTimingStats();
         renderTimingStats(Math.min(Math.max(second,1),TIMING_SECONDS));
         if(resolveSecond===TIMING_SECONDS){
+            const completedMode=timingSession.mode;
+            const bestAfter=getBestTimingSecond();
+            if(bestAfter){
+                hablar(`Motor de momento óptimo: sesión de ${modeLabel(completedMode)} finalizada. El mejor momento aprendido es el segundo ${bestAfter.index+1}, con ${timingRate(bestAfter.stat).toFixed(1)} por ciento de acierto en ${bestAfter.stat.signals} muestras.`);
+            }else{
+                hablar(`Motor de momento óptimo: sesión de ${modeLabel(completedMode)} finalizada. Todavía no hay suficientes muestras para declarar un mejor segundo.`);
+            }
             timingSession=null;
             timingLastSecond=0;
             renderTimingStats();
@@ -1788,29 +1914,37 @@ function processTimingTick(digit){
     if(second<1 || second>TIMING_SECONDS) return;
 
     if(!timingSession.snapshots[second]){
-        const results=analyzeAllDigits();
-        if(results.length){
-            const best=results[0];
-            timingSession.snapshots[second]={
-                digit:best.digit,
-                score:best.score,
-                createdAt:Date.now()
-            };
+        const mode=timingSession.mode;
+        let candidate;
+        let score=0;
+        if(mode==='matches'){
+            const results=analyzeAllDigits();
+            if(results.length){candidate=results[0].digit;score=results[0].score;}
+        }else{
+            const m=calculateModeMetrics(mode);
+            candidate=mode;
+            score=m.score;
+        }
+        if(candidate!==undefined && candidate!==null){
+            timingSession.snapshots[second]={candidate,score,createdAt:Date.now()};
             timingSession.pendingBySecond[second]=timingSession.snapshots[second];
             timingLastSecond=second;
             renderTimingStats(second);
             const learnedNow=getBestTimingSecond();
-            if(learnedNow && second===learnedNow.index+1) hablar(`Momento recomendado: quedan aproximadamente ${11-second} segundos.`);
+            if(learnedNow && second===learnedNow.index+1){
+                hablarPantalla(`Motor de momento óptimo: el segundo ${second} destaca para ${modeLabel(mode)}. Continúo comprobándolo con datos reales.`);
+            }
+            if(voiceEnabled && vozDetalle()==='full') hablar(`Momento ${second} de 10 evaluado para ${modeLabel(mode)}.`);
             const timingText=document.getElementById("timingBest");
-            if(timingText && best){
+            if(timingText){
                 const learned=getBestTimingSecond();
                 const learnedText=learned ? `MEJOR HISTÓRICO S${learned.index+1}` : "AÚN APRENDIENDO";
-                timingText.innerHTML=`<strong>${learnedText}</strong> &nbsp; | &nbsp; AHORA S${second}: D${best.digit} · SCORE ${best.score.toFixed(1)}`;
+                const candidateText=mode==='matches' ? `D${candidate}` : modeLabel(mode);
+                timingText.innerHTML=`<strong>${learnedText}</strong> &nbsp; | &nbsp; AHORA S${second}: ${candidateText} · SCORE ${Number(score).toFixed(1)}`;
             }
         }
     }
 }
-
 
 const digitMemory =
     Array.from(
@@ -2893,6 +3027,12 @@ function processTick(
 
 
     document.getElementById("lastTickDisplay").textContent=`TICK: ${digit}`;
+    const tickCountNow=recentDigits.length;
+    if(voiceEnabled && [1,5,10,20,50,80,100].includes(tickCountNow) && voiceLastMilestone!==tickCountNow){
+        voiceLastMilestone=tickCountNow;
+        hablar(`Datos en vivo: tick ${tickCountNow}. Último dígito ${digit}. ${tickCountNow<20?'Todavía acumulando muestra para analizar.':tickCountNow===100?'Muestra de 100 ticks completa y lista para evaluación.':'Muestra suficiente para análisis en curso.'}`);
+    }
+    if(voiceEnabled) hablarTick(digit,tickCountNow);
     const currentPred=document.getElementById("predCurrent"); if(currentPred) currentPred.textContent=`ÚLTIMO DÍGITO EN VIVO: ${digit}`; const liveDigitBig=document.getElementById("liveDigitBig"); if(liveDigitBig) liveDigitBig.textContent=digit;
 
 
@@ -2937,10 +3077,11 @@ function representativeDigitForMode(mode){
 }
 
 function generatePrediction(fromBot=false){
-  if(recentDigits.length<20){systemToast.textContent="NECESITAMOS AL MENOS 20 TICKS.";return;}
+  const mode=document.getElementById("modeSelector")?.value||"matches";
+  if(recentDigits.length<20){systemToast.textContent="NECESITAMOS AL MENOS 20 TICKS.";hablar(`Análisis solicitado en modo ${modeLabel(mode)}. No hay suficientes datos. Se necesitan al menos 20 ticks y actualmente hay ${recentDigits.length}.`);return;}
+  hablar(`Iniciando análisis completo. Activo ${document.getElementById("assetSelector")?.value||"actual"}. Modo ${modeLabel(mode)}. Hay ${recentDigits.length} ticks disponibles.`);
   if(multiActive||pendingPrediction!==null){systemToast.textContent="YA EXISTE UN CICLO ACTIVO.";if(fromBot&&botAuto)scheduleBotCycle(500);return;}
 
-  const mode=document.getElementById("modeSelector")?.value||"matches";
   pendingMode=mode;
   let best,second,quality,difference;
 
@@ -2983,7 +3124,14 @@ function generatePrediction(fromBot=false){
   startTimingSession();signals++;digitMemory[best.digit].signals++;document.getElementById("signalCount").textContent=signals;
   addSignalLog(best,"PENDIENTE");startMultiEngine(best.digit,best.score,pendingMode);startTimer();
   systemToast.textContent=fromBot?`BOT · ${modeLabel(mode)} · CICLO ${botRuns} · 4S / 5S / 7S / 10S`:`${modeLabel(mode)} · PREDICCIÓN INICIADA · 4S / 5S / 7S / 10S`;
-  if(fromBot)renderBotState(`BOT ACTIVO · ${modeLabel(mode)} · CICLO #${botRuns}`);
+  const mejor=getBestTimingSecond();
+  const momentoVoz=mejor ? `Motor de momento óptimo: mejor momento histórico, segundo ${mejor.index+1}, con rendimiento de ${timingRate(mejor.stat).toFixed(1)} por ciento.` : `Motor de momento óptimo: todavía aprendiendo; necesita más muestras.`;
+  const motorVoz=`Motor matemático ${modeLabel(mode)}. Señal ${mode==='matches'?'para el dígito '+best.digit:'para la condición '+modeLabel(mode)}. Score ${best.score.toFixed(1)}. Calidad ${quality.toFixed(0)} sobre 100. Probabilidad observada en 100 ticks ${(best.p100*100).toFixed(1)} por ciento. ${momentoVoz}`;
+  hablar(motorVoz);
+  const metricVoice=`Detalle estadístico: probabilidad a 20 ticks ${(best.p20*100).toFixed(1)} por ciento; a 50 ticks ${(best.p50*100).toFixed(1)} por ciento; a 100 ticks ${(best.p100*100).toFixed(1)} por ciento; z-score 20 ${Number(best.z20).toFixed(2)}, z-score 50 ${Number(best.z50).toFixed(2)}, z-score 100 ${Number(best.z100).toFixed(2)}; frecuencia ${Number(best.frequencyScore).toFixed(1)}; momento ${Number(best.momentumScore).toFixed(1)}; consistencia ${Number(best.consistencyScore).toFixed(1)}; estabilidad ${Number(best.stabilityScore).toFixed(1)}; recencia ${Number(best.recencyScore).toFixed(1)}.`;
+  hablar(metricVoice);
+  hablar(`Resultado del análisis: ${mode==='matches'?'dígito '+best.digit:'condición '+modeLabel(mode)} aprobada por el filtro estadístico. Se inicia la predicción multiventana de 4, 5, 7 y 10 segundos.`);
+  if(fromBot){hablar(`Bot automático: ciclo ${botRuns} iniciado.`);renderBotState(`BOT ACTIVO · ${modeLabel(mode)} · CICLO #${botRuns}`);}
 }
 
 /* =========================================================
@@ -3022,6 +3170,7 @@ function showNoSignal(
         `ANÁLISIS COMPLETADO — ${
             reason
         }`;
+    hablar(`Análisis completo terminado en modo ${modeLabel(pendingMode)}. Señal débil. ${reason}. Valor observado ${value.toFixed(2)}. Mínimo requerido ${minimum.toFixed(2)}. Recomendación: esperar y seguir acumulando datos.`);
 }
 
 
@@ -3247,7 +3396,7 @@ function startTimer(){
             ()=>{
 
                 seconds--;
-                if(seconds>=0 && voiceEnabled) hablar(`${seconds} segundos`);
+                if(seconds>=0 && voiceEnabled) hablarCuenta(`${seconds} segundos restantes`);
 
                 if(
                     seconds>=0
@@ -3420,7 +3569,7 @@ function connectDeriv(symbol){
       try{ws.send(JSON.stringify({ticks:symbol,subscribe:1,symbol}))}catch(e){}
       document.getElementById('statusText').textContent='LIVE';
       document.getElementById('liveDot').style.background='#00ffcc';
-      systemToast.textContent=`RECIBIENDO TICKS: ${symbol}`;
+      systemToast.textContent=`RECIBIENDO TICKS: ${symbol}`; voiceLastMilestone=0; hablar(`Conexión en vivo establecida. Activo ${symbol}. Recibiendo ticks. El escáner está escuchando el mercado y acumulando datos.`);
     };
     ws.onmessage=event=>{
       try{
@@ -3440,8 +3589,8 @@ function connectDeriv(symbol){
         }
       }catch(error){console.error('Error procesando tick',error)}
     };
-    ws.onerror=()=>{document.getElementById('statusText').textContent='ERROR';document.getElementById('liveDot').style.background='#ff3355';systemToast.textContent='ERROR DE CONEXIÓN CON EL SERVIDOR';};
-    ws.onclose=()=>{document.getElementById('statusText').textContent='DESCONECTADO';document.getElementById('liveDot').style.background='#ff3355';};
+    ws.onerror=()=>{document.getElementById('statusText').textContent='ERROR';document.getElementById('liveDot').style.background='#ff3355';systemToast.textContent='ERROR DE CONEXIÓN CON EL SERVIDOR';hablar('Error de conexión. El escáner no está recibiendo datos en este momento.');};
+    ws.onclose=()=>{document.getElementById('statusText').textContent='DESCONECTADO';document.getElementById('liveDot').style.background='#ff3355';hablar('Conexión cerrada. El escáner quedó desconectado.');};
 }
 
 
@@ -3573,6 +3722,7 @@ document.getElementById("modeSelector").addEventListener("change",()=>{
   predQuality.textContent=`CONDICIÓN: ${label}`;
   predGap.textContent=mode==='matches'?"El próximo análisis elegirá un dígito":"El próximo análisis evaluará la condición completa";
   systemToast.textContent=`MODO CAMBIADO → ${label} · EJECUTA EL ANÁLISIS PARA GENERAR UNA NUEVA SEÑAL`;
+  hablar(`Modo cambiado a ${label}. No hay señal activa. El motor matemático queda preparado para evaluar la condición completa. Ejecuta el análisis cuando haya suficientes ticks.`);
   loadMultiStats();
 });
 
@@ -3586,7 +3736,7 @@ function runManualPrediction(){
 }
 
 
-document.getElementById("voiceButton").addEventListener("click",()=>{voiceEnabled=!voiceEnabled;document.getElementById("voiceButton").textContent=voiceEnabled?"🔊 VOZ ACTIVADA":"🔇 VOZ DESACTIVADA";if(voiceEnabled)hablar("Voz activada. Sistema listo.");});
+document.getElementById("voiceButton").addEventListener("click",()=>{voiceEnabled=!voiceEnabled;document.getElementById("voiceButton").textContent=voiceEnabled?"🔊 VOZ ACTIVADA":"🔇 VOZ DESACTIVADA";if(voiceEnabled){hablar("Voz activada. Narración completa del escáner habilitada. Voy a anunciar conexión, datos, análisis, motor de momento óptimo, predicción multiventana, coincidencias, resultados, fallos y cierre de cada ciclo. La cuenta regresiva visual seguirá funcionando y su voz no interrumpirá los avisos importantes.");}else{detenerVoz();}});
 document.getElementById("predictButton").addEventListener("click",runManualPrediction);
 const startPredictionButton=document.getElementById("startPredictionButton"); if(startPredictionButton)startPredictionButton.addEventListener("click",runManualPrediction);
 document.getElementById("botToggleButton").addEventListener("click",toggleAutoBot);
@@ -3604,6 +3754,10 @@ document.getElementById("resetMultiButton").addEventListener("click",()=>{
    ========================================================= */
 
 function iniciarFondoNumeros(){const c=document.getElementById('scannerBg'),x=c.getContext('2d');let fs=22,cols,ys=[];function size(){c.width=innerWidth;c.height=innerHeight;cols=Math.ceil(c.width/fs);ys=Array(cols).fill(0).map(()=>Math.random()*c.height)}size();addEventListener('resize',size);(function loop(){x.fillStyle='rgba(2,10,30,.20)';x.fillRect(0,0,c.width,c.height);x.font=fs+'px monospace';for(let i=0;i<cols;i++){x.fillStyle=i%6===0?'rgba(30,120,255,.72)':'rgba(10,70,220,.50)';x.fillText(Math.floor(Math.random()*10),i*fs,ys[i]);ys[i]+=fs;if(ys[i]>c.height&&Math.random()>.94)ys[i]=0}requestAnimationFrame(loop)})()}iniciarFondoNumeros();
+document.getElementById('productSelector')?.addEventListener('change',e=>{hablar(`Producto seleccionado: ${e.target.options[e.target.selectedIndex]?.text||e.target.value}. El selector es informativo y el análisis continúa en modo demo.`);});
+document.getElementById('multiplierSelector')?.addEventListener('change',e=>{hablar(`Multiplicador seleccionado: ${e.target.value} veces. Este valor es informativo y no ejecuta operaciones.`);});
+document.getElementById('voiceDetailSelect')?.addEventListener('change',e=>{hablar(`Nivel de voz cambiado a ${e.target.value==='full'?'todo, análisis y resultados':'resumen'}.`);});
+
 initUI();
 loadTimingStats();
 loadMultiStats();
