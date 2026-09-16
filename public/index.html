@@ -1,6 +1,5 @@
 
 
-</html>
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1552,34 +1551,7 @@ function registerTickSync(tick){
   updateSyncUI();
   updateEntryPanel();
 }
-function bestHistoricalTiming(){const b=getBestTimingSecond();return b?{second:b.index+1,rate:timingRate(b.stat),score:b.score,samples:b.stat.signals}:null;}
-function bestWindowCandidate(){const arr=MULTI_WINDOWS.map(w=>({w,st:multiWindows[w]?.stats})).filter(x=>x.st&&x.st.signals>0);arr.sort((a,b)=>multiRate(b.st)-multiRate(a.st));return arr[0]||null;}
-function updateEntryPanel(activeSecond=0){
-  const secondEl=document.getElementById('entrySecond'), confEl=document.getElementById('entryConfidence'), histEl=document.getElementById('entryHistory'), statusEl=document.getElementById('entryStatus');
-  const motorEl=document.getElementById('entryMotor'), winEl=document.getElementById('entryWindow'), gapEl=document.getElementById('entryGap');
-  if(!secondEl||!statusEl)return;
-  const learned=bestHistoricalTiming(); const bp=bestWindowCandidate();
-  const p=pendingPrediction;
-  const mainOk=!!p && Number(p.quality)>=55;
-  const windowOk=!!bp && bp.st.signals>=3;
-  const learnedOk=!!learned;
-  const gapOk=!p || p.mode!=='matches' ? (!!p && Number(p.quality)>=55) : Number(p.difference)>=3;
-  const liveOk=liveValidTicks>=LIVE_MIN_TICKS;
-  const latencyOk=estimatedLatencyMs===null || estimatedLatencyMs<=1500;
-  const stable=mainOk&&windowOk&&learnedOk&&gapOk&&liveOk&&latencyOk;
-  entryGate={confirmed:stable,bestSecond:learned?.second||null,bestWindow:bp?.w||null,confidence:p?.quality||0,historyRate:learned?.rate||null,gap:p?.difference||0};
-  secondEl.innerHTML=learned?`${learned.second} <small>SEGUNDO</small>`:'-- <small>SEGUNDO</small>';
-  confEl.textContent=stable?`CONFIRMACIÓN: ${Number(p.quality).toFixed(0)}% · ESTABLE`:`CONFIRMACIÓN: ${mainOk?Number(p.quality).toFixed(0)+'%':'ESPERANDO ANÁLISIS'} · ${liveOk?'LIVE':'SIN LIVE'}`;
-  histEl.textContent=learned?`RENDIMIENTO HISTÓRICO: ${learned.rate.toFixed(1)}% · ${learned.samples} muestras`:'RENDIMIENTO HISTÓRICO: AÚN APRENDIENDO';
-  motorEl.textContent=p?(p.mode==='matches'?'D'+p.digit:modeLabel(p.mode)):'—';
-  winEl.textContent=bp?`${bp.w}S · ${multiRate(bp.st).toFixed(1)}%`:'—';
-  gapEl.textContent=p?(p.mode==='matches'?p.difference.toFixed(2):'CONF. BINARIA'):'—';
-  if(!stable){statusEl.className='entry-status '+(liveOk&&mainOk?'yellow':'red');statusEl.textContent=liveOk&&mainOk?'🟡 ESPERAR':'🔴 NO ENTRAR';}
-  else if(activeSecond && learned && activeSecond===learned.second){statusEl.className='entry-status green';statusEl.textContent='🟢 ENTRAR · SEGUNDO OBJETIVO';}
-  else{statusEl.className='entry-status yellow';statusEl.textContent='🟡 PREPARAR · ESPERAR SEGUNDO '+learned.second;}
-  renderSmartCountdown(activeSecond,learned?.second||null);
-}
-function renderSmartCountdown(active,target){const box=document.getElementById('smartCountdown');if(!box)return;box.innerHTML='';for(let i=1;i<=10;i++){const d=document.createElement('div');let label='ESPERAR';if(target){if(i===target)label='ENTRAR';else if(i===target-1)label='PREPARAR';else if(i>target)label='EJECUTAR';}d.className=(i===active?'active ':'')+(target&&i===target?'target ':'')+(active&&i<active?'past':'');d.innerHTML=`<b>${i}</b>${label}`;box.appendChild(d);}}
+function bestHistoricalTiming(){const b=getBestTimingSecond();return b?{second:b.index+1,rate:timingAdjustedRate(b.stat),rawRate:timingRate(b.stat),score:b.score,samples:b.stat.signals}:null;}
 
 
 function vozDetalle(){return document.getElementById('voiceDetailSelect')?.value||'full';}
@@ -1854,8 +1826,9 @@ function finalizeMultiWindow(w){
   const o=multiWindows[w];if(!o||o.state!=='active')return;
   const correct=!!o.matched;o.state=correct?'win':'loss';
   if(correct)o.stats.wins++;else o.stats.losses++;
+  const wk=`${document.getElementById('assetSelector')?.value||'R_100'}:${timingCandidateKey(o.mode,o.predicted)}`;entryWindowStore[wk]=entryWindowStore[wk]||{};entryWindowStore[wk][w]=entryWindowStore[wk][w]||emptyWindowStats();const ew=entryWindowStore[wk][w];ew.signals++;if(correct){ew.wins++;ew.hitTimeMsTotal=(Number(ew.hitTimeMsTotal)||0)+(o.matchElapsedMs||0);ew.hitCount=(Number(ew.hitCount)||0)+1;}else ew.losses++;saveEntryWindowStore();
   if(w===10){
-    if(pendingPrediction){
+    if(pendingPrediction && pendingPrediction.mode==='matches'){
       const d=pendingPrediction.digit;
       if(correct) digitMemory[d].wins++; else digitMemory[d].losses++;
     }
@@ -1886,187 +1859,126 @@ let signalHistory = [];
    MOTOR DE MOMENTO ÓPTIMO 1-10s
    ========================================================= */
 const TIMING_SECONDS = 10;
+const TIMING_START_SECOND = 4;
 const TIMING_MIN_SAMPLES = 5;
+const TIMING_STRONG_SAMPLES = 20;
+const TIMING_MEMORY_VERSION = 'b19_entry_v2';
 let timingStats = Array.from({length:TIMING_SECONDS},()=>({signals:0,wins:0,losses:0}));
 let timingSession = null;
 let timingLastSecond = 0;
-
+let adaptiveTimingStore = {};
+let entryWindowStore = {};
 function timingMode(){return document.getElementById('modeSelector')?.value||'matches';}
 function timingBaseline(mode){return mode==='matches'?0.10:0.50;}
-function timingConditionMatches(mode,digit,candidate){
-  if(mode==='matches') return digit===Number(candidate);
-  return modeCondition(mode,digit);
+function timingConditionMatches(mode,digit,candidate){return mode==='matches'?digit===Number(candidate):modeCondition(mode,digit);}
+function timingCandidateKey(mode,candidate){return `${mode}:${mode==='matches'?'D'+Number(candidate):mode}`;}
+function getTimingStorageKey(){const a=document.getElementById('assetSelector'),m=document.getElementById('modeSelector');return 'g2lude_timing_v3_'+(a?.value||'R_100')+'_'+(m?.value||'matches');}
+function getAdaptiveTimingStorageKey(){return 'g2lude_'+TIMING_MEMORY_VERSION+'_'+(document.getElementById('assetSelector')?.value||'R_100');}
+function getWindowStorageKey(){return 'g2lude_b19_windows_v2_'+(document.getElementById('assetSelector')?.value||'R_100');}
+function emptyTimingArray(){return Array.from({length:TIMING_SECONDS},()=>({signals:0,wins:0,losses:0}));}
+function emptyWindowStats(){return {signals:0,wins:0,losses:0,hitTimeMsTotal:0,hitCount:0};}
+function ensureAdaptiveCandidate(key){if(!adaptiveTimingStore[key])adaptiveTimingStore[key]=emptyTimingArray();return adaptiveTimingStore[key];}
+function loadAdaptiveTiming(){
+  adaptiveTimingStore={};
+  try{const raw=localStorage.getItem(getAdaptiveTimingStorageKey());const parsed=raw?JSON.parse(raw):{};if(parsed&&typeof parsed==='object')adaptiveTimingStore=parsed;}catch(e){adaptiveTimingStore={};}
+  Object.keys(adaptiveTimingStore).forEach(k=>{if(!Array.isArray(adaptiveTimingStore[k]))adaptiveTimingStore[k]=emptyTimingArray();adaptiveTimingStore[k]=Array.from({length:TIMING_SECONDS},(_,i)=>({signals:Number(adaptiveTimingStore[k][i]?.signals)||0,wins:Number(adaptiveTimingStore[k][i]?.wins)||0,losses:Number(adaptiveTimingStore[k][i]?.losses)||0}));});
 }
-
-function getTimingStorageKey(){
-    const assetEl=document.getElementById("assetSelector");
-    const modeEl=document.getElementById("modeSelector");
-    return "g2lude_timing_v2_"+(assetEl ? assetEl.value : "R_100")+"_"+(modeEl ? modeEl.value : "matches");
-}
-
+function saveAdaptiveTiming(){try{localStorage.setItem(getAdaptiveTimingStorageKey(),JSON.stringify(adaptiveTimingStore));}catch(e){}}
+function loadEntryWindowStore(){try{const raw=localStorage.getItem(getWindowStorageKey());entryWindowStore=raw?JSON.parse(raw):{};}catch(e){entryWindowStore={};}}
+function saveEntryWindowStore(){try{localStorage.setItem(getWindowStorageKey(),JSON.stringify(entryWindowStore));}catch(e){}}
 function loadTimingStats(){
-    try{
-        const raw=localStorage.getItem(getTimingStorageKey());
-        if(raw){
-            const parsed=JSON.parse(raw);
-            if(Array.isArray(parsed) && parsed.length===TIMING_SECONDS){
-                timingStats=parsed.map(x=>({
-                    signals:Number(x.signals)||0,
-                    wins:Number(x.wins)||0,
-                    losses:Number(x.losses)||0
-                }));
-            }
-        }
-    }catch(e){ console.warn("No se pudo cargar memoria de momento",e); }
-    renderTimingStats();
+  timingStats=emptyTimingArray();
+  try{const raw=localStorage.getItem(getTimingStorageKey()),parsed=raw?JSON.parse(raw):null;if(Array.isArray(parsed))timingStats=Array.from({length:TIMING_SECONDS},(_,i)=>({signals:Number(parsed[i]?.signals)||0,wins:Number(parsed[i]?.wins)||0,losses:Number(parsed[i]?.losses)||0}));}catch(e){}
+  loadAdaptiveTiming();loadEntryWindowStore();renderTimingStats();updateEntryPanel();
 }
-
-function saveTimingStats(){
-    try{ localStorage.setItem(getTimingStorageKey(),JSON.stringify(timingStats)); }
-    catch(e){ console.warn("No se pudo guardar memoria de momento",e); }
+function saveTimingStats(){try{localStorage.setItem(getTimingStorageKey(),JSON.stringify(timingStats));}catch(e){}}
+function timingRate(stat){return stat&&stat.signals>0?stat.wins/stat.signals*100:0;}
+function timingAdjustedRate(stat){return !stat||!stat.signals?50:((stat.wins+1)/(stat.signals+2))*100;}
+function timingWilsonLower(stat){
+  if(!stat||!stat.signals)return 0;
+  const n=stat.signals,p=stat.wins/n,z=1.645,den=1+z*z/n,center=p+z*z/(2*n),rad=z*Math.sqrt((p*(1-p)+z*z/(4*n))/n);
+  return Math.max(0,(center-rad)/den)*100;
 }
-
-function timingRate(stat){
-    return stat.signals>0 ? stat.wins/stat.signals*100 : 0;
+function timingShrinkage(stat,basePct){if(!stat||!stat.signals)return basePct;const w=Math.min(stat.signals/25,1);return basePct*(1-w)+timingRate(stat)*w;}
+function timingScore(stat,mode=timingMode()){
+  if(!stat||!stat.signals)return 0;
+  const base=timingBaseline(mode)*100,shrunk=timingShrinkage(stat,base),lower=timingWilsonLower(stat);
+  const edge=clamp(50+(shrunk-base)*2.5,0,100),robust=clamp(50+(lower-base)*3,0,100),sample=clamp(stat.signals/30,0,1)*100;
+  return clamp(edge*.40+robust*.40+sample*.20,0,100);
 }
-
-function timingAdjustedRate(stat){
-    /* Base teórica de acertar un dígito: 10%.
-       Suavizado para que 1/1 no parezca mejor que 20/20. */
-    if(!stat.signals) return 0;
-    const base=timingBaseline(timingMode());
-     return ((stat.wins+1)/(stat.signals+(1/base-1)))*100;
-}
-
-function timingScore(stat){
-    if(!stat.signals) return 0;
-    const edge=timingAdjustedRate(stat)-(timingBaseline(timingMode())*100);
-    const edgeScore=clamp(50+(edge/20)*50,0,100);
-    const sampleFactor=clamp(stat.signals/30,0,1);
-    return edgeScore*.75+sampleFactor*25;
-}
-
-function getBestTimingSecond(){
-    const candidates=timingStats
-        .map((stat,index)=>({stat,index,score:timingScore(stat)}))
-        .filter(x=>x.stat.signals>=TIMING_MIN_SAMPLES);
-    if(!candidates.length) return null;
-    candidates.sort((a,b)=>b.score-a.score);
-    return candidates[0];
-}
-
-function renderTimingStats(activeSecond=0){
-    const grid=document.getElementById("timingGrid");
-    const bestEl=document.getElementById("timingBest");
-    const liveEl=document.getElementById("timingLive");
-    if(!grid || !bestEl || !liveEl) return;
-
-    const best=getBestTimingSecond();
-    liveEl.textContent=activeSecond>0 ? `SEGUNDO ${activeSecond}/10` : (best ? "MOMENTO APRENDIDO" : "APRENDIENDO");
-
-    if(best){
-        const st=best.stat;
-        bestEl.innerHTML=`<strong>MEJOR MOMENTO: S${best.index+1}</strong> &nbsp; | &nbsp; RENDIMIENTO: ${timingRate(st).toFixed(1)}% (${st.wins}/${st.signals}) &nbsp; | &nbsp; SCORE MOMENTO: ${best.score.toFixed(1)}`;
-    }else{
-        const total=timingStats.reduce((a,x)=>a+x.signals,0);
-        bestEl.innerHTML=`<strong>MEJOR MOMENTO: --</strong> &nbsp; | &nbsp; ACUMULANDO DATOS DESDE S4 (${total} muestras; mínimo ${TIMING_MIN_SAMPLES} por segundo)`;
-    }
-
-    grid.innerHTML=timingStats.map((st,i)=>{
-        const rate=st.signals ? timingRate(st) : null;
-        const isBest=best && best.index===i;
-        const active=activeSecond===i+1;
-        return `<div class="timing-cell ${active?"active":""} ${isBest?"best":""}">
-            <div class="timing-sec">S${i+1}</div>
-            <div class="timing-rate">${rate===null?"--":rate.toFixed(0)+"%"}</div>
-            <div class="timing-sample">${st.signals?st.wins+"/"+st.signals:"--"}</div>
-        </div>`;
-    }).join("");
-}
-
-function timingConfidence(best, secondBest){
-    if(!best) return {level:'débil', strong:false, gap:0};
-    const gap=secondBest ? best.score-secondBest.score : best.score;
-    const rate=timingRate(best.stat);
-    if(best.stat.signals>=TIMING_MIN_SAMPLES && rate>=65 && gap>=8) return {level:'fuerte',strong:true,gap};
-    if(best.stat.signals>=TIMING_MIN_SAMPLES && rate>=55 && gap>=4) return {level:'media',strong:false,gap};
-    return {level:'débil',strong:false,gap};
-}
-
+function getCurrentTimingCandidate(){const mode=pendingPrediction?.mode||timingMode();return mode==='matches'?(pendingPrediction?.digit??null):mode;}
+function getTimingStatsForCandidate(mode,candidate){return ensureAdaptiveCandidate(timingCandidateKey(mode,candidate));}
 function getAvailableTimingCandidates(){
-    return timingStats.map((stat,index)=>({stat,index,score:timingScore(stat)}))
-      .filter(x=>x.stat.signals>0 && x.index>=3).sort((a,b)=>b.score-a.score);
+  const mode=pendingPrediction?.mode||timingMode(),candidate=getCurrentTimingCandidate(),arr=getTimingStatsForCandidate(mode,candidate);
+  return arr.map((stat,index)=>({stat,index,score:timingScore(stat,mode),adjusted:timingAdjustedRate(stat),lower:timingWilsonLower(stat),raw:timingRate(stat)})).filter(x=>x.index+1>=TIMING_START_SECOND).sort((a,b)=>b.score-a.score||b.lower-a.lower||b.stat.signals-a.stat.signals);
 }
-
-function getBestTimingSecond(){
-    const candidates=getAvailableTimingCandidates().filter(x=>x.stat.signals>=TIMING_MIN_SAMPLES);
-    return candidates.length ? candidates[0] : null;
+function getBestTimingSecond(){return getAvailableTimingCandidates().filter(x=>x.stat.signals>=TIMING_MIN_SAMPLES)[0]||null;}
+function timingConfidence(best,secondBest){
+  if(!best)return{level:'débil',strong:false,gap:0};
+  const gap=secondBest?best.score-secondBest.score:Math.max(0,best.score-50),lower=timingWilsonLower(best.stat),n=best.stat.signals;
+  if(n>=TIMING_STRONG_SAMPLES&&lower>=60&&gap>=5)return{level:'fuerte',strong:true,gap};
+  if(n>=TIMING_MIN_SAMPLES&&lower>=52&&gap>=2.5)return{level:'media',strong:false,gap};
+  return{level:'débil',strong:false,gap};
 }
-
-function renderTimingHistory(){
-    const el=document.getElementById('timingHistory');
-    if(!el || !timingSession){ if(el) el.textContent=''; return; }
-    el.innerHTML='<b>HISTORIAL DE CAMBIOS</b><br>'+timingSession.changeHistory.slice(-12).map(x=>
-      `${x.time} → segundo ${x.second}, ${x.probability.toFixed(1)}% (${x.level})`).join('<br>');
+function getLiveEntrySecondScore(second,mode,candidate){
+  if(second<TIMING_START_SECOND||second>TIMING_SECONDS)return 0;
+  const st=getTimingStatsForCandidate(mode,candidate)[second-1],base=timingBaseline(mode)*100,shrunk=timingShrinkage(st,base),lower=timingWilsonLower(st);
+  const hist=st.signals?clamp(50+(shrunk-base)*2.5,0,100):45,robust=st.signals?clamp(50+(lower-base)*3,0,100):45,sample=clamp(st.signals/20,0,1)*100;
+  return clamp(hist*.38+robust*.42+sample*.20,0,100);
 }
-
+function entryCurrentMomentum(){
+  const a=recentDigits.slice(-12);if(a.length<6)return 50;
+  const mode=pendingPrediction?.mode||timingMode(),candidate=getCurrentTimingCandidate(),hit=d=>mode==='matches'?d===Number(candidate):modeCondition(mode,d);
+  const rate=a.filter(hit).length/a.length,prev=a.slice(0,6).filter(hit).length/6;
+  return clamp(50+(rate-prev)*140,0,100);
+}
+function bestWindowCandidate(){
+  const mode=pendingPrediction?.mode||timingMode(),candidate=getCurrentTimingCandidate(),key=(document.getElementById('assetSelector')?.value||'R_100')+':'+timingCandidateKey(mode,candidate),mem=entryWindowStore[key];
+  if(mem){const arr=MULTI_WINDOWS.map(w=>({w,st:mem[w]||emptyWindowStats()})).filter(x=>x.st.signals>0);if(arr.length){arr.sort((a,b)=>((b.st.wins+1)/(b.st.signals+2))-((a.st.wins+1)/(a.st.signals+2))||b.st.signals-a.st.signals);return arr[0];}}
+  const arr=MULTI_WINDOWS.map(w=>({w,st:multiWindows[w]?.stats})).filter(x=>x.st&&x.st.signals>0);arr.sort((a,b)=>((b.st.wins+1)/(b.st.signals+2))-((a.st.wins+1)/(a.st.signals+2))||b.st.signals-a.st.signals);return arr[0]||null;
+}
+function getEntryPointModel(){
+  const p=pendingPrediction,mode=p?.mode||timingMode(),candidate=p?.digit??mode,candidates=getAvailableTimingCandidates(),best=getBestTimingSecond(),secondBest=candidates.find(x=>x.index!==best?.index)||candidates[1],conf=timingConfidence(best,secondBest),bp=bestWindowCandidate();
+  const activeSecond=timingSession?timingLastSecond:0,currentTiming=activeSecond?getLiveEntrySecondScore(activeSecond,mode,candidate):0,target=best?.index+1||null,targetScore=target?getLiveEntrySecondScore(target,mode,candidate):0;
+  const currentEdge=mode==='matches'?(Number(p?.difference)||0):Math.max(0,(Number(p?.p100)||0)-.5)*100,signalComponent=p?clamp(Number(p.quality)||0,0,100):0,windowComponent=bp?clamp((bp.st.wins+1)/(bp.st.signals+2)*100,0,100):50,liveComponent=liveValidTicks>=LIVE_MIN_TICKS?100:clamp(liveValidTicks/LIVE_MIN_TICKS*100,0,100),edgeComponent=clamp(50+currentEdge*2,0,100),momentumComponent=entryCurrentMomentum(),targetComponent=targetScore||50;
+  const entryConfidence=clamp(signalComponent*.22+targetComponent*.23+currentTiming*.22+windowComponent*.10+liveComponent*.08+edgeComponent*.07+momentumComponent*.08,0,100);
+  return{learned:best?{second:best.index+1,rate:timingAdjustedRate(best.stat),rawRate:timingRate(best.stat),score:best.score,samples:best.stat.signals,lower:timingWilsonLower(best.stat)}:null,secondBest,conf,bp,activeSecond,entryConfidence,currentTiming,targetScore,target,mode,candidate,momentum:momentumComponent};
+}
+function renderSmartCountdown(active,target){const box=document.getElementById('smartCountdown');if(!box)return;box.innerHTML='';for(let i=1;i<=10;i++){const d=document.createElement('div');let label='ESPERAR';if(target){if(i===target)label='ENTRAR';else if(i===target-1)label='PREPARAR';else if(i>target)label='EJECUTAR';}d.className=(i===active?'active ':'')+(target&&i===target?'target ':'')+(active&&i<active?'past':'');d.innerHTML=`<b>${i}</b>${label}`;box.appendChild(d);}}
+function updateEntryPanel(activeSecond=0){
+  const secondEl=document.getElementById('entrySecond'),confEl=document.getElementById('entryConfidence'),histEl=document.getElementById('entryHistory'),statusEl=document.getElementById('entryStatus'),motorEl=document.getElementById('entryMotor'),winEl=document.getElementById('entryWindow'),gapEl=document.getElementById('entryGap');if(!secondEl||!statusEl)return;
+  const p=pendingPrediction,model=getEntryPointModel(),learned=model.learned,bp=model.bp,liveOk=liveValidTicks>=LIVE_MIN_TICKS,hasSignal=!!p,target=model.target,targetActive=!!target&&activeSecond===target,enoughSamples=!!learned&&learned.samples>=TIMING_MIN_SAMPLES,robustTiming=!!learned&&learned.lower>=timingBaseline(model.mode)*100+1,signalOk=hasSignal&&Number(p.quality)>=50,entryNow=targetActive&&liveOk&&signalOk&&enoughSamples&&robustTiming&&model.entryConfidence>=60&&model.conf.gap>=1.5;
+  entryGate={confirmed:entryNow,bestSecond:target,bestWindow:bp?.w||null,confidence:model.entryConfidence,historyRate:learned?.rate||null,gap:p?.difference||0};
+  secondEl.innerHTML=target?`${target} <small>SEGUNDO</small>`:'-- <small>APRENDIENDO</small>';confEl.textContent=`CONF. ENTRADA: ${model.entryConfidence.toFixed(0)}% · ${liveOk?'LIVE':'SIN LIVE'} · S${activeSecond||'--'} · ${model.conf.level.toUpperCase()}`;histEl.textContent=learned?`PUNTO HISTÓRICO S${learned.second}: ${learned.rate.toFixed(1)}% ajustado · ROBUSTO ${learned.lower.toFixed(1)}% · ${learned.samples} muestras`:`PUNTO DE ENTRADA: APRENDIENDO S4–S10 PARA ${modeLabel(model.mode)}${model.mode==='matches'?' D'+model.candidate:''}`;motorEl.textContent=p?(p.mode==='matches'?'D'+p.digit:modeLabel(p.mode)):'—';winEl.textContent=bp?`${bp.w}S · ${(100*(bp.st.wins+1)/(bp.st.signals+2)).toFixed(1)}% ajustado`:'—';gapEl.textContent=p?(p.mode==='matches'?`VENTAJA DÍGITO: ${Number(p.difference).toFixed(2)}`:`VENTAJA BINARIA: ${((Number(p.p100)-.5)*100).toFixed(1)} pp`):'—';
+  if(!hasSignal){statusEl.className='entry-status red';statusEl.textContent='🔴 SIN SEÑAL';}else if(!target){statusEl.className='entry-status yellow';statusEl.textContent=liveOk?'🟡 APRENDIENDO PUNTO':'🟡 ESPERAR LIVE';}else if(!entryNow){statusEl.className='entry-status yellow';statusEl.textContent=targetActive?'🟡 PUNTO DETECTADO · VALIDAR':`🟡 PREPARAR · ESPERAR S${target}`;}else{statusEl.className='entry-status green';statusEl.textContent=`🟢 PUNTO DE ENTRADA · S${target}`;}
+  renderSmartCountdown(activeSecond,target);
+}
 function renderTimingStats(activeSecond=0){
-    const grid=document.getElementById('timingGrid'), bestEl=document.getElementById('timingBest'), liveEl=document.getElementById('timingLive');
-    if(!grid || !bestEl || !liveEl) return;
-    const candidates=getAvailableTimingCandidates(), best=getBestTimingSecond(), secondBest=candidates[1];
-    const conf=timingConfidence(best,secondBest);
-    liveEl.textContent=activeSecond>0 ? `SEGUNDO ${activeSecond}/10 · EVALUANDO DESDE S4` : (best ? 'MOMENTO APRENDIDO' : 'ESPERANDO DATOS');
-    if(best){
-      const st=best.stat;
-      bestEl.innerHTML=`<strong>MEJOR MOMENTO: S${best.index+1}</strong> | PROBABILIDAD ESTIMADA: ${timingRate(st).toFixed(1)}% | CONFIANZA: ${conf.level.toUpperCase()} | VENTAJA: ${conf.gap.toFixed(1)} puntos`;
-    }else bestEl.innerHTML='<strong>MEJOR MOMENTO: --</strong> | ESPERANDO DATOS SUFICIENTES DESDE S4';
-    grid.innerHTML=timingStats.map((st,i)=>{const rate=st.signals?timingRate(st):null;return `<div class="timing-cell ${activeSecond===i+1?'active':''} ${best&&best.index===i?'best':''}"><div class="timing-sec">S${i+1}</div><div class="timing-rate">${rate===null?'--':rate.toFixed(0)+'%'}</div><div class="timing-sample">${st.signals?st.wins+'/'+st.signals:'--'}</div></div>`}).join('');
-    renderTimingHistory();
+  const grid=document.getElementById('timingGrid'),bestEl=document.getElementById('timingBest'),liveEl=document.getElementById('timingLive'),historyEl=document.getElementById('timingHistory');if(!grid)return;
+  const mode=pendingPrediction?.mode||timingMode(),candidate=getCurrentTimingCandidate(),arr=getTimingStatsForCandidate(mode,candidate),best=getBestTimingSecond();grid.innerHTML='';
+  for(let i=1;i<=TIMING_SECONDS;i++){const st=arr[i-1],adj=timingAdjustedRate(st),lower=timingWilsonLower(st),cell=document.createElement('div');cell.className='timing-cell'+(i===activeSecond?' active ':'')+(best&&i===best.index+1?' best':'');cell.innerHTML=`<div class="timing-sec">S${i}</div><div class="timing-rate">${st.signals?adj.toFixed(1)+'%':'—'}</div><div class="timing-sample">n=${st.signals}${st.signals?' · R'+lower.toFixed(0):''}</div>`;grid.appendChild(cell);}
+  if(bestEl)bestEl.innerHTML=best?`<strong>S${best.index+1}</strong> · ${timingAdjustedRate(best.stat).toFixed(1)}% ajustado · robusto ${timingWilsonLower(best.stat).toFixed(1)}% · n=${best.stat.signals} · score ${best.score.toFixed(1)}`:`<strong>APRENDIENDO</strong> · sin muestras suficientes para este candidato`;
+  if(liveEl)liveEl.textContent=best?`APRENDIENDO → S${best.index+1}`:'APRENDIENDO';
+  if(historyEl){const h=timingSession?.changeHistory||[];historyEl.innerHTML=h.length?h.slice(-8).reverse().map(x=>`S${x.second} · ${x.probability.toFixed(1)}% · ${x.level} · ${x.time}`).join('<br>'):'Memoria adaptativa por activo + modo + candidato.';}
 }
-
-function resetTimingSession(){ timingSession=null; timingLastSecond=0; renderTimingStats(); }
-
+function resetTimingSession(){timingSession=null;timingLastSecond=0;renderTimingStats();updateEntryPanel();}
 function startTimingSession(){
-    const mode=pendingMode || document.getElementById('modeSelector')?.value || 'matches';
-    const currentCandidate=mode==='matches' ? (pendingPrediction?.digit ?? null) : mode;
-    timingSession={startMs:Date.now(),startEpochMs:Date.now(),snapshots:{},pendingBySecond:{},mode,candidate:currentCandidate,lastAnnouncedSecond:null,lastAnnouncedScore:-Infinity,stableCount:0,lastBestKey:null,changeHistory:[],lastSpokenSecond:0,voiceTest:!voiceEnabled};
-    timingLastSecond=0; renderTimingStats(1); updateEntryPanel(1);
-    hablar(`Motor de momento óptimo iniciado. Evaluando datos y comparando los segundos disponibles. No es una garantía.`);
+  const mode=pendingMode||timingMode(),currentCandidate=mode==='matches'?(pendingPrediction?.digit??null):mode;
+  timingSession={startMs:Date.now(),snapshots:{},pendingBySecond:{},mode,candidate:currentCandidate,lastBestKey:null,stableCount:0,changeHistory:[],lastSpokenSecond:0};timingLastSecond=0;renderTimingStats(1);updateEntryPanel(1);hablar('Motor de punto de entrada B19 iniciado. S1 a S3 son observación. S4 a S10 se aprenden por activo, modo y candidato.');
 }
-
 function processTimingTick(digit){
-    if(!timingSession) return;
-    const elapsed=(Date.now()-timingSession.startMs)/1000, second=Math.floor(elapsed)+1, resolveSecond=second-1;
-    if(resolveSecond>=1 && resolveSecond<=TIMING_SECONDS && timingSession.pendingBySecond[resolveSecond]){
-      const candidate=timingSession.pendingBySecond[resolveSecond], st=timingStats[resolveSecond-1]; st.signals++;
-      if(timingConditionMatches(timingSession.mode,digit,candidate.candidate)) st.wins++; else st.losses++;
-      delete timingSession.pendingBySecond[resolveSecond]; saveTimingStats();
-    }
-    if(second<1 || second>TIMING_SECONDS) return;
-    const mode=timingSession.mode;
-    let candidate,score=0;
-    if(mode==='matches'){const results=analyzeAllDigits(); if(results.length){candidate=results[0].digit;score=results[0].score;}}
-    else {const m=calculateModeMetrics(mode);candidate=mode;score=m.score;}
-    if(candidate===undefined || candidate===null) return;
-    timingSession.snapshots[second]={candidate,score,createdAt:Date.now()}; timingSession.pendingBySecond[second]=timingSession.snapshots[second]; timingLastSecond=second;
-    const candidates=getAvailableTimingCandidates(), best=getBestTimingSecond(), secondBest=candidates[1], conf=timingConfidence(best,secondBest);
-    if(best){
-      const key=`${best.index+1}`, materiallyChanged=timingSession.lastBestKey!==key && conf.gap>=4;
-      if(timingSession.lastBestKey===key) timingSession.stableCount++; else timingSession.stableCount=1;
-      if(materiallyChanged || (conf.gap>=4 && timingSession.stableCount>=2)){
-        const prob=timingRate(best.stat), now=new Date().toLocaleTimeString('es-CL',{hour12:false});
-        timingSession.changeHistory.push({time:now,second:best.index+1,probability:prob,level:conf.level}); timingSession.lastBestKey=key;
-        if(voiceEnabled && !timingSession.voiceTest) hablar(`Actualización: el mejor punto estimado ahora es el segundo ${best.index+1}. Probabilidad actual ${prob.toFixed(1)} por ciento.`);
-      }
-      const margin=best.index<9?`segundos ${best.index+1} a ${best.index+2}`:`segundo ${best.index+1}`;
-      if(conf.strong && conf.gap>=8 && voiceEnabled && !timingSession.voiceTest && timingSession.lastAnnouncedSecond!==best.index+1){
-        hablar(`Entrada estimada confirmada por los datos: ${margin}. Confianza fuerte, ${timingRate(best.stat).toFixed(1)} por ciento.`); timingSession.lastAnnouncedSecond=best.index+1;
-      }
-      document.getElementById('timingBest').innerHTML=`<strong>MEJOR PROBABILIDAD ACTUAL: S${best.index+1}</strong> | ${timingRate(best.stat).toFixed(1)}% | CONFIANZA ${conf.level.toUpperCase()} | ENTRADA ESTIMADA: ${margin}`;
-    } else document.getElementById('timingBest').innerHTML='<strong>EVALUANDO…</strong> | ESPERANDO DATOS SUFICIENTES DESDE S4';
-    renderTimingStats(second); updateEntryPanel(second);
-    if(voiceEnabled && !timingSession.voiceTest) hablarCuenta(second);
-    if(second===TIMING_SECONDS){hablar(`Sesión finalizada. El resultado es una estimación estadística, no una garantía.`); resetTimingSession();}
+  if(!timingSession)return;
+  const elapsed=(Date.now()-timingSession.startMs)/1000,second=Math.floor(elapsed)+1,resolveSecond=second-1;
+  if(resolveSecond>=TIMING_START_SECOND&&resolveSecond<=TIMING_SECONDS&&timingSession.pendingBySecond[resolveSecond]){
+    const snap=timingSession.pendingBySecond[resolveSecond],hit=timingConditionMatches(timingSession.mode,digit,snap.candidate),st=timingStats[resolveSecond-1];st.signals++;if(hit)st.wins++;else st.losses++;
+    const arr=ensureAdaptiveCandidate(timingCandidateKey(timingSession.mode,snap.candidate)),ast=arr[resolveSecond-1];ast.signals++;if(hit)ast.wins++;else ast.losses++;delete timingSession.pendingBySecond[resolveSecond];saveTimingStats();saveAdaptiveTiming();
+  }
+  if(second<TIMING_START_SECOND)return;if(second>TIMING_SECONDS){resetTimingSession();return;}
+  const mode=timingSession.mode;let candidate=null,score=0;if(mode==='matches'){const results=analyzeAllDigits();if(results.length){candidate=results[0].digit;score=results[0].score;}}else{const m=calculateModeMetrics(mode);candidate=mode;score=m.score;}if(candidate===null)return;
+  timingSession.snapshots[second]={candidate,score,createdAt:Date.now()};timingSession.pendingBySecond[second]=timingSession.snapshots[second];timingLastSecond=second;
+  const candidates=getAvailableTimingCandidates(),best=getBestTimingSecond(),secondBest=candidates.find(x=>x.index!==best?.index)||candidates[1],conf=timingConfidence(best,secondBest);
+  if(best){const key=String(best.index+1);if(timingSession.lastBestKey===key)timingSession.stableCount++;else{timingSession.stableCount=1;timingSession.lastBestKey=key;}if(conf.gap>=2.5&&timingSession.stableCount>=2){const prob=timingAdjustedRate(best.stat),now=new Date().toLocaleTimeString('es-CL',{hour12:false}),last=timingSession.changeHistory[timingSession.changeHistory.length-1];if(!last||last.second!==best.index+1)timingSession.changeHistory.push({time:now,second:best.index+1,probability:prob,level:conf.level});}}
+  renderTimingStats(second);updateEntryPanel(second);if(second===TIMING_SECONDS)timingSession.endsAt=Date.now();
 }
 
 const digitMemory =
@@ -2938,15 +2850,15 @@ function updateAnalysis(){
                 </td>
 
                 <td>
-                    ${item.c20}
+                    ${item.c20 ?? item.p20 ?? 0}
                 </td>
 
                 <td>
-                    ${item.c50}
+                    ${item.c50 ?? item.p50 ?? 0}
                 </td>
 
                 <td>
-                    ${item.c100}
+                    ${item.c100 ?? item.p100 ?? 0}
                 </td>
 
                 <td>
@@ -3243,13 +3155,9 @@ function generatePrediction(fromBot=false){
   const observed=best.p100;
 
   if(mode!=='matches'){
-    /* Señal binaria: buscamos una pequeña ventaja sobre 50%.
-       Con pocas muestras también aceptamos evidencia equivalente
-       mediante z-score, pero nunca prometemos que sea predictiva. */
-    const positiveObserved=observed>=0.55;
-    const positiveZ=Number(best.z100)>=0.70;
-    if(!positiveObserved && !positiveZ){
-      showNoSignal(`ESPERAR · ${modeLabel(mode)} SIN VENTAJA SUFICIENTE · ${(observed*100).toFixed(1)}% vs 50% BASE`,Math.max(0,0.50-observed),0.05);
+    const binaryEdge=(observed-0.50)*100;
+    if(binaryEdge < -8){
+      showNoSignal(`ESPERAR · ${modeLabel(mode)} POR DEBAJO DE LA BASE · ${(observed*100).toFixed(1)}% vs 50%`,binaryEdge,-8);
       if(fromBot&&botAuto)scheduleBotCycle(Number(document.getElementById('botDelaySelect')?.value||3000));
       return;
     }
@@ -3273,11 +3181,11 @@ function generatePrediction(fromBot=false){
   predQuality.textContent=`CALIDAD ${quality.toFixed(1)}/100`;
   predGap.textContent=mode==='matches'?`Ventaja sobre #2: ${difference.toFixed(2)}`:`PROB. 100T: ${(best.p100*100).toFixed(1)}% · BASE ${(modeBaseline*100).toFixed(0)}%`;
 
-  pendingPrediction={digit:best.digit,score:best.score,quality,difference,metrics:{frequency:best.frequencyScore,momentum:best.momentumScore,consistency:best.consistencyScore,stability:best.stabilityScore,recency:best.recencyScore},createdAt:Date.now(),matched:false,matchDigit:null,mode:pendingMode};
+  pendingPrediction={digit:best.digit,score:best.score,quality,difference,metrics:{frequency:best.frequencyScore,momentum:best.momentumScore,consistency:best.consistencyScore,stability:best.stabilityScore,recency:best.recencyScore},p20:best.p20,p50:best.p50,p100:best.p100,modeMetrics:best.modeMetrics||null,createdAt:Date.now(),matched:false,matchDigit:null,mode:pendingMode};
   updateEntryPanel();
   startTimingSession();signals++;digitMemory[best.digit].signals++;document.getElementById("signalCount").textContent=signals;
   addSignalLog(best,"PENDIENTE");startMultiEngine(best.digit,best.score,pendingMode);startTimer();
-  systemToast.textContent=fromBot?`BOT · ${modeLabel(mode)} · CICLO ${botRuns} · 4S / 5S / 7S / 10S`:`${modeLabel(mode)} · PREDICCIÓN INICIADA · 4S / 5S / 7S / 10S`;
+  systemToast.textContent=fromBot?`BOT · ${modeLabel(mode)} · CICLO ${botRuns} · ANÁLISIS ACTIVO`:`${modeLabel(mode)} · ANÁLISIS COMPLETADO · CICLO 4S / 5S / 7S / 10S`;
   const mejor=getBestTimingSecond();
   const momentoVoz=mejor ? `Motor de momento óptimo: mejor momento histórico, segundo ${mejor.index+1}, con rendimiento de ${timingRate(mejor.stat).toFixed(1)} por ciento.` : `Motor de momento óptimo: todavía aprendiendo; necesita más muestras.`;
   const motorVoz=`Motor matemático ${modeLabel(mode)}. Señal ${mode==='matches'?'para el dígito '+best.digit:'para la condición '+modeLabel(mode)}. Score ${best.score.toFixed(1)}. Calidad ${quality.toFixed(0)} sobre 100. Probabilidad observada en 100 ticks ${(best.p100*100).toFixed(1)} por ciento. ${momentoVoz}`;
@@ -3874,6 +3782,8 @@ document.getElementById("modeSelector").addEventListener("change",()=>{
     return;
   }
   pendingMode=mode;
+  resetTimingSession();
+  loadTimingStats();
   // Al cambiar de modo, nunca dejamos visible una señal del modo anterior.
   pendingPrediction=null;
   prediction.style.display="block";
@@ -3901,7 +3811,8 @@ document.getElementById("modeSelector").addEventListener("change",()=>{
    ========================================================= */
 function runManualPrediction(){
   if(botAuto){botAuto=false;if(botTimer){clearTimeout(botTimer);botTimer=null;}renderBotState('BOT DETENIDO · MODO MANUAL');}
-  hablar("Iniciando predicción.", true);
+  hablar("Analizando la señal y buscando el punto de entrada.", true);
+  const toast=document.getElementById("systemToast"); if(toast)toast.textContent="ANALIZANDO · BUSCANDO PUNTO DE ENTRADA…";
   generatePrediction(false);
 }
 
@@ -3965,7 +3876,7 @@ document.addEventListener('click',e=>{
 },{capture:true});
 
 /* =========================================================
-   MEJORA MATEMÁTICA V18 — SUAVIZADO, ENTROPÍA Y CONSENSO
+   MEJORA MATEMÁTICA B19 — MOTOR DE PUNTO DE ENTRADA
    ========================================================= */
 (function(){
   const clamp18=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
@@ -3977,7 +3888,7 @@ document.addEventListener('click',e=>{
     const all=recentDigits, w20=window18(20),w50=window18(50),w100=window18(100);
     const count=a=>a.filter(x=>x===d).length;
     const rates=[w20,w50,w100].map(a=>(count(a)+1)/(a.length+10));
-    const base=.1, z=rates.map((p,i)=>a=>0);
+    const base=.1;
     const z20=(rates[0]-base)/Math.sqrt(base*(1-base)/Math.max(1,w20.length));
     const z50=(rates[1]-base)/Math.sqrt(base*(1-base)/Math.max(1,w50.length));
     const z100=(rates[2]-base)/Math.sqrt(base*(1-base)/Math.max(1,w100.length));
@@ -3987,7 +3898,7 @@ document.addEventListener('click',e=>{
     const gap=all.length-lastIndex18(d,all);
     const gapScore=gap===all.length?25:clamp18(75-Math.abs(gap-9)*5);
     const score=clamp18(recent*.30+historical*.25+momentum*.18+consistency*.17+gapScore*.10);
-    return {digit:d,p20:rates[0],p50:rates[1],p100:rates[2],z20,z50,z100,frequencyScore:historical,momentumScore:momentum,consistencyScore:consistency,stabilityScore:consistency,recencyScore:recent,gap,entropy:entropy18(all),score};
+    return {digit:d,c20:w20.filter(x=>x===d).length,c50:w50.filter(x=>x===d).length,c100:w100.filter(x=>x===d).length,p20:rates[0],p50:rates[1],p100:rates[2],z20,z50,z100,frequencyScore:historical,momentumScore:momentum,consistencyScore:consistency,stabilityScore:consistency,recencyScore:recent,gap,entropy:entropy18(all),score};
   }
   function lastIndex18(d,a){for(let i=a.length-1;i>=0;i--)if(a[i]===d)return a.length-1-i;return a.length;}
   window.analyzeAllDigits=function(){return Array.from({length:10},(_,d)=>metrics18(d)).sort((a,b)=>b.score-a.score);};
@@ -3997,7 +3908,7 @@ document.addEventListener('click',e=>{
     box.id='mathUpgradePanel';
     box.className='panel';
     box.style.cssText='margin:12px 0 14px;padding:16px;border:1px solid #1677ff;border-radius:14px;background:rgba(4,20,55,.78);color:#dceaff';
-    box.innerHTML='<h3 style="margin:0 0 10px">MOTOR MATEMÁTICO V18</h3><div id="mathUpgradeText">Acumulando datos...</div>';
+    box.innerHTML='<h3 style="margin:0 0 10px">MOTOR MATEMÁTICO B19 · PUNTO DE ENTRADA</h3><div id="mathUpgradeText">Acumulando datos...</div>';
     const topHud=document.querySelector('.top-hud');
     if(topHud && topHud.parentNode) topHud.parentNode.insertBefore(box,topHud.nextSibling);
     else document.querySelector('.phone-frame')?.prepend(box);
@@ -4006,7 +3917,7 @@ document.addEventListener('click',e=>{
     addPanel18();const el=document.getElementById('mathUpgradeText');if(!el)return;
     const n=recentDigits.length;if(!n){el.textContent='Esperando ticks reales.';return;}
     const r=window.analyzeAllDigits(),b=r[0],s=r[1];
-    el.innerHTML=`<b>Consenso:</b> ${b.digit} · <b>Score:</b> ${b.score.toFixed(1)}/100 · <b>Ventaja:</b> ${(b.score-s.score).toFixed(1)}<br><b>Probabilidad suavizada:</b> ${(b.p100*100).toFixed(1)}% · <b>Entropía:</b> ${(b.entropy*100).toFixed(1)}% · <b>Muestra:</b> ${n} ticks<br><small>La señal se considera débil si la ventaja es pequeña, la entropía es alta o la muestra es insuficiente.</small>`;
+    el.innerHTML=`<b>Consenso:</b> ${b.digit} · <b>Score:</b> ${b.score.toFixed(1)}/100 · <b>Ventaja:</b> ${(b.score-s.score).toFixed(1)}<br><b>Probabilidad suavizada:</b> ${(b.p100*100).toFixed(1)}% · <b>Entropía:</b> ${(b.entropy*100).toFixed(1)}% · <b>Muestra:</b> ${n} ticks<br><small>B19: el punto de entrada se aprende por activo + modo + candidato, con historial por segundo, suavizado, límite robusto, momentum, ventanas y sincronización LIVE. No garantiza el próximo resultado.</small>`;
   }
   const oldProcess=window.processTick; if(typeof oldProcess==='function'){window.processTick=function(d){const out=oldProcess.apply(this,arguments);render18();return out;};}
   setTimeout(render18,300);
