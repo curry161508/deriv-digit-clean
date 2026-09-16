@@ -3802,7 +3802,7 @@ function connectDeriv(symbol){
     ws.onopen=()=>{
       reconnectAttempts=0;
       requestVolatilityCatalog(ws);
-      try{ws.send(JSON.stringify({ticks:symbol,subscribe:1,symbol}))}catch(e){}
+      try{ws.send(JSON.stringify({ticks:symbol,subscribe:1}))}catch(e){}
       document.getElementById('statusText').textContent='SINCRONIZANDO...';
       document.getElementById('liveDot').style.background='#ffe600';
       liveValidTicks=0; flowStatus='ACUMULANDO'; updateSyncUI(); setSyncState('syncing','🟡 SINCRONIZANDO TICKS...');
