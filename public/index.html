@@ -1598,7 +1598,7 @@ let voiceLastMilestone = 0;
 /* V18 · INTEGRIDAD DEL TICK + PUERTA DE SINCRONIZACIÓN */
 const LIVE_MIN_TICKS=5;
 const MAX_TICK_AGE_MS=2200;
-const MAX_INTERARRIVAL_MS=2500;
+const MAX_INTERARRIVAL_MS=8000;
 let liveValidTicks=0;
 let lastTickReceiveMs=0;
 let lastTickEpochMs=0;
@@ -4014,7 +4014,10 @@ function connectDeriv(symbol){
         if(data.error){const msg='DERIV: '+(data.error.message||'ERROR');systemToast.textContent=msg;setSyncState('error','🔴 '+msg);flowStatus='ERROR DERIV';syncLocked=true;updateSyncUI();return;}
         const tick=data.tick||null;
         if(tick&&tick.quote!==undefined){
-          if(tick.symbol && String(tick.symbol)!==String(symbol)) return;
+          if(tick.symbol && String(tick.symbol)!==String(symbol)){
+             lastDerivSymbol=String(tick.symbol);
+             return;
+           }
           const cleanTick=registerTickSync(tick);
           if(!cleanTick) return;
           const shownQuote=displayDerivQuote(tick);
