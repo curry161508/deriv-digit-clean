@@ -3795,8 +3795,9 @@ function connectDeriv(symbol){
     document.getElementById('statusText').textContent='CONECTANDO...';
     document.getElementById('liveDot').style.background='#ffe600';
     liveValidTicks=0; lastTickReceiveMs=0; clockOffsetMs=null; estimatedLatencyMs=null; flowStatus='ESPERANDO'; updateSyncUI(); setSyncState('','🔴 CONECTANDO...'); updateEntryPanel();
-    const proto=location.protocol==='https:'?'wss':'ws';
-    ws=new WebSocket(proto+'://'+location.host);
+    /* Conexión directa a Deriv: Render ya no retransmite los ticks en vivo. */
+    const derivAppId='1089';
+    ws=new WebSocket('wss://ws.derivws.com/websockets/v3?app_id='+derivAppId);
     manualClose=false;
     ws.onopen=()=>{
       reconnectAttempts=0;
