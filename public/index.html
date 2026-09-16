@@ -1597,8 +1597,8 @@ let voiceLastMilestone = 0;
 
 /* V18 · INTEGRIDAD DEL TICK + PUERTA DE SINCRONIZACIÓN */
 const LIVE_MIN_TICKS=5;
-const MAX_TICK_AGE_MS=2200;
-const MAX_INTERARRIVAL_MS=8000;
+const MAX_TICK_AGE_MS=15000;
+const MAX_INTERARRIVAL_MS=15000;
 let liveValidTicks=0;
 let lastTickReceiveMs=0;
 let lastTickEpochMs=0;
@@ -1643,7 +1643,7 @@ function updateSyncUI(){
 }
 
 function hardSyncLock(reason){
-  syncLocked=true; liveValidTicks=Math.max(0,liveValidTicks-1); flowStatus='BLOQUEADO'; tickSequenceOk=false;
+  syncLocked=true; liveValidTicks=0; flowStatus='BLOQUEADO'; tickSequenceOk=false;
   setSyncState('error','🔴 ENTRADA BLOQUEADA');
   const n=document.getElementById('syncNote'); if(n)n.textContent='BLOQUEO DE INTEGRIDAD: '+reason+' Se reinicia la confirmación y no se permite usar este tick para el motor matemático.';
 }
@@ -1681,30 +1681,22 @@ function tickIntegrityCheck(tick){
   const precision=tickPrecision(tick);
   const quote=normalizedQuote(tick,precision);
   if(!Number.isFinite(quote)||precision===null)return {ok:false,reason:'precio o precisión inválidos'};
-  /* IMPORTANTE: epoch de Deriv y reloj del dispositivo pueden tener desfase.
-     No rechazamos un tick válido solo porque el reloj local esté adelantado/atrasado. */
-  const rawAge=Number.isFinite(epoch)&&epoch>0?now-epoch:null;
+  const age=Number.isFinite(epoch)&&epoch>0?Math.max(0,now-epoch):null;
   const gap=lastTickReceiveMs?now-lastTickReceiveMs:null;
   const epochGap=Number.isFinite(epoch)&&lastTickEpochMs?epoch-lastTickEpochMs:null;
   const key=(Number.isFinite(epoch)&&epoch>0?String(epoch):'noepoch')+'|'+quote;
   const duplicate=key===lastTickKey;
   const outOfOrder=epochGap!==null&&epochGap<0;
+  const badAge=age!==null&&age>MAX_TICK_AGE_MS;
   const badGap=gap!==null&&gap>MAX_INTERARRIVAL_MS;
-  const badEpochGap=epochGap!==null&&(epochGap<0||epochGap>10000);
-  /* La antigüedad real se calcula después de estimar el desfase del reloj. */
-  let correctedAge=null;
-  if(Number.isFinite(rawAge)){
-    if(clockOffsetMs===null) clockOffsetMs=rawAge;
-    correctedAge=Math.max(0,rawAge-clockOffsetMs);
-    clockOffsetMs=clockOffsetMs*.95+rawAge*.05;
-    correctedAge=Math.max(0,rawAge-clockOffsetMs);
-  }
-  tickAgeMs=correctedAge; tickGapMs=gap; tickDuplicate=duplicate; tickOutOfOrder=outOfOrder;
+  const badEpochGap=epochGap!==null&&(epochGap<0||epochGap>5000);
+  tickAgeMs=age; tickGapMs=gap; tickDuplicate=duplicate; tickOutOfOrder=outOfOrder;
+  if(badAge)return {ok:false,reason:'tick atrasado ('+Math.round(age)+'ms)'};
   if(duplicate)return {ok:false,reason:'tick duplicado'};
   if(outOfOrder)return {ok:false,reason:'tick fuera de orden'};
   if(badGap)return {ok:false,reason:'interrupción de flujo ('+Math.round(gap)+'ms)'};
   if(badEpochGap)return {ok:false,reason:'salto temporal de tick'};
-  return {ok:true,reason:'OK',quote,precision,epoch,key,age:correctedAge,gap,epochGap,rawAge};
+  return {ok:true,reason:'OK',quote,precision,epoch,key,age,gap,epochGap};
 }
 function registerTickSync(tick){
   const check=tickIntegrityCheck(tick);
@@ -1714,8 +1706,7 @@ function registerTickSync(tick){
     const d=lastDigitFromDerivQuote(tick); lastTickDigit=d;
     if(Number.isFinite(epoch)&&epoch>0){
       const raw=now-epoch;
-      if(clockOffsetMs===null)clockOffsetMs=raw;
-      clockOffsetMs=clockOffsetMs*.95+raw*.05;
+      if(clockOffsetMs===null)clockOffsetMs=raw;else clockOffsetMs=clockOffsetMs*.9+raw*.1;
       estimatedLatencyMs=Math.max(0,raw-clockOffsetMs);
     }
     lastTickReceiveMs=now; lastTickEpochMs=Number.isFinite(epoch)?epoch:lastTickEpochMs; lastTickKey=check.key;
@@ -1728,13 +1719,16 @@ function registerTickSync(tick){
     }else{syncLocked=true;flowStatus='ACUMULANDO';setSyncState('syncing','🟡 VALIDANDO FLUJO...');}
     syncIntegrity=Math.min(100,50+liveValidTicks*10+(tickAgeMs!==null?Math.max(0,20-tickAgeMs/100):0));
   }else{
-    // Un tick duplicado, fuera de orden o con un hueco aislado no debe
-    // reiniciar toda la sincronización: simplemente se descarta.
-    syncIntegrity=Math.max(0,syncIntegrity-5);
-    tickSequenceOk=false;
-    flowStatus='DESCARTANDO TICK';
-    updateSyncUI();
-    return false;
+    // Un tick aislado no debe bloquear permanentemente la conexión.
+    // Conservamos el último estado válido y seguimos escuchando.
+    syncIntegrity=Math.max(0,syncIntegrity-2);
+    flowStatus='RECIBIENDO';
+    lastTickReceiveMs=now;
+    tickSequenceOk=true;
+    if(liveValidTicks<LIVE_MIN_TICKS){
+      syncLocked=true;
+      setSyncState('syncing','🟡 RECIBIENDO TICKS...');
+    }
   }
   updateSyncUI(); updateEntryPanel();
   return check.ok;
@@ -4005,7 +3999,7 @@ function connectDeriv(symbol){
       document.getElementById('statusText').textContent='SINCRONIZANDO...';
       document.getElementById('liveDot').style.background='#ffe600';
       liveValidTicks=0; syncLocked=true; flowStatus='ACUMULANDO'; updateSyncUI(); setSyncState('syncing','🟡 SINCRONIZANDO TICKS...');
-      systemToast.textContent=`RECIBIENDO TICKS: ${symbol}`; voiceLastMilestone=0;
+      systemToast.textContent=`RECIBIENDO TICKS: ${symbol}`; voiceLastMilestone=0; hablar(`Conexión en vivo establecida. Activo ${symbol}. Recibiendo ticks. El escáner está escuchando el mercado y acumulando datos.`);
     };
     ws.onmessage=event=>{
       if(myGeneration!==connectionGeneration) return;
@@ -4015,12 +4009,13 @@ function connectDeriv(symbol){
           populateVolatilitySymbols(data.active_symbols);
           return;
         }
-        if(data.error){const msg='DERIV: '+(data.error.message||'ERROR');systemToast.textContent=msg;setSyncState('error','🔴 '+msg);flowStatus='ERROR DERIV';syncLocked=true;updateSyncUI();return;}
+        if(data.error){systemToast.textContent='DERIV: '+(data.error.message||'ERROR');return;}
         const tick=data.tick||null;
         if(tick&&tick.quote!==undefined){
           if(tick.symbol && String(tick.symbol)!==String(symbol)){
-             return;
-           }
+            // Deriv puede devolver el símbolo canónico en respuestas de suscripción;
+            // no descartamos el tick si contiene una cotización válida.
+          }
           const cleanTick=registerTickSync(tick);
           if(!cleanTick) return;
           const shownQuote=displayDerivQuote(tick);
@@ -4033,15 +4028,6 @@ function connectDeriv(symbol){
         }
       }catch(error){console.error('Error procesando tick',error)}
     };
-    setTimeout(()=>{
-      if(myGeneration!==connectionGeneration) return;
-      if(ws && ws.readyState===1 && liveValidTicks===0){
-        systemToast.textContent='CONEXIÓN ABIERTA PERO SIN TICKS: REVISAR SÍMBOLO/SUSCRIPCIÓN';
-        setSyncState('error','🔴 SIN TICKS DE DERIV');
-        flowStatus='SIN TICKS';
-        updateSyncUI();
-      }
-    },7000);
     ws.onerror=()=>{if(myGeneration!==connectionGeneration)return; document.getElementById('statusText').textContent='ERROR';document.getElementById('liveDot').style.background='#ff3355';setSyncState('error','🔴 CONEXIÓN CON ERROR');flowStatus='ERROR';updateSyncUI();systemToast.textContent='ERROR DE CONEXIÓN CON EL SERVIDOR';hablarPrioridad('Error de conexión. Reintentando automáticamente.',3,true);scheduleReconnect();};
     ws.onclose=()=>{if(myGeneration!==connectionGeneration)return; document.getElementById('statusText').textContent='DESCONECTADO';document.getElementById('liveDot').style.background='#ff3355';setSyncState('error','🔴 DESCONECTADO');flowStatus='DESCONECTADO';updateSyncUI();scheduleReconnect();};
 }
