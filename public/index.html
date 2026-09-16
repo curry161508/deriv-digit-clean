@@ -3713,6 +3713,8 @@ function startTimer(){
    EXTRAER ÚLTIMO DÍGITO
    ========================================================= */
 
+let lastAcceptedDerivEpoch = 0;
+
 function extractLastDigit(tick){
     /* Fuente única del último dígito para Deriv y el escáner. */
     if(!tick || tick.quote===undefined || tick.quote===null) return null;
@@ -3816,6 +3818,10 @@ function connectDeriv(symbol){
         if(data.error){systemToast.textContent='DERIV: '+(data.error.message||'ERROR');return;}
         const tick=data.tick||((data.status==='TICK RECIBIDO')?data:null);
         if(tick&&tick.quote!==undefined){
+          const tickEpoch=Number(tick.epoch);
+          /* Ignorar duplicados o ticks atrasados para no desincronizar la pantalla. */
+          if(Number.isFinite(tickEpoch) && tickEpoch>0 && tickEpoch<lastAcceptedDerivEpoch) return;
+          if(Number.isFinite(tickEpoch) && tickEpoch>0) lastAcceptedDerivEpoch=tickEpoch;
           registerTickSync(tick);
           processTickForCandle(tick);
           const digit=extractLastDigit(tick);
