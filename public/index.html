@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1597,8 +1596,8 @@ let voiceLastMilestone = 0;
 
 /* V18 · INTEGRIDAD DEL TICK + PUERTA DE SINCRONIZACIÓN */
 const LIVE_MIN_TICKS=5;
-const MAX_TICK_AGE_MS=15000;
-const MAX_INTERARRIVAL_MS=15000;
+const MAX_TICK_AGE_MS=2200;
+const MAX_INTERARRIVAL_MS=2500;
 let liveValidTicks=0;
 let lastTickReceiveMs=0;
 let lastTickEpochMs=0;
@@ -1719,16 +1718,9 @@ function registerTickSync(tick){
     }else{syncLocked=true;flowStatus='ACUMULANDO';setSyncState('syncing','🟡 VALIDANDO FLUJO...');}
     syncIntegrity=Math.min(100,50+liveValidTicks*10+(tickAgeMs!==null?Math.max(0,20-tickAgeMs/100):0));
   }else{
-    // Un tick aislado no debe bloquear permanentemente la conexión.
-    // Conservamos el último estado válido y seguimos escuchando.
-    syncIntegrity=Math.max(0,syncIntegrity-2);
-    flowStatus='RECIBIENDO';
+    syncIntegrity=Math.max(0,syncIntegrity-25);
+    hardSyncLock(check.reason);
     lastTickReceiveMs=now;
-    tickSequenceOk=true;
-    if(liveValidTicks<LIVE_MIN_TICKS){
-      syncLocked=true;
-      setSyncState('syncing','🟡 RECIBIENDO TICKS...');
-    }
   }
   updateSyncUI(); updateEntryPanel();
   return check.ok;
@@ -4012,10 +4004,7 @@ function connectDeriv(symbol){
         if(data.error){systemToast.textContent='DERIV: '+(data.error.message||'ERROR');return;}
         const tick=data.tick||null;
         if(tick&&tick.quote!==undefined){
-          if(tick.symbol && String(tick.symbol)!==String(symbol)){
-            // Deriv puede devolver el símbolo canónico en respuestas de suscripción;
-            // no descartamos el tick si contiene una cotización válida.
-          }
+          if(tick.symbol && String(tick.symbol)!==String(symbol)) return;
           const cleanTick=registerTickSync(tick);
           if(!cleanTick) return;
           const shownQuote=displayDerivQuote(tick);
