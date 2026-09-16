@@ -1643,7 +1643,7 @@ function updateSyncUI(){
 }
 
 function hardSyncLock(reason){
-  syncLocked=true; liveValidTicks=0; flowStatus='BLOQUEADO'; tickSequenceOk=false;
+  syncLocked=true; liveValidTicks=Math.max(0,liveValidTicks-1); flowStatus='BLOQUEADO'; tickSequenceOk=false;
   setSyncState('error','🔴 ENTRADA BLOQUEADA');
   const n=document.getElementById('syncNote'); if(n)n.textContent='BLOQUEO DE INTEGRIDAD: '+reason+' Se reinicia la confirmación y no se permite usar este tick para el motor matemático.';
 }
@@ -1728,9 +1728,13 @@ function registerTickSync(tick){
     }else{syncLocked=true;flowStatus='ACUMULANDO';setSyncState('syncing','🟡 VALIDANDO FLUJO...');}
     syncIntegrity=Math.min(100,50+liveValidTicks*10+(tickAgeMs!==null?Math.max(0,20-tickAgeMs/100):0));
   }else{
-    syncIntegrity=Math.max(0,syncIntegrity-25);
-    hardSyncLock(check.reason);
-    lastTickReceiveMs=now;
+    // Un tick duplicado, fuera de orden o con un hueco aislado no debe
+    // reiniciar toda la sincronización: simplemente se descarta.
+    syncIntegrity=Math.max(0,syncIntegrity-5);
+    tickSequenceOk=false;
+    flowStatus='DESCARTANDO TICK';
+    updateSyncUI();
+    return false;
   }
   updateSyncUI(); updateEntryPanel();
   return check.ok;
@@ -4015,7 +4019,6 @@ function connectDeriv(symbol){
         const tick=data.tick||null;
         if(tick&&tick.quote!==undefined){
           if(tick.symbol && String(tick.symbol)!==String(symbol)){
-             lastDerivSymbol=String(tick.symbol);
              return;
            }
           const cleanTick=registerTickSync(tick);
