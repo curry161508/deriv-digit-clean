@@ -508,6 +508,25 @@ button:active{
 .sync-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:10px}.sync-state{font-size:22px;font-weight:1000;letter-spacing:1px;padding:14px;border-radius:12px;text-align:center;border:1px solid rgba(255,230,0,.35);background:rgba(255,230,0,.06);color:#ffe600}.sync-state.syncing{color:#ffd84d;border-color:#ffd84d;background:rgba(255,216,77,.08)}.sync-state.live{color:#19f5a5;border-color:#19f5a5;background:rgba(25,245,165,.08);box-shadow:0 0 22px rgba(25,245,165,.14)}.sync-state.error{color:#ff496d;border-color:#ff496d;background:rgba(255,73,109,.08)}
 .sync-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.sync-metric{padding:9px;border-radius:9px;background:#061a2e;border:1px solid rgba(22,140,255,.22);text-align:center}.sync-metric span{display:block;font-size:9px;color:#78bde6}.sync-metric b{display:block;margin-top:3px;font-size:15px;color:#fff}.sync-note{margin-top:8px;font-size:9px;color:#7199b8;text-align:center}
 .entry-panel{margin:0 0 14px;padding:20px;border-radius:18px;border:2px solid #168cff;background:radial-gradient(circle at 50% 35%,rgba(0,180,255,.20),rgba(3,18,34,.99) 65%);box-shadow:0 0 36px rgba(0,140,255,.20);text-align:center}.entry-kicker{font-size:13px;font-weight:1000;letter-spacing:2px;color:#9edcff}.entry-second{font-size:68px;line-height:.95;font-weight:1000;margin:8px 0;color:#fff;text-shadow:0 0 25px rgba(0,190,255,.65)}.entry-second small{font-size:22px}.entry-confidence{font-size:19px;font-weight:1000;color:#8fe1ff}.entry-history{font-size:14px;font-weight:900;color:#cdeaff;margin-top:6px}.entry-status{margin:12px auto 0;padding:11px 15px;max-width:680px;border-radius:12px;font-size:22px;font-weight:1000;letter-spacing:1px;background:#10283e;color:#fff;border:2px solid #3a6280}.entry-status.green{color:#071c13;background:#19f5a5;border-color:#19f5a5;box-shadow:0 0 24px rgba(25,245,165,.35)}.entry-status.yellow{color:#241d00;background:#ffe600;border-color:#ffe600}.entry-status.red{color:#fff;background:#d91e45;border-color:#ff496d}.entry-details{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.entry-details div{padding:8px;border-radius:8px;background:rgba(0,20,40,.7);border:1px solid rgba(22,140,255,.25);font-size:10px;color:#9ec8e6}.entry-details b{display:block;color:#fff;font-size:12px;margin-top:2px}.smart-countdown{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:11px}.smart-countdown div{padding:7px 2px;border-radius:7px;border:1px solid rgba(22,140,255,.25);background:#061a2e;color:#789bb7;font-size:9px;font-weight:900}.smart-countdown div.active{color:#fff;border-color:#00d9ff;box-shadow:0 0 12px rgba(0,217,255,.2)}.smart-countdown div.target{color:#071c13;background:#19f5a5;border-color:#19f5a5}.smart-countdown div.past{opacity:.55}.smart-countdown b{display:block;font-size:15px;margin-bottom:2px}@media(max-width:700px){.sync-grid{grid-template-columns:1fr}.entry-second{font-size:54px}.entry-status{font-size:18px}.entry-details{grid-template-columns:1fr}.smart-countdown{grid-template-columns:repeat(5,1fr)}}
+
+/* =========================================================
+   ENTRY FOCUS V2 · JERARQUÍA VISUAL Y MOTOR DE ENTRADA
+   ========================================================= */
+.entry-panel{position:relative;overflow:hidden;z-index:5;scroll-margin-top:12px;box-shadow:0 0 0 1px rgba(0,255,204,.18),0 18px 55px rgba(0,0,0,.28)}
+.entry-panel:before{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 0,rgba(0,255,204,.10),transparent 52%)}
+.entry-panel.entry-ready{box-shadow:0 0 0 2px rgba(0,255,204,.38),0 0 34px rgba(0,255,204,.18)}
+.entry-panel.entry-wait{box-shadow:0 0 0 1px rgba(255,193,7,.24),0 18px 55px rgba(0,0,0,.28)}
+.entry-kicker{letter-spacing:.16em;font-weight:900}
+.entry-score-ring{font-size:52px;font-weight:1000}
+.entry-focus-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin:12px 0}
+.entry-metric{padding:10px;border:1px solid rgba(120,180,220,.2);border-radius:10px;background:rgba(0,0,0,.16);text-align:center}
+.entry-metric span{display:block;font-size:10px;letter-spacing:.08em;opacity:.7;font-weight:900}.entry-metric b{display:inline-block;font-size:22px;margin-top:3px}.entry-metric small{opacity:.55;margin-left:2px}
+.entry-confluence{margin-top:10px;padding:10px;border:1px solid rgba(0,255,204,.18);border-radius:12px;background:rgba(0,0,0,.13)}
+.confluence-title{font-size:10px;font-weight:900;letter-spacing:.1em;opacity:.72;margin-bottom:7px}.confluence-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.confluence-grid div{padding:8px 5px;border-radius:8px;background:rgba(255,255,255,.035);text-align:center;font-size:11px;font-weight:900}.confluence-grid .ok{border:1px solid rgba(0,255,204,.45);color:#7fffe5}.confluence-grid .weak{border:1px solid rgba(255,193,7,.35);color:#ffd36a}.confluence-grid .bad{border:1px solid rgba(255,80,80,.25);color:#ff8c8c}
+.entry-reason{margin-top:10px;padding:10px 12px;border-left:3px solid #00ffcc;background:rgba(0,255,204,.045);font-size:12px;line-height:1.45;font-weight:800}.entry-checks{display:flex;flex-wrap:wrap;gap:6px;margin-top:9px}.entry-checks span{padding:5px 8px;border-radius:999px;background:rgba(255,255,255,.045);font-size:10px;font-weight:900;letter-spacing:.03em}.entry-checks .ok{color:#7fffe5;background:rgba(0,255,204,.08)}.entry-checks .bad{color:#ff9898;background:rgba(255,60,60,.07)}.entry-checks .warn{color:#ffd36a;background:rgba(255,193,7,.07)}
+.entry-audit{margin-top:8px;font-size:9px;opacity:.5;line-height:1.4}.entry-panel .smart-countdown{margin-top:12px}
+@media(max-width:700px){.entry-focus-grid{grid-template-columns:repeat(2,1fr)}.confluence-grid{grid-template-columns:repeat(2,1fr)}.entry-panel{margin-left:-2px;margin-right:-2px}.entry-second{font-size:56px}}
+
 </style>
 <style>
 /* Mejor legibilidad en celular */
@@ -802,7 +821,24 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
     <div>MEJOR VENTANA<b id="entryWindow">—</b></div>
     <div>DIFERENCIA<b id="entryGap">—</b></div>
   </div>
+  <div class="entry-focus-grid">
+    <div class="entry-metric"><span>PUNTAJE DE ENTRADA</span><b id="entryScore">0</b><small>/100</small></div>
+    <div class="entry-metric"><span>ESTABILIDAD</span><b id="entryStability">--</b></div>
+    <div class="entry-metric"><span>EVIDENCIA</span><b id="entryEvidence">--</b></div>
+    <div class="entry-metric"><span>RIESGO DE FALSA ENTRADA</span><b id="entryFalseRisk">--</b></div>
+  </div>
+  <div class="entry-confluence" id="entryConfluence">
+    <div class="confluence-title">CONFIRMACIÓN MULTIVENTANA</div>
+    <div class="confluence-grid">
+      <div id="entryW4">4S · --</div><div id="entryW5">5S · --</div><div id="entryW7">7S · --</div><div id="entryW10">10S · --</div>
+    </div>
+  </div>
+  <div class="entry-reason" id="entryReason">Esperando suficientes datos para construir el punto de entrada.</div>
+  <div class="entry-checks" id="entryChecks">
+    <span id="checkLive">○ LIVE</span><span id="checkSignal">○ SEÑAL</span><span id="checkTiming">○ MOMENTO</span><span id="checkWindow">○ VENTANAS</span><span id="checkStability">○ ESTABILIDAD</span>
+  </div>
   <div class="smart-countdown" id="smartCountdown"></div>
+  <div class="entry-audit" id="entryAudit">AUDITORÍA: —</div>
 </div>
 
 <!-- PREDICCIÓN -->
@@ -1580,50 +1616,84 @@ function registerTickSync(tick){
 }
 function bestHistoricalTiming(){const b=getBestTimingSecond();return b?{second:b.index+1,rate:timingRate(b.stat),score:b.score,samples:b.stat.signals}:null;}
 function bestWindowCandidate(){const arr=MULTI_WINDOWS.map(w=>({w,st:multiWindows[w]?.stats})).filter(x=>x.st&&x.st.signals>0);arr.sort((a,b)=>multiRate(b.st)-multiRate(a.st));return arr[0]||null;}
-function updateEntryPanel(activeSecond=0){
-  const secondEl=document.getElementById('entrySecond'), confEl=document.getElementById('entryConfidence'), histEl=document.getElementById('entryHistory'), statusEl=document.getElementById('entryStatus');
-  const motorEl=document.getElementById('entryMotor'), winEl=document.getElementById('entryWindow'), gapEl=document.getElementById('entryGap');
-  if(!secondEl||!statusEl)return;
-  const learned=bestHistoricalTiming(); const bp=bestWindowCandidate();
+function entryPointEngine(activeSecond=0){
   const p=pendingPrediction;
-  const mainOk=!!p && Number(p.quality)>=55;
-  const windowOk=!!bp && bp.st.signals>=3;
-  const learnedOk=!!learned;
-  const gapOk=!p ? false : p.mode!=='matches' ? Number(p.difference)>=1.25 : Number(p.difference)>=3;
+  const learned=bestHistoricalTiming();
+  const windows=MULTI_WINDOWS.map(w=>({w,st:multiWindows[w]?.stats||emptyMultiStats()}));
   const liveOk=liveValidTicks>=LIVE_MIN_TICKS;
   const latencyOk=estimatedLatencyMs===null || estimatedLatencyMs<=1500;
-  const stable=mainOk&&windowOk&&learnedOk&&gapOk&&liveOk&&latencyOk;
-  entryGate={confirmed:stable,bestSecond:learned?.second||null,bestWindow:bp?.w||null,confidence:p?.quality||0,historyRate:learned?.rate||null,gap:p?.difference||0};
-  secondEl.innerHTML=learned?`${learned.second} <small>SEGUNDO</small>`:'-- <small>SEGUNDO</small>';
-  confEl.textContent=stable?`CONFIRMACIÓN: ${Number(p.quality).toFixed(0)}% · ESTABLE`:`CONFIRMACIÓN: ${mainOk?Number(p.quality).toFixed(0)+'%':'ESPERANDO ANÁLISIS'} · ${liveOk?'LIVE':'SIN LIVE'}`;
-  histEl.textContent=learned?`RENDIMIENTO HISTÓRICO: ${learned.rate.toFixed(1)}% · ${learned.samples} muestras`:'RENDIMIENTO HISTÓRICO: AÚN APRENDIENDO';
-  motorEl.textContent=p?(p.mode==='matches'?'D'+p.digit:modeLabel(p.mode)):'—';
-  winEl.textContent=bp?`${bp.w}S · ${multiRate(bp.st).toFixed(1)}%`:'—';
-  gapEl.textContent=p?(p.mode==='matches'?p.difference.toFixed(2):'CONF. BINARIA'):'—';
-  if(!stable){statusEl.className='entry-status '+(liveOk&&mainOk?'yellow':'red');statusEl.textContent=liveOk&&mainOk?'🟡 ESPERAR':'🔴 NO ENTRAR';}
-  else if(activeSecond && learned && activeSecond===learned.second){
-    statusEl.className='entry-status green';
-    statusEl.textContent='🟢 ENTRAR · SEGUNDO OBJETIVO';
-    const key=`${multiCycle||0}-${learned.second}-${learned.samples}-${p?.mode||''}-${p?.digit??''}`;
-    if(relojVoz10Activo && voiceEnabled && ultimoAvisoPuntoEntrada!==key){
-      ultimoAvisoPuntoEntrada=key;
-      ultimoAvisoPrepararEntrada=key;
-      hablarPrioridad(`PUNTO DE ENTRADA. Segundo ${learned.second}. Validar ahora.`,4,true);
-    }
+  const sampleReady=recentDigits.length>=20;
+  const signalQuality=p?Number(p.quality)||0:0;
+  const rawGap=p?Number(p.difference)||0:0;
+  const gapNeed=p?.mode==='matches'?3:1.25;
+  const gapOk=!!p && rawGap>=gapNeed;
+  const timingReady=!!learned;
+  const target=learned?.second||null;
+  const onTarget=!!activeSecond && !!target && activeSecond===target;
+  const preparing=!!activeSecond && !!target && activeSecond===target-1;
+  const rates=windows.map(x=>x.st.signals>=3?multiRate(x.st):null);
+  const validRates=rates.filter(x=>x!==null);
+  const windowConsensus=validRates.length?validRates.filter(x=>x>=50).length/validRates.length:0;
+  const bestWin=windows.filter(x=>x.st.signals>0).sort((a,b)=>multiRate(b.st)-multiRate(a.st)||b.st.signals-a.st.signals)[0]||null;
+  const qualityScore=Math.max(0,Math.min(100,signalQuality));
+  const historyScore=learned?Math.max(0,Math.min(100,learned.rate + Math.min(20,learned.samples/2))):0;
+  const windowScore=validRates.length?validRates.reduce((a,r)=>a+r,0)/validRates.length:0;
+  const stabilityScore=sampleReady?Math.max(0,Math.min(100,50 + Math.min(50,validRates.length*10) - (latencyOk?0:25))):20;
+  const evidenceScore=p ? (p.evidence!==undefined?Number(p.evidence):qualityScore) : 0;
+  const timingScore22=learned?Math.max(0,Math.min(100,learned.score||0)):0;
+  let score=qualityScore*.28+historyScore*.18+windowScore*.18+stabilityScore*.12+evidenceScore*.14+timingScore22*.10;
+  if(!liveOk)score-=35;if(!latencyOk)score-=15;if(!sampleReady)score-=15;if(!gapOk)score-=12;if(!timingReady)score-=12;if(!onTarget)score-=10;
+  score=Math.max(0,Math.min(100,score));
+  const falseRisk=Math.max(0,Math.min(100,100-(qualityScore*.35+evidenceScore*.25+windowConsensus*100*.20+stabilityScore*.20)));
+  const enoughWindows=validRates.length>=2 && windowConsensus>=.5;
+  const stable=liveOk&&latencyOk&&sampleReady&&gapOk&&timingReady&&qualityScore>=55&&evidenceScore>=45&&enoughWindows&&falseRisk<48;
+  const confirmed=stable&&onTarget&&score>=68;
+  const state=confirmed?'ENTRADA':preparing?'PREPARAR':(stable?'VALIDAR':'ESPERAR');
+  entryGate={confirmed,bestSecond:target,bestWindow:bestWin?.w||null,confidence:qualityScore,historyRate:learned?.rate||null,gap:rawGap,score,state,falseRisk};
+  return {p,learned,windows,bestWin,liveOk,latencyOk,sampleReady,qualityScore,rawGap,gapOk,timingReady,target,onTarget,preparing,validRates,windowConsensus,qualityScore,historyScore,windowScore,stabilityScore,evidenceScore,timingScore22,score,falseRisk,enoughWindows,stable,confirmed,state};
+}
+function updateEntryPanel(activeSecond=0){
+  const els={second:document.getElementById('entrySecond'),conf:document.getElementById('entryConfidence'),hist:document.getElementById('entryHistory'),status:document.getElementById('entryStatus'),motor:document.getElementById('entryMotor'),win:document.getElementById('entryWindow'),gap:document.getElementById('entryGap'),score:document.getElementById('entryScore'),stability:document.getElementById('entryStability'),evidence:document.getElementById('entryEvidence'),risk:document.getElementById('entryFalseRisk'),reason:document.getElementById('entryReason'),audit:document.getElementById('entryAudit'),panel:document.getElementById('entryPanel')};
+  if(!els.second||!els.status)return;
+  const e=entryPointEngine(activeSecond), target=e.target;
+  els.second.innerHTML=target?`${target} <small>SEGUNDO</small>`:'-- <small>SEGUNDO</small>';
+  els.score.textContent=Math.round(e.score); els.stability.textContent=Math.round(e.stabilityScore); els.evidence.textContent=Math.round(e.evidenceScore); els.risk.textContent=Math.round(e.falseRisk)+'%';
+  els.motor.textContent=e.p?(e.p.mode==='matches'?'D'+e.p.digit:modeLabel(e.p.mode)):'—';
+  els.win.textContent=e.bestWin?`${e.bestWin.w}S · ${multiRate(e.bestWin.st).toFixed(1)}%`:'—';
+  els.gap.textContent=e.p?(e.p.mode==='matches'?e.rawGap.toFixed(2):'CONF. BINARIA'):'—';
+  els.conf.textContent=`CONFIRMACIÓN: ${Math.round(e.score)}/100 · ${e.state}${e.latencyOk?'':' · FLUJO RETRASADO'}`;
+  els.hist.textContent=e.learned?`RENDIMIENTO HISTÓRICO: ${e.learned.rate.toFixed(1)}% · ${e.learned.samples} muestras · MOMENTO APRENDIDO`:'RENDIMIENTO HISTÓRICO: AÚN APRENDIENDO';
+  els.status.className='entry-status '+(e.confirmed?'green':(e.state==='PREPARAR'||e.state==='VALIDAR'?'yellow':'red'));
+  els.status.textContent=e.confirmed?'🟢 ENTRADA · VALIDACIÓN COMPLETA':e.state==='PREPARAR'?'🟡 PREPARAR · PRÓXIMO SEGUNDO':e.state==='VALIDAR'?'🟡 VALIDAR · CONFLUENCIA ACTIVA':'🔴 ESPERAR · NO ENTRAR';
+  els.panel.classList.toggle('entry-ready',e.confirmed);els.panel.classList.toggle('entry-wait',!e.confirmed);
+  const checks=[['checkLive',e.liveOk,'LIVE'],['checkSignal',!!e.p&&e.qualityScore>=55,'SEÑAL'],['checkTiming',e.timingReady,'MOMENTO'],['checkWindow',e.enoughWindows,'VENTANAS'],['checkStability',e.stabilityScore>=55,'ESTABILIDAD']];
+  checks.forEach(([id,ok,label])=>{const x=document.getElementById(id);if(!x)return;x.className=ok?'ok':'bad';x.textContent=(ok?'✓ ':'✕ ')+label;});
+  e.windows.forEach(x=>{const el=document.getElementById('entryW'+x.w);if(!el)return;const r=x.st.signals>=3?multiRate(x.st):null;el.className=r===null?'bad':r>=55?'ok':r>=45?'weak':'bad';el.textContent=`${x.w}S · ${r===null?'--':r.toFixed(0)+'%'}${x.st.signals?' · '+x.st.signals+'m':''}`;});
+  let reason='';
+  if(!e.liveOk)reason='Sin LIVE confirmado: el motor de entrada queda bloqueado hasta acumular 5 ticks válidos consecutivos.';
+  else if(!e.sampleReady)reason='Aún faltan datos para estabilizar el cálculo; se mantiene en observación.';
+  else if(!e.p)reason='No existe una señal candidata activa. El sistema observa y aprende el momento antes de validar una entrada.';
+  else if(!e.gapOk)reason=`Ventaja insuficiente frente al umbral del modo (${e.gapNeed|| (e.p.mode==='matches'?3:1.25)}).`;
+  else if(!e.enoughWindows)reason='Las ventanas 4S/5S/7S/10S todavía no muestran suficiente consenso.';
+  else if(e.falseRisk>=48)reason='Detector de falsa entrada activo: la evidencia es inestable o demasiado dependiente de una sola ventana.';
+  else if(!e.timingReady)reason='El momento óptimo todavía está aprendiendo; no se fuerza una entrada.';
+  else if(e.preparing)reason=`Preparar. El punto aprendido es S${target}; se espera confirmación en ese segundo.`;
+  else if(e.onTarget&&e.stable)reason='Punto temporal alcanzado con señal, evidencia, sincronización y consenso multiventana compatibles.';
+  else if(e.stable)reason=`Confluencia suficiente, pero fuera del segundo objetivo S${target}. Se espera el momento exacto.`;
+  else reason='Confluencia parcial. Mantener observación y no forzar la entrada.';
+  els.reason.textContent=reason;
+  els.audit.textContent=`AUDITORÍA · score ${Math.round(e.score)} | señal ${Math.round(e.qualityScore)} | evidencia ${Math.round(e.evidenceScore)} | estabilidad ${Math.round(e.stabilityScore)} | riesgo falso ${Math.round(e.falseRisk)} | ventanas ${e.validRates.length}/4 | live ${e.liveOk?'OK':'NO'}`;
+  renderSmartCountdown(activeSecond,target);
+  if(e.confirmed){
+    const key=`${multiCycle||0}-${target}-${e.learned?.samples||0}-${e.p?.mode||''}-${e.p?.digit??''}`;
+    if(relojVoz10Activo&&voiceEnabled&&ultimoAvisoPuntoEntrada!==key){ultimoAvisoPuntoEntrada=key;ultimoAvisoPrepararEntrada=key;hablarPrioridad(`Punto de entrada validado. Segundo ${target}. Score ${Math.round(e.score)}. Validar ahora.`,4,true);}
+  }else if(e.preparing){
+    const key=`${multiCycle||0}-${target}-${e.learned?.samples||0}-${e.p?.mode||''}-${e.p?.digit??''}`;
+    if(relojVoz10Activo&&voiceEnabled&&ultimoAvisoPrepararEntrada!==key){ultimoAvisoPrepararEntrada=key;hablarPrioridad(`Preparar. El punto de entrada aprendido es el segundo ${target}.`,3,true);}
   }
-  else if(activeSecond && learned && activeSecond===learned.second-1){
-    statusEl.className='entry-status yellow';
-    statusEl.textContent='🟡 PREPARAR · PRÓXIMO SEGUNDO OBJETIVO';
-    const key=`${multiCycle||0}-${learned.second}-${learned.samples}-${p?.mode||''}-${p?.digit??''}`;
-    if(relojVoz10Activo && voiceEnabled && ultimoAvisoPrepararEntrada!==key){
-      ultimoAvisoPrepararEntrada=key;
-      hablarPrioridad(`PREPARAR. En un segundo, punto de entrada. Segundo ${learned.second}.`,3,true);
-    }
-  }
-  else{statusEl.className='entry-status yellow';statusEl.textContent='🟡 PREPARAR · ESPERAR SEGUNDO '+learned.second;}
-  renderSmartCountdown(activeSecond,learned?.second||null);
 }
 function renderSmartCountdown(active,target){const box=document.getElementById('smartCountdown');if(!box)return;box.innerHTML='';for(let i=1;i<=10;i++){const d=document.createElement('div');let label='ESPERAR';if(target){if(i===target)label='ENTRAR';else if(i===target-1)label='PREPARAR';else if(i>target)label='EJECUTAR';}d.className=(i===active?'active ':'')+(target&&i===target?'target ':'')+(active&&i<active?'past':'');d.innerHTML=`<b>${i}</b>${label}`;box.appendChild(d);}}
+
 
 
 function vozDetalle(){return document.getElementById('voiceDetailSelect')?.value||'full';}
@@ -4248,6 +4318,29 @@ connectDeriv(
   setInterval(renderV22,1000); setTimeout(renderV22,700);
 })();
 
+</script>
+
+
+<!-- ENTRY FOCUS V2 · TELEMETRÍA LOCAL -->
+<script>
+(function(){
+  const KEY='entry_focus_v2_log';
+  function saveEntrySnapshot(){
+    try{
+      if(!window.entryGate)return;
+      const snap={time:new Date().toISOString(),asset:document.getElementById('assetSelector')?.value||'',mode:document.getElementById('modeSelector')?.value||'',...window.entryGate};
+      const arr=JSON.parse(localStorage.getItem(KEY)||'[]');arr.push(snap);localStorage.setItem(KEY,JSON.stringify(arr.slice(-100)));window.entryFocusHistory=arr.slice(-100);
+    }catch(e){}
+  }
+  let last='';
+  setInterval(()=>{
+    const g=window.entryGate||{};const k=[g.state,g.bestSecond,g.score,g.bestWindow].join('|');
+    if(k!==last){last=k;saveEntrySnapshot();}
+    if(typeof window.updateEntryPanel==='function') window.updateEntryPanel(window.timingLastSecond||0);
+  },1000);
+  window.entryFocusHistory=[];
+  try{window.entryFocusHistory=JSON.parse(localStorage.getItem(KEY)||'[]').slice(-100)}catch(e){}
+})();
 </script>
 
 </body>
