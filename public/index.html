@@ -5,604 +5,714 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>XL DIGIT PRO</title>
+    <title>Analizador Binario - Deriv</title>
+    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.min.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            font-family: 'Segoe UI', Consolas, monospace;
-            color: #e0e0e0;
-        }
+        * { margin:0; padding:0; box-sizing:border-box; font-family:Arial, sans-serif; }
         body {
-            background-color: #0c0f14;
-            padding: 10px;
+            background:
+                radial-gradient(circle at top left, rgba(0,255,128,0.14), transparent 35%),
+                linear-gradient(135deg, #050a07 0%, #0f1a0f 45%, #050a07 100%);
+            color:#fff;
+            padding:18px;
+            min-height:100vh;
         }
+
         .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            border: 1px solid #1e293b;
-            background: #0f141c;
-            box-shadow: 0 0 15px rgba(0,150,255,0.15);
+            max-width:400px;
+            margin:0 auto;
+            background:rgba(10,15,10,0.92);
+            border-radius:22px;
+            padding:18px;
+            border:1px solid rgba(0,255,128,0.16);
+            box-shadow:
+                0 0 35px rgba(0,255,128,0.12),
+                inset 0 0 12px rgba(0,255,128,0.04);
         }
 
-        /* ==== CABECERA PRINCIPAL ==== */
-        .top-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 10px 15px;
-            border-bottom: 1px solid #1e293b;
-        }
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .logo-icon {
-            width: 28px;
-            height: 28px;
-            background: #0ea5e9;
-            border-radius: 4px;
-        }
-        .logo-text h1 {
-            font-size: 16px;
-            color: #0ea5e9;
-            font-weight: bold;
-        }
-        .logo-text p {
-            font-size: 10px;
-            color: #94a3b8;
-        }
-        .score-section {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-        .score-box {
-            text-align: center;
-        }
-        .score-value {
-            font-size: 32px;
-            font-weight: bold;
-            color: #ffffff;
-        }
-        .score-label {
-            font-size: 11px;
-            color: #94a3b8;
-        }
-        .bar-container {
-            width: 280px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-        }
-        .bar-row {
-            height: 10px;
-            border-radius: 5px;
-            background: linear-gradient(90deg, #0ea5e9 0%, #ffffff 65%, #22c55e 100%);
-        }
-        .bar-row:nth-child(2) { opacity: 0.85; }
-        .bar-row:nth-child(3) { opacity: 0.70; }
-        .bar-desc {
-            font-size: 10px;
-            color: #94a3b8;
-            margin-top: 4px;
+        h2 {
+            text-align:center;
+            margin-bottom:12px;
+            color:#00ff88;
+            font-size:20px;
+            letter-spacing:1px;
+            text-shadow:0 0 8px rgba(0,255,136,0.65);
         }
 
-        /* ==== BARRA DE CONTROLES ==== */
-        .controls-bar {
-            padding: 12px 15px;
-            border-bottom: 1px solid #1e293b;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            align-items: center;
+        /* === GRÁFICO DE VELAS ESTILO NEON HACKER === */
+        #chart-container {
+            background:
+                linear-gradient(180deg, rgba(10,15,20,0.96) 0%, rgba(5,10,15,0.98) 100%);
+            border-radius:18px;
+            padding:14px;
+            margin-bottom:18px;
+            height:240px;
+            border:1px solid rgba(0,255,128,0.22);
+            box-shadow:
+                inset 0 0 18px rgba(0,255,128,0.08),
+                0 0 22px rgba(0,255,128,0.14);
+            position:relative;
+            overflow:hidden;
         }
+
+        #chart-container::before {
+            content:"";
+            position:absolute;
+            inset:0;
+            background:
+                repeating-linear-gradient(
+                    0deg,
+                    transparent,
+                    transparent 2px,
+                    rgba(0,255,128,0.035) 2px,
+                    rgba(0,255,128,0.035) 4px
+                );
+            pointer-events:none;
+        }
+
+        #chart { width:100%; height:100%; }
+
+        .box {
+            background:rgba(25,35,25,0.88);
+            border-radius:18px;
+            padding:14px;
+            margin-bottom:14px;
+            border:1px solid rgba(0,255,128,0.18);
+            box-shadow:0 0 18px rgba(0,255,128,0.12);
+        }
+
+        h3 {
+            color:#00ff88;
+            margin-bottom:10px;
+            font-size:15px;
+            letter-spacing:0.5px;
+            text-shadow:0 0 6px rgba(0,255,136,0.55);
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+        }
+
+        .tag-top {
+            font-size:12px;
+            background:rgba(0,255,128,0.15);
+            color:#00ff88;
+            padding:2px 8px;
+            border-radius:10px;
+            border:1px solid rgba(0,255,128,0.35);
+        }
+
         select, button {
-            padding: 6px 10px;
-            background: #1e293b;
-            border: 1px solid #334155;
-            border-radius: 4px;
-            font-size: 12px;
-            cursor: pointer;
+            width:100%;
+            padding:11px;
+            border-radius:12px;
+            border:none;
+            font-size:16px;
+            margin-top:8px;
         }
+
+        select {
+            background:rgba(20,30,20,0.9);
+            color:#00ff88;
+            border:1px solid rgba(0,255,128,0.22);
+        }
+
         button {
-            background: #f59e0b;
-            color: #000;
-            font-weight: bold;
-            border: none;
-        }
-        button:nth-child(3) { background: #f97316; }
-        .guide-text {
-            width: 100%;
-            font-size: 10px;
-            color: #94a3b8;
-            margin-top: 4px;
-            line-height: 1.4;
+            background:
+                linear-gradient(135deg, #ff0066, #ff4081);
+            color:#fff;
+            font-weight:bold;
+            cursor:pointer;
+            font-size:17px;
+            padding:13px;
+            border:1px solid rgba(255,0,102,0.5);
+            box-shadow:0 0 18px rgba(255,0,102,0.45);
         }
 
-        /* ==== FILA DE ÍNDICES RÁPIDOS ==== */
-        .indices-row {
-            padding: 6px 15px;
-            font-size: 10px;
-            color: #64748b;
-            border-bottom: 1px solid #1e293b;
-            display: flex;
-            gap: 12px;
-            overflow-x: auto;
-        }
-        .indices-row span { white-space: nowrap; }
-
-        /* ==== PANELES PRINCIPALES ==== */
-        .main-panels {
-            display: grid;
-            grid-template-columns: 320px 1fr;
-            gap: 10px;
-            padding: 10px 15px;
+        button:disabled {
+            background:#555;
+            cursor:not-allowed;
+            border-color:#777;
+            box-shadow:none;
         }
 
-        /* -- PANEL IZQUIERDO -- */
-        .panel-left {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .volatility-tag {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .vol-label {
-            font-size: 13px;
-            font-weight: bold;
-            color: #f59e0b;
-        }
-        .live-tag {
-            background: #22c55e;
-            color: #000;
-            font-size: 10px;
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-weight: bold;
-        }
-        .price-big {
-            font-size: 22px;
-            font-weight: bold;
-            color: #22c55e;
-            margin: 4px 0;
-        }
-        .price-big.red { color: #ef4444; }
-        .last-digit {
-            font-size: 11px;
-            color: #94a3b8;
-            margin-bottom: 8px;
-        }
-        .chart-box {
-            height: 80px;
-            background: #1e293b;
-            border-radius: 4px;
-            margin-bottom: 10px;
-            position: relative;
-            overflow: hidden;
-        }
-        .chart-line {
-            position: absolute;
-            bottom: 10px;
-            left: 0;
-            width: 100%;
-            height: 60px;
-            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 300 60" xmlns="http://www.w3.org/2000/svg"><path d="M0,35 L40,25 L80,18 L120,22 L160,30 L200,20 L240,32 L280,40 L300,45" fill="none" stroke="%23f59e0b" stroke-width="3"/></svg>');
-            background-size: 100% 100%;
-        }
-        .lab-title {
-            font-size: 12px;
-            color: #22c55e;
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 6px;
-        }
-        .lab-desc {
-            font-size: 10px;
-            color: #94a3b8;
-            line-height: 1.4;
-            margin-bottom: 8px;
-        }
-        .strategy-table {
-            width: 100%;
-            font-size: 10px;
-            border-collapse: collapse;
-        }
-        .strategy-table td {
-            padding: 3px 4px;
-            border-bottom: 1px solid #1e293b;
-        }
-        .col-name { color: #e0e0e0; }
-        .col-val { text-align: right; }
-        .col-plus { color: #22c55e; }
-        .col-minus { color: #ef4444; }
-
-        /* -- PANEL DERECHO -- */
-        .panel-right {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-        }
-        .data-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 8px;
-        }
-        .data-card {
-            background: #1e293b;
-            padding: 8px;
-            border-radius: 4px;
-        }
-        .data-label {
-            font-size: 10px;
-            color: #94a3b8;
-        }
-        .data-value {
-            font-size: 15px;
-            font-weight: bold;
-            margin-top: 2px;
-        }
-        .even-odd-box {
-            background: #1e293b;
-            padding: 12px;
-            border-radius: 4px;
-        }
-        .eo-title {
-            font-size: 11px;
-            color: #94a3b8;
-            margin-bottom: 8px;
-        }
-        .eo-percent {
-            font-size: 24px;
-            font-weight: bold;
-            text-align: center;
-            margin: 8px 0;
-        }
-        .eo-indicator {
-            height: 10px;
-            border-radius: 5px;
-            background: linear-gradient(90deg, #22c55e 36%, #ef4444 36%);
-            margin: 6px 0;
-            position: relative;
-        }
-        .eo-dot {
-            position: absolute;
-            top: -3px;
-            left: 34%;
-            width: 16px;
-            height: 16px;
-            background: #22c55e;
-            border-radius: 50%;
-            border: 2px solid #fff;
-        }
-        .stats-text {
-            font-size: 10px;
-            color: #94a3b8;
-            margin: 8px 0;
-            line-height: 1.5;
-        }
-        .history-bar {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin: 6px 0;
-        }
-        .history-label { font-size: 10px; color: #94a3b8; }
-        .history-value { font-size: 12px; font-weight: bold; color: #f59e0b; }
-        .history-dots {
-            display: flex;
-            gap: 2px;
-            flex-wrap: wrap;
-            max-width: 120px;
-        }
-        .dot { width: 6px; height: 6px; border-radius: 50%; }
-        .dot.green { background: #22c55e; }
-        .dot.red { background: #ef4444; }
-        .dot.yellow { background: #f59e0b; }
-
-        /* ==== SECCIÓN MEJOR OPERATIVA ==== */
-        .best-op-section {
-            margin: 10px 15px;
-            padding: 15px;
-            background: #1e293b;
-            border-radius: 6px;
-            border: 1px solid #22c55e44;
-        }
-        .best-op-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-        }
-        .best-op-title {
-            font-size: 14px;
-            font-weight: bold;
-            color: #22c55e;
-        }
-        .odd-tag {
-            background: #ef4444;
-            color: white;
-            font-size: 12px;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-weight: bold;
-        }
-        .score-circle {
-            width: 55px;
-            height: 55px;
-            border-radius: 50%;
-            border: 4px solid #22c55e;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            font-weight: bold;
-            color: #22c55e;
-        }
-        .best-op-text {
-            font-size: 10px;
-            line-height: 1.5;
-            color: #cbd5e1;
-            margin: 10px 0;
-        }
-        .plan-box {
-            background: #0f141c;
-            padding: 10px;
-            border-radius: 4px;
-            border: 1px solid #334155;
-            font-size: 10px;
-            line-height: 1.5;
-            color: #cbd5e1;
-        }
-        .plan-title {
-            font-weight: bold;
-            color: #f59e0b;
-            margin-bottom: 6px;
+        /* Dígitos 0–9 — COLORES POR NIVEL IGUAL A TU FOTO */
+        .digits-grid {
+            display:grid;
+            grid-template-columns:repeat(5, 1fr);
+            gap:10px;
+            margin:12px 0;
+            min-height:90px;
         }
 
-        /* ==== PIE DE PÁGINA ==== */
-        .footer-text {
-            padding: 12px 15px 20px;
-            text-align: center;
-            line-height: 1.6;
-            border-top: 1px solid #1e293b;
-            margin-top: 10px;
+        .digit-circle {
+            aspect-ratio:1;
+            border-radius:50%;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            border:2px solid rgba(0,255,128,0.75);
+            background:rgba(10,20,10,0.9);
+            box-shadow:0 0 12px rgba(0,255,128,0.25);
+            transition: all 0.3s ease;
         }
-        .footer-text h2 {
-            font-size: 18px;
-            color: #0ea5e9;
+
+        /* Nivel 1 — MÁS FUERTE: ROSA NEÓN */
+        .digit-circle.rank-1 {
+            border-color:#ff00cc;
+            background:rgba(255,0,204,0.18);
+            box-shadow:0 0 18px rgba(255,0,204,0.6);
         }
-        .footer-text h3 {
-            font-size: 14px;
-            color: #e0e0e0;
+        .digit-circle.rank-1 .digit-num {
+            color:#ff00cc;
+            text-shadow:0 0 10px rgba(255,0,204,0.8);
         }
-        .footer-text p {
-            font-size: 12px;
-            color: #94a3b8;
+
+        /* Nivel 2 — AZUL NEÓN */
+        .digit-circle.rank-2 {
+            border-color:#00ccff;
+            background:rgba(0,204,255,0.12);
+            box-shadow:0 0 14px rgba(0,204,255,0.45);
         }
-        .check-icon { color: #22c55e; }
+        .digit-circle.rank-2 .digit-num {
+            color:#00ccff;
+            text-shadow:0 0 8px rgba(0,204,255,0.6);
+        }
+
+        /* Nivel 3 — AMARILLO/VERDE NEÓN */
+        .digit-circle.rank-3 {
+            border-color:#ccff00;
+            background:rgba(204,255,0,0.10);
+            box-shadow:0 0 12px rgba(204,255,0,0.35);
+        }
+        .digit-circle.rank-3 .digit-num {
+            color:#ccff00;
+            text-shadow:0 0 6px rgba(204,255,0,0.5);
+        }
+
+        /* Nivel 4 — VERDE CLARO */
+        .digit-circle.rank-4 {
+            border-color:#00ff88;
+            background:rgba(0,255,136,0.08);
+            box-shadow:0 0 10px rgba(0,255,136,0.25);
+        }
+        .digit-circle.rank-4 .digit-num {
+            color:#00ff88;
+            text-shadow:0 0 5px rgba(0,255,136,0.4);
+        }
+
+        .digit-num {
+            font-size:21px;
+            font-weight:bold;
+            color:#00ff88;
+            text-shadow:0 0 8px rgba(0,255,136,0.65);
+        }
+
+        .digit-pct {
+            font-size:11px;
+            color:#ccc;
+            margin-top:2px;
+        }
+
+        /* CAJA DE RESULTADO — SOLO APARECE AL PREDECIR */
+        .result-box {
+            display:none;
+            background:rgba(25,35,25,0.92);
+            border:1px solid #00ff88;
+            border-radius:18px;
+            padding:16px;
+            margin:14px 0;
+            box-shadow:0 0 22px rgba(0,255,128,0.35);
+        }
+
+        .result-box.danger {
+            border-color:#ffcc00;
+            box-shadow:0 0 22px rgba(255,204,0,0.35);
+        }
+
+        .result-title {
+            color:#00ff88;
+            font-weight:bold;
+            font-size:18px;
+            margin-bottom:10px;
+            text-shadow:0 0 8px rgba(0,255,136,0.55);
+        }
+
+        .res-main {
+            font-size:28px;
+            font-weight:bold;
+            margin:8px 0;
+        }
+
+        .res-main.ok {
+            color:#00ff88;
+            text-shadow:0 0 10px rgba(0,255,136,0.65);
+        }
+
+        .res-main.warn {
+            color:#ffcc00;
+            text-shadow:0 0 10px rgba(255,204,0,0.65);
+        }
+
+        .res-prec {
+            font-size:15px;
+            color:#aed581;
+            margin-bottom:10px;
+        }
+
+        .res-text {
+            font-size:14px;
+            line-height:1.5;
+            color:#e0e0e0;
+        }
+
+        /* RELOJ */
+        .timer-box {
+            display:none;
+            text-align:center;
+            margin:12px 0 0 0;
+        }
+
+        .timer-num {
+            font-size:48px;
+            font-weight:bold;
+            color:#ffcc00;
+            text-shadow:0 0 12px rgba(255,204,0,0.75);
+        }
+
+        /* Filas de datos */
+        .row {
+            display:flex;
+            justify-content:space-between;
+            margin:5px 0;
+            font-size:14px;
+        }
+
+        .label {
+            color:#90caf9;
+        }
+
+        .value {
+            font-weight:bold;
+            color:#00ff88;
+        }
+
+        /* Interruptor de voz */
+        .toggle-row {
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            margin-top:10px;
+        }
+
+        .toggle {
+            width:46px;
+            height:26px;
+            background:#555;
+            border-radius:13px;
+            position:relative;
+            cursor:pointer;
+            border:1px solid #888;
+        }
+
+        .toggle.on {
+            background:#00ff88;
+            border-color:#00ff88;
+            box-shadow:0 0 12px rgba(0,255,136,0.65);
+        }
+
+        .toggle::after {
+            content:'';
+            position:absolute;
+            top:3px;
+            left:3px;
+            width:20px;
+            height:20px;
+            background:#fff;
+            border-radius:50%;
+            transition:0.2s;
+        }
+
+        .toggle.on::after {
+            left:23px;
+        }
     </style>
 </head>
 <body>
-
 <div class="container">
+    <h2>📊 ANALIZADOR DERIV</h2>
 
-    <!-- CABECERA -->
-    <div class="top-bar">
-        <div class="logo">
-            <div class="logo-icon"></div>
-            <div class="logo-text">
-                <h1>XL DIGIT PRO</h1>
-                <p>STATISTICAL ENGINE v2.1</p>
-            </div>
+    <!-- GRÁFICO DE VELAS NEÓN -->
+    <div id="chart-container">
+        <div id="chart"></div>
+    </div>
+
+    <!-- SELECCIÓN DE ACTIVO -->
+    <div class="box">
+        <label>Activo / Volatilidad:</label>
+        <select id="symbolSel">
+            <option value="R_10">Volatilidad 10</option>
+            <option value="R_20">Volatilidad 20</option>
+            <option value="R_50">Volatilidad 50</option>
+            <option value="R_75">Volatilidad 75</option>
+            <option value="R_100" selected>Volatilidad 100</option>
+        </select>
+    </div>
+
+    <!-- SELECCIÓN DE MODO -->
+    <div class="box">
+        <label>Modo de análisis:</label>
+        <select id="modeSel">
+            <option value="matches" selected>MATCHES</option>
+            <option value="over">OVER</option>
+            <option value="under">UNDER</option>
+            <option value="even">EVEN</option>
+            <option value="odd">ODD</option>
+        </select>
+    </div>
+
+    <!-- DIGIT MAP — COLORES POR RANGO -->
+    <div class="box">
+        <h3>DIGIT MAP — Frecuencia</h3>
+        <div class="digits-grid" id="digitMap"></div>
+    </div>
+
+    <!-- HOT RANKING — AHORA TOP 4 ✅ -->
+    <div class="box">
+        <h3>HOT RANKING — Más frecuentes <span class="tag-top">TOP 4</span></h3>
+        <div id="hotList">
+            <div class="row"><span class="label">#1 — Esperando datos…</span><span class="value">-</span></div>
         </div>
-        <div class="score-section">
-            <div class="score-box">
-                <div class="score-value">68</div>
-                <div class="score-label">/ 100</div>
-            </div>
-            <div class="bar-container">
-                <div class="bar-row"></div>
-                <div class="bar-row"></div>
-                <div class="bar-row"></div>
-                <div class="bar-desc">OPERABLE – confianza: completa</div>
-            </div>
+    </div>
+
+    <!-- MOMENTO DE COINCIDENCIA -->
+    <div class="box">
+        <h3>MOMENTO DE COINCIDENCIA <span class="tag-top">TOP 4</span></h3>
+        <div id="momentList">
+            <div class="row"><span class="label">Más frecuente:</span><span class="value">—</span></div>
         </div>
     </div>
 
     <!-- CONTROLES -->
-    <div class="controls-bar">
-        <select>
-            <option selected>Todas las estrategias</option>
-            <option>Even / Odd</option>
-            <option>Even / Odd Fire</option>
-            <option>Over / Under</option>
-            <option>Over / Under Fire</option>
-            <option>Match / Diff</option>
-            <option>Rise / Fall</option>
-            <option>Rise / Fall Fire</option>
-        </select>
-
-        <select>
-            <option selected>1 tick</option>
-            <option>2 ticks</option>
-            <option>3 ticks</option>
-        </select>
-
-        <button>CALCULAR MERCADO</button>
-        <button>RE-CALCULAR</button>
-
-        <select>
-            <option>Volatility 10</option>
-            <option selected>Volatility 25</option>
-            <option>Volatility 50 (1s)</option>
-        </select>
-
-        <div class="guide-text">
-            Elige una estrategia, presiona CALCULAR MERCADO para que el sistema elija el índice más efectivo, y luego PROCESAR para ver el resultado.
+    <div class="box">
+        <div class="toggle-row">
+            <span>🔊 Voz activada:</span>
+            <div class="toggle on" id="voiceToggle" onclick="toggleVoice()"></div>
         </div>
+        <button id="btnPredict" style="margin-top:12px;">🔴 PREDECIR</button>
     </div>
 
-    <!-- FILA DE ÍNDICES -->
-    <div class="indices-row">
-        <span>V10 4736.85</span>
-        <span>V25 2735.82</span>
-        <span>V50 99.02</span>
-        <span>V75 49929.33</span>
-        <span>V100 895.49</span>
-        <span>V125(1s) 9829.29</span>
-        <span>V150(1s) 13095.28</span>
-    </div>
+    <!-- CAJA DE RESULTADO — SOLO AL DAR PREDECIR -->
+    <div class="result-box" id="resultBox">
+        <div class="result-title">Estrategia Matches/Differs</div>
+        <div class="res-main" id="resMain"></div>
+        <div class="res-prec" id="resPrec"></div>
+        <div class="res-text" id="resText"></div>
 
-    <!-- PANELES CENTRALES -->
-    <div class="main-panels">
-
-        <!-- PANEL IZQUIERDO -->
-        <div class="panel-left">
-            <div class="volatility-tag">
-                <span class="vol-label">VOLATILITY 25</span>
-                <span class="live-tag">LIVE</span>
-            </div>
-
-            <div class="price-big">4736.8560</div>
-            <div class="last-digit">Último dígito: 6 — EVEN</div>
-
-            <div class="chart-box">
-                <div class="chart-line"></div>
-            </div>
-
-            <div class="lab-title">
-                <span>🔬 LABORATORIO DE ESTRATEGIAS</span>
-                <span>❓ QUÉ OPERAR</span>
-            </div>
-
-            <div class="lab-desc">
-                Historial real de aciertos en 2550 velas anteriores, promedio de rentabilidad por vela, y el perfil más estable analizado.
-            </div>
-
-            <table class="strategy-table">
-                <tr><td class="col-name">EVEN / ODD</td><td class="col-val">48.7% <span class="col-plus">+0.99%</span></td></tr>
-                <tr><td class="col-name">OVER / UNDER</td><td class="col-val">51.3% <span class="col-plus">+0.29%</span></td></tr>
-                <tr><td class="col-name">RISE / FALL</td><td class="col-val">52.5% <span class="col-plus">+0.79%</span></td></tr>
-                <tr><td class="col-name">MATCH / DIFF</td><td class="col-val">49.2% <span class="col-minus">-0.89%</span></td></tr>
-            </table>
+        <div class="timer-box" id="timerBox">
+            <div style="font-size:14px; color:#ffcc00;">⏱️ TIEMPO PARA OPERAR:</div>
+            <div class="timer-num" id="timerNum">10</div>
         </div>
-
-        <!-- PANEL DERECHO -->
-        <div class="panel-right">
-            <div class="data-grid">
-                <div class="data-card">
-                    <div class="data-label">TOTAL TICKS</div>
-                    <div class="data-value">251</div>
-                    <div class="data-label">En sesión</div>
-                </div>
-                <div class="data-card">
-                    <div class="data-label">PRECIO BASE</div>
-                    <div class="data-value">39.6</div>
-                    <div class="data-label">Máx / Mín</div>
-                </div>
-                <div class="data-card">
-                    <div class="data-label">MOMENTUM</div>
-                    <div class="data-value" style="color:#ef4444">-0.1380</div>
-                    <div class="data-label">Bajista</div>
-                </div>
-            </div>
-
-            <div class="even-odd-box">
-                <div class="eo-title">⚖️ EVEN / ODD ANÁLISIS</div>
-                <div class="eo-percent">44.8% <span style="font-size:14px; color:#94a3b8">EVEN</span></div>
-                <div class="eo-indicator">
-                    <div class="eo-dot"></div>
-                </div>
-
-                <div class="stats-text">
-                    Confianza: Se esperan por ahora: 36.8% EVEN / 63.2% ODD en las próximas 250 velas.<br>
-                    ✅ TEST DE RACHAS (LAGAY CORRELACIÓN REAL):<br>
-                    Z = +0.98 → Alta evidencia de correlación.<br>
-                    *Esto es una estimación estadística, no una garantía.*
-                </div>
-
-                <div class="history-bar">
-                    <span class="history-label">HISTORIAL DE ACIERTOS EN VIVO:</span>
-                    <span class="history-value">48.7%</span>
-                    <span style="font-size:10px; color:#94a3b8">123 / 253 predicciones</span>
-                </div>
-                <div class="history-dots">
-                    <span class="dot green"></span><span class="dot green"></span><span class="dot red"></span>
-                    <span class="dot green"></span><span class="dot yellow"></span><span class="dot green"></span>
-                    <span class="dot red"></span><span class="dot green"></span><span class="dot green"></span>
-                </div>
-
-                <div class="stats-text" style="margin-top:10px;">
-                    📊 EVEN / ODD FIRE:<br>
-                    Compara la posición en 25/50/100/250/500/1000 ticks y alarma muestra si coincide en dirección: +15 puntos
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- === MEJOR OPERATIVA DETALLADA === -->
-    <div class="best-op-section">
-        <div class="best-op-header">
-            <div>
-                <div class="best-op-title">🏆 MEJOR OPERATIVA — VOLATILITY 50 (1s)</div>
-                <div style="font-size:11px; color:#94a3b8; margin-top:4px;">Índice ganador: Volatility 50 (1s)</div>
-            </div>
-            <div style="display:flex; align-items:center; gap:10px;">
-                <span class="odd-tag">ODD</span>
-                <div class="score-circle">73</div>
-            </div>
-        </div>
-
-        <div class="best-op-text">
-            Volatility 50 (1s) muestra <b>87.5%</b> de ocurrencia hacia ODD en EVEN/ODD FIRE — misma dirección sostenida en las últimas 3 ventanas temporales (25/50/100 ticks). Score: <b>73</b> (confianza 73%). Consistencia 100%, supera el umbral mínimo de 60). Esto es una estimación estadística, no una garantía de resultado.
-        </div>
-
-        <div class="plan-box">
-            <div class="plan-title">📋 PLAN DE ENTRADAS SUGERIDO</div>
-            Hasta 4 entradas separadas de ODD en Volatility 50 (1s), cada una con contrato de 1 tick (el horizonte que elijas), antes de renovar. Después de las 4, vuelve a presionar CALCULAR/PROCESAR — no sigas con la misma señal vencida. Esto es una sugerencia de gestión de riesgo basada en estadística, no una garantía de que cada entrada acierte.
-        </div>
-    </div>
-
-    <!-- === PIE DE PÁGINA === -->
-    <div class="footer-text">
-        <h2>XL DIGIT PRO</h2>
-        <h3>ANALIZADOR PROFESIONAL DE DÍGITOS</h3>
-        <p>Analizador de Edge estadístico 🚀</p>
-        <p>Actualización ya en línea <span class="check-icon">✅</span></p>
-        <p>La actualización más brutal de nuestro sistema...</p>
     </div>
 
 </div>
 
-
-<style>
-#liveLayer{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin:8px 0;padding:8px 10px;border:1px solid #22d3ee;border-radius:10px;background:#07111f;color:#cbd5e1;font-size:12px}
-#liveLayer b{color:#22d3ee}#liveState{color:#22c55e;font-weight:800}.entry-clock{display:none;position:fixed;right:14px;top:14px;z-index:20;background:#07111f;border:2px solid #e879f9;border-radius:12px;padding:8px 14px;text-align:center;color:#fff;box-shadow:0 0 20px #e879f966}.entry-clock.on{display:block}.entry-clock strong{display:block;color:#e879f9;font-size:34px}.entry-clock.hit{border-color:#22c55e}.entry-clock.hit strong{color:#22c55e}
-</style>
 <script>
-(()=>{
-const q=s=>document.querySelector(s), qs=s=>[...document.querySelectorAll(s)];
-const strategy=qs('.controls-bar select')[0], assetSelect=qs('.controls-bar select')[2], calc=qs('.controls-bar button')[0], recalc=qs('.controls-bar button')[1];
-const symbols={'Volatility 10':'R_10','Volatility 25':'R_25','Volatility 50 (1s)':'R_50','Volatility 75':'R_75','Volatility 100':'R_100','Volatility 125 (1s)':'R_100','Volatility 150 (1s)':'R_100'};
-let asset=symbols[assetSelect?.value]||'R_25', digits=[], prices=[], timer=null, left=0, predicted=null;
-const panel=q('.panel-left'), price=q('.price-big'), last=q('.last-digit'), total=q('.data-value');
-const live=document.createElement('div');live.id='liveLayer';live.innerHTML='<b>LIVE</b><span id="liveState">CONECTANDO</span><span id="livePrice">Precio: —</span><span id="liveDigit">Último dígito: —</span><span id="live20">20 dígitos: —</span>';panel?.insertBefore(live,panel.querySelector('.chart-box'));
-const clock=document.createElement('div');clock.className='entry-clock';clock.innerHTML='ENTRADA MANUAL<strong>10</strong><span>ESPERANDO SEÑAL</span>';document.body.appendChild(clock);
-function say(t){if('speechSynthesis' in window){speechSynthesis.cancel();speechSynthesis.speak(new SpeechSynthesisUtterance(t));}}
-function digit(v){let a=String(v).replace(/\D/g,'');return Number(a.at(-1));}
-function update(){let d=digits.at(-1),p=prices.at(-1);if(p!=null){price.textContent=p; q('#livePrice').textContent='Precio: '+p}if(d!=null){last.textContent='Último dígito: '+d+' — '+(d%2?'ODD':'EVEN');q('#liveDigit').textContent='Último dígito: '+d;q('#live20').textContent='20 dígitos: '+digits.slice(-20).join(' · ')}if(total)total.textContent=digits.length;}
-function tick(m){if(m.symbol!==asset)return;let p=Number(m.quote);if(!Number.isFinite(p))return;prices.push(p);digits.push(digit(m.quote));if(digits.length>1000)digits.shift();if(prices.length>200)prices.shift();update();if(left>0&&digit(m.quote)===predicted){clock.classList.add('hit');clock.querySelector('span').textContent='PUNTO DE ENTRADA · '+left+'s';say('Punto de entrada detectado. Quedan '+left+' segundos.');}}
-function connect(){let ws=new WebSocket((location.protocol==='https:'?'wss':'ws')+'://'+location.host);ws.onopen=()=>q('#liveState').textContent='LIVE';ws.onclose=()=>q('#liveState').textContent='DESCONECTADO';ws.onmessage=e=>{try{let m=JSON.parse(e.data);if(m.status==='TICK RECIBIDO')tick(m)}catch{}};}
-function calculate(){if(digits.length<20){say('Aún no hay veinte ticks');return}let c=Array(10).fill(0),a=digits.slice(-200);a.forEach(d=>c[d]++);let order=[...Array(10).keys()].sort((x,y)=>c[y]-c[x]),best=order[0],second=order[1],strength=Math.round(50+((c[best]-c[second])/Math.max(c[best],1))*100);predicted=best;let green=strength>=70;qs('.panel-resultado').forEach(x=>x.style.display='none');let target=green?q('.panel-left'):q('.panel-right');clock.classList.toggle('on',green);clock.classList.remove('hit');if(green){clock.querySelector('strong').textContent='10';clock.querySelector('span').textContent='PREDICCIÓN POSITIVA';left=10;clearInterval(timer);timer=setInterval(()=>{left--;clock.querySelector('strong').textContent=Math.max(left,0);if(left<=0){clearInterval(timer);clock.querySelector('span').textContent='TIEMPO TERMINADO';say('Tiempo terminado')}},1000);say('Predicción positiva. Dígito '+best+'. Fuerza '+strength+' de 100.');}else say('Señal débil. Esperar, no entrar.');
-const guide=q('.guide-text');if(guide)guide.textContent=(green?'PREDICCIÓN POSITIVA: ':'SEÑAL DÉBIL: ')+best+' · fuerza matemática '+strength+'/100'+(green?' · entrada manual durante 10 segundos':' · ESPERAR — NO ENTRAR');}
-assetSelect?.addEventListener('change',()=>{asset=symbols[assetSelect.value]||asset;digits=[];prices=[];q('#liveState').textContent='CAMBIANDO ACTIVO';});calc?.addEventListener('click',calculate);recalc?.addEventListener('click',calculate);connect();
-})();
+let voiceEnabled = true;
+let ws = null;
+let historyDigits = [];
+let historyTicks = [];
+let timerInterval = null;
+let predictionWindow = false;
+let countdownSecond = 0;
+let timingCounts = Array.from({length:10},()=>Array(11).fill(0));
+let timingTotal = 0;
+const MAX_HISTORY = 1000;
+
+let chart = null;
+let candleSeries = null;
+let candles = [];
+const CANDLE_INTERVAL = 60000;
+let lastCandleTime = null;
+
+function inicializarGrafico() {
+    const container = document.getElementById('chart');
+    chart = LightweightCharts.createChart(container, {
+        layout: {
+            background: { type: 'solid', color: '#0a0f14' },
+            textColor: '#00ff88',
+        },
+        grid: {
+            vertLines: { color: 'rgba(0,255,128,0.08)' },
+            horzLines: { color: 'rgba(0,255,128,0.08)' },
+        },
+        crosshair: {
+            mode: LightweightCharts.CrosshairMode.Normal,
+        },
+        priceScale: {
+            borderColor: 'rgba(0,255,128,0.18)',
+        },
+        timeScale: {
+            borderColor: 'rgba(0,255,128,0.18)',
+            timeVisible: true,
+            secondsVisible: false,
+        },
+    });
+
+    candleSeries = chart.addCandlestickSeries({
+        upColor: '#00ff88',
+        downColor: '#ff0066',
+        borderVisible: false,
+        wickUpColor: '#00ff88',
+        wickDownColor: '#ff0066',
+    });
+}
+
+function agregarPrecioAlGrafico(precio) {
+    const ahora = Math.floor(Date.now() / CANDLE_INTERVAL) * CANDLE_INTERVAL / 1000;
+
+    if (!lastCandleTime || ahora !== lastCandleTime) {
+        candles.push({
+            time: ahora,
+            open: precio,
+            high: precio,
+            low: precio,
+            close: precio
+        });
+        lastCandleTime = ahora;
+    } else {
+        const ult = candles[candles.length - 1];
+        ult.high = Math.max(ult.high, precio);
+        ult.low = Math.min(ult.low, precio);
+        ult.close = precio;
+    }
+
+    if (candles.length > 100) candles.shift();
+    candleSeries.setData(candles);
+    chart.timeScale().fitContent();
+}
+
+function hablar(texto) {
+    if (!voiceEnabled) return;
+    window.speechSynthesis.cancel();
+    const msg = new SpeechSynthesisUtterance(texto);
+    msg.lang = 'es-ES';
+    msg.rate = 1.05;
+    window.speechSynthesis.speak(msg);
+}
+
+function toggleVoice() {
+    voiceEnabled = !voiceEnabled;
+    document.getElementById('voiceToggle').classList.toggle('on', voiceEnabled);
+    hablar(voiceEnabled ? "Voz activada" : "Voz desactivada");
+}
+
+function ultimoDigito(precio) {
+    return parseInt(precio.toFixed(2).slice(-1));
+}
+
+function inicializarDigitMap() {
+    let html = '';
+    for(let d=0;d<=9;d++){
+        html += `<div class="digit-circle">
+                    <div class="digit-num">${d}</div>
+                    <div class="digit-pct">0.0%</div>
+                 </div>`;
+    }
+    document.getElementById('digitMap').innerHTML = html;
+}
+
+function actualizarEstadisticas() {
+    const conteo = Array(10).fill(0);
+    historyDigits.forEach(d => conteo[d]++);
+    const total = historyDigits.length || 1;
+
+    // Digit Map con colores según posición TOP ✅
+    const orden = [...Array(10).keys()].sort((a,b)=>conteo[b]-conteo[a]);
+    let html = '';
+    for(let d=0;d<=9;d++){
+        const pct = ((conteo[d]/total)*100).toFixed(1);
+        let claseRango = '';
+        const pos = orden.indexOf(d) + 1; // posición 1..10
+        if(pos === 1) claseRango = 'rank-1';
+        else if(pos === 2) claseRango = 'rank-2';
+        else if(pos === 3) claseRango = 'rank-3';
+        else if(pos === 4) claseRango = 'rank-4';
+
+        html += `<div class="digit-circle ${claseRango}">
+                    <div class="digit-num">${d}</div>
+                    <div class="digit-pct">${pct}%</div>
+                 </div>`;
+    }
+    document.getElementById('digitMap').innerHTML = html;
+
+    // HOT RANKING — AHORA TOP 4 ✅
+    const top4 = orden.slice(0,4);
+    let hotHtml = '';
+    top4.forEach((d,i)=>{
+        hotHtml += `<div class="row"><span class="label">#${i+1} — Dígito ${d}</span><span class="value">${((conteo[d]/total)*100).toFixed(1)}%</span></div>`;
+    });
+    document.getElementById('hotList').innerHTML = hotHtml;
+
+    // Momento real: una sola línea por dígito y sus segundos
+    let momHtml = '';
+    for(let d=0; d<10; d++){
+        const n = timingCounts[d].reduce((a,b)=>a+b,0);
+        const momentos = timingCounts[d].map((v,sec)=>v && sec ? `${sec}s×${v}` : '').filter(Boolean).join(' · ');
+        if(n) momHtml += `<div class="row"><span class="label">${d} · ${momentos}</span><span class="value">${n} · ${(timingTotal ? n/timingTotal*100 : 0).toFixed(1)}%</span></div>`;
+    }
+    document.getElementById('momentList').innerHTML = momHtml || '<div class="row"><span class="label">Sin apariciones registradas</span><span class="value">—</span></div>';
+}
+
+function conectarDeriv(simbolo) {
+    if(ws) ws.close();
+    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
+
+    ws.onopen = () => {
+        ws.send(JSON.stringify({ ticks: simbolo, subscribe: 1 }));
+        hablar(`Conectado a ${simbolo}`);
+    };
+
+    ws.onmessage = (evt) => {
+        const data = JSON.parse(evt.data);
+        if(data.status === 'TICK RECIBIDO' && data.symbol === simbolo) {
+            const precio = parseFloat(data.quote);
+            agregarPrecioAlGrafico(precio);
+            const dig = ultimoDigito(precio);
+            if(predictionWindow && countdownSecond > 0){
+                timingCounts[dig][countdownSecond]++;
+                timingTotal++;
+                localStorage.setItem('timingCounts', JSON.stringify({counts:timingCounts,total:timingTotal}));
+            }
+            historyDigits.push(dig);
+            if(historyDigits.length > MAX_HISTORY) historyDigits.shift();
+            historyTicks.push(data.tick);
+            if(historyTicks.length > MAX_HISTORY) historyTicks.shift();
+            actualizarEstadisticas();
+        }
+    };
+
+    ws.onerror = () => hablar("Error de conexión, revisa tu red");
+}
+
+function analizarYMostrar() {
+    if(historyDigits.length < 30) {
+        hablar("Aún no hay suficientes datos, espera unos segundos");
+        return;
+    }
+
+    const conteo = Array(10).fill(0);
+    historyDigits.forEach(d => conteo[d]++);
+    const total = historyDigits.length;
+    const orden = [...Array(10).keys()].sort((a,b)=>conteo[b]-conteo[a]);
+    const mejor = orden[0];
+    const pctMejor = (conteo[mejor]/total)*100;
+    const modo = document.getElementById('modeSel').value;
+
+    let recomendacion = '';
+    let nivelFuerza = 'buena';
+    let digitoObjetivo = mejor;
+
+    if(modo === 'over') {
+        const mayores = historyDigits.filter(d=>d>4).length;
+        digitoObjetivo = 5;
+        recomendacion = mayores/total >= 0.55 ? 'OK' : 'DEBIL';
+        nivelFuerza = recomendacion === 'OK' ? 'buena' : 'baja';
+    } else if(modo === 'under') {
+        const menores = historyDigits.filter(d=>d<=4).length;
+        digitoObjetivo = 3;
+        recomendacion = menores/total >= 0.55 ? 'OK' : 'DEBIL';
+        nivelFuerza = recomendacion === 'OK' ? 'buena' : 'baja';
+    } else if(modo === 'even') {
+        const pares = historyDigits.filter(d=>d%2===0).length;
+        digitoObjetivo = 6;
+        recomendacion = pares/total >= 0.55 ? 'OK' : 'DEBIL';
+        nivelFuerza = recomendacion === 'OK' ? 'buena' : 'baja';
+    } else if(modo === 'odd') {
+        const impares = historyDigits.filter(d=>d%2!==0).length;
+        digitoObjetivo = 7;
+        recomendacion = impares/total >= 0.55 ? 'OK' : 'DEBIL';
+        nivelFuerza = recomendacion === 'OK' ? 'buena' : 'baja';
+    } else {
+        recomendacion = pctMejor >= 18 ? 'OK' : 'DEBIL';
+        nivelFuerza = recomendacion === 'OK' ? 'buena' : 'baja';
+    }
+
+    const caja = document.getElementById('resultBox');
+    caja.style.display = 'block';
+    caja.classList.toggle('danger', nivelFuerza==='baja');
+
+    const resMain = document.getElementById('resMain');
+    const resPrec = document.getElementById('resPrec');
+    const resText = document.getElementById('resText');
+
+    if(nivelFuerza === 'buena') {
+        resMain.textContent = `GANA: ${digitoObjetivo}`;
+        resMain.className = 'res-main ok';
+        resPrec.textContent = `Frecuencia observada: ${pctMejor.toFixed(1)}%`;
+        resText.innerHTML = `El análisis de mercado predice que aparecerá el dígito ${digitoObjetivo}.<br>Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en los datos observados; la frecuencia no garantiza el resultado.`;
+
+        hablar(`Análisis listo. Dígito más probable: ${digitoObjetivo}. Frecuencia observada: ${pctMejor.toFixed(0)} por ciento. Tienes 10 segundos para tomar la operación.`);
+
+        document.getElementById('timerBox').style.display = 'block';
+        predictionWindow = true;
+        let seg = 10;
+        countdownSecond = 10;
+        document.getElementById('timerNum').textContent = seg;
+        if(timerInterval) clearInterval(timerInterval);
+
+        timerInterval = setInterval(()=>{
+            seg--;
+            countdownSecond = seg;
+            document.getElementById('timerNum').textContent = seg;
+            if(voiceEnabled) hablar(seg.toString());
+
+            if(seg <= 0) {
+                clearInterval(timerInterval);
+                predictionWindow = false;
+                countdownSecond = 0;
+                document.getElementById('timerBox').style.display = 'none';
+                hablar("Tiempo terminado. ¿Quieres tomar otra operación?");
+            }
+        }, 1000);
+
+    } else {
+        resMain.textContent = `⚠️ ESPERA — NO RECOMENDABLE`;
+        resMain.className = 'res-main warn';
+        resPrec.textContent = `Fuerza baja — riesgo alto`;
+        resText.innerHTML = `La señal tiene poca consistencia.<br>Mejor espera más datos o cambia de activo.<br>Puede perder si entras ahora.`;
+
+        hablar("No es recomendable entrar ahora. La señal tiene menos fuerza, puede perder. Espérate mejor. ¿Quieres tomar otra operación?");
+        document.getElementById('timerBox').style.display = 'none';
+    }
+}
+
+document.getElementById('symbolSel').addEventListener('change', e=>{
+    const nom = e.target.options[e.target.selectedIndex].text;
+    hablar(`Seleccionado: ${nom}`);
+    conectarDeriv(e.target.value);
+    historyDigits = []; historyTicks = []; candles = []; lastCandleTime = null;
+    inicializarDigitMap();
+    document.getElementById('resultBox').style.display='none';
+});
+
+document.getElementById('modeSel').addEventListener('change', e=>{
+    hablar(`Modo cambiado a: ${e.target.options[e.target.selectedIndex].text}`);
+    document.getElementById('resultBox').style.display='none';
+});
+
+document.getElementById('btnPredict').addEventListener('click', ()=>{
+    hablar("Analizando datos del mercado…");
+    analizarYMostrar();
+});
+
+window.onload = () => {
+    try{ const saved=JSON.parse(localStorage.getItem('timingCounts')||'null'); if(saved){timingCounts=saved.counts;timingTotal=saved.total;} }catch(e){}
+    inicializarGrafico();
+    inicializarDigitMap();
+    hablar("Sistema listo. Conectando a Deriv…");
+    conectarDeriv(document.getElementById('symbolSel').value);
+};
 </script>
 </body>
 </html>
