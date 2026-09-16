@@ -3779,6 +3779,7 @@ let reconnectTimer=null;
 let reconnectAttempts=0;
 let lastDerivSymbol='R_100';
 let manualClose=false;
+let connectionGeneration=0;
 function scheduleReconnect(){
   if(manualClose || reconnectTimer) return;
   reconnectAttempts=Math.min(reconnectAttempts+1,6);
@@ -3788,16 +3789,18 @@ function scheduleReconnect(){
 }
 
 function connectDeriv(symbol){
+    const myGeneration=++connectionGeneration;
     lastDerivSymbol=symbol||lastDerivSymbol;
     manualClose=false;
     if(reconnectTimer){clearTimeout(reconnectTimer);reconnectTimer=null;}
-    if(ws){try{manualClose=true;ws.close();}catch(e){} manualClose=false;}
+    if(ws){try{manualClose=true;ws.close();}catch(e){}}
     recentDigits=[]; pendingPrediction=null; clearInterval(timerInterval); resetTimingSession(); resetCandleChart();
     document.getElementById('statusText').textContent='CONECTANDO...';
     document.getElementById('liveDot').style.background='#ffe600';
     liveValidTicks=0; lastTickReceiveMs=0; clockOffsetMs=null; estimatedLatencyMs=null; flowStatus='ESPERANDO'; updateSyncUI(); setSyncState('','🔴 CONECTANDO...'); updateEntryPanel();
     const proto=location.protocol==='https:'?'wss':'ws';
     ws=new WebSocket(proto+'://'+location.host);
+    manualClose=false;
     ws.onopen=()=>{
       reconnectAttempts=0;
       requestVolatilityCatalog(ws);
@@ -3808,6 +3811,7 @@ function connectDeriv(symbol){
       systemToast.textContent=`RECIBIENDO TICKS: ${symbol}`; voiceLastMilestone=0; hablar(`Conexión en vivo establecida. Activo ${symbol}. Recibiendo ticks. El escáner está escuchando el mercado y acumulando datos.`);
     };
     ws.onmessage=event=>{
+      if(myGeneration!==connectionGeneration) return;
       try{
         const data=JSON.parse(event.data);
         if(data.msg_type==='active_symbols' && Array.isArray(data.active_symbols)){
@@ -3826,8 +3830,8 @@ function connectDeriv(symbol){
         }
       }catch(error){console.error('Error procesando tick',error)}
     };
-    ws.onerror=()=>{document.getElementById('statusText').textContent='ERROR';document.getElementById('liveDot').style.background='#ff3355';setSyncState('error','🔴 CONEXIÓN CON ERROR');flowStatus='ERROR';updateSyncUI();systemToast.textContent='ERROR DE CONEXIÓN CON EL SERVIDOR';hablarPrioridad('Error de conexión. Reintentando automáticamente.',3,true);scheduleReconnect();};
-    ws.onclose=()=>{document.getElementById('statusText').textContent='DESCONECTADO';document.getElementById('liveDot').style.background='#ff3355';setSyncState('error','🔴 DESCONECTADO');flowStatus='DESCONECTADO';updateSyncUI();scheduleReconnect();};
+    ws.onerror=()=>{if(myGeneration!==connectionGeneration)return; document.getElementById('statusText').textContent='ERROR';document.getElementById('liveDot').style.background='#ff3355';setSyncState('error','🔴 CONEXIÓN CON ERROR');flowStatus='ERROR';updateSyncUI();systemToast.textContent='ERROR DE CONEXIÓN CON EL SERVIDOR';hablarPrioridad('Error de conexión. Reintentando automáticamente.',3,true);scheduleReconnect();};
+    ws.onclose=()=>{if(myGeneration!==connectionGeneration)return; document.getElementById('statusText').textContent='DESCONECTADO';document.getElementById('liveDot').style.background='#ff3355';setSyncState('error','🔴 DESCONECTADO');flowStatus='DESCONECTADO';updateSyncUI();scheduleReconnect();};
 }
 
 
