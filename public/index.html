@@ -3713,90 +3713,17 @@ function startTimer(){
    EXTRAER ÚLTIMO DÍGITO
    ========================================================= */
 
-function extractLastDigit(
-    tick
-){
-
-    if(
-        !tick ||
-        tick.quote===undefined ||
-        tick.quote===null
-    ){
-
-        return null;
-    }
-
-
-    let quote;
-
-
-    if(
-        typeof tick.pip_size===
-        "number" &&
-        Number.isFinite(
-            tick.pip_size
-        )
-    ){
-
-        const decimals =
-            Math.max(
-                0,
-                Math.floor(
-                    tick.pip_size
-                )
-            );
-
-
-        quote =
-            Number(
-                tick.quote
-            ).toFixed(
-                decimals
-            );
-
-    }else{
-
-        quote =
-            String(
-                tick.quote
-            );
-    }
-
-
-    const digitsOnly =
-        quote.replace(
-            /[^0-9]/g,
-            ""
-        );
-
-
-    if(
-        !digitsOnly.length
-    ){
-
-        return null;
-    }
-
-
-    const digit =
-        Number(
-            digitsOnly[
-                digitsOnly.length-1
-            ]
-        );
-
-
-    if(
-        !Number.isInteger(digit) ||
-        digit<0 ||
-        digit>9
-    ){
-
-        return null;
-    }
-
-
-    return digit;
+function extractLastDigit(tick){
+    /* Fuente única del último dígito para Deriv y el escáner. */
+    if(!tick || tick.quote===undefined || tick.quote===null) return null;
+    const pipSize=Number(tick.pip_size);
+    const shownQuote=(Number.isFinite(pipSize) && pipSize>=0 && pipSize<=20)
+        ? Number(tick.quote).toFixed(Math.floor(pipSize))
+        : String(tick.quote);
+    const digitsOnly=shownQuote.replace(/[^0-9]/g,'');
+    if(!digitsOnly.length) return null;
+    const digit=Number(digitsOnly.charAt(digitsOnly.length-1));
+    return Number.isInteger(digit) && digit>=0 && digit<=9 ? digit : null;
 }
 
 
@@ -3891,9 +3818,9 @@ function connectDeriv(symbol){
         if(tick&&tick.quote!==undefined){
           registerTickSync(tick);
           processTickForCandle(tick);
-          const liveMarket=document.getElementById("liveMarket");
-          if(liveMarket) liveMarket.innerHTML=`PRECIO EN VIVO: <strong>${tick.quote}</strong> &nbsp; | &nbsp; ÚLTIMO DÍGITO: <strong id="liveDigitBig" style="font-size:28px;color:#00ffcc">—</strong>`;
           const digit=extractLastDigit(tick);
+          const liveMarket=document.getElementById("liveMarket");
+          if(liveMarket) liveMarket.innerHTML=`PRECIO EN VIVO: <strong>${String(tick.quote)}</strong> &nbsp; | &nbsp; ÚLTIMO DÍGITO: <strong id="liveDigitBig" style="font-size:28px;color:#00ffcc">${digit===null?'—':digit}</strong>`;
           if(digit!==null)processTick(digit);
         }
       }catch(error){console.error('Error procesando tick',error)}
