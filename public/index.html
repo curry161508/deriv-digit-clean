@@ -1,718 +1,3402 @@
 
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analizador Binario - Deriv</title>
-    <script src="https://cdn.jsdelivr.net/npm/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.min.js"></script>
-    <style>
-        * { margin:0; padding:0; box-sizing:border-box; font-family:Arial, sans-serif; }
-        body {
-            background:
-                radial-gradient(circle at top left, rgba(0,255,128,0.14), transparent 35%),
-                linear-gradient(135deg, #050a07 0%, #0f1a0f 45%, #050a07 100%);
-            color:#fff;
-            padding:18px;
-            min-height:100vh;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>G2LUDE // MATH ENGINE PRO v3 + OHLC</title>
 
-        .container {
-            max-width:400px;
-            margin:0 auto;
-            background:rgba(10,15,10,0.92);
-            border-radius:22px;
-            padding:18px;
-            border:1px solid rgba(0,255,128,0.16);
-            box-shadow:
-                0 0 35px rgba(0,255,128,0.12),
-                inset 0 0 12px rgba(0,255,128,0.04);
-        }
+<style>
+:root{
+    --bg:#010403;
+    --panel:#07130f;
+    --green:#00ffcc;
+    --pink:#ff007f;
+    --white:#eafff8;
+    --red:#ff3355;
+    --yellow:#ffe600;
+    --blue:#4da6ff;
+}
 
-        h2 {
-            text-align:center;
-            margin-bottom:12px;
-            color:#00ff88;
-            font-size:20px;
-            letter-spacing:1px;
-            text-shadow:0 0 8px rgba(0,255,136,0.65);
-        }
+*{
+    box-sizing:border-box;
+    user-select:none;
+}
 
-        /* === GRÁFICO DE VELAS ESTILO NEON HACKER === */
-        #chart-container {
-            background:
-                linear-gradient(180deg, rgba(10,15,20,0.96) 0%, rgba(5,10,15,0.98) 100%);
-            border-radius:18px;
-            padding:14px;
-            margin-bottom:18px;
-            height:240px;
-            border:1px solid rgba(0,255,128,0.22);
-            box-shadow:
-                inset 0 0 18px rgba(0,255,128,0.08),
-                0 0 22px rgba(0,255,128,0.14);
-            position:relative;
-            overflow:hidden;
-        }
+body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    justify-content:center;
+    align-items:center;
+    background:radial-gradient(circle at center,#0a2119 0%,#010403 70%);
+    color:var(--green);
+    font-family:"Courier New",monospace;
+}
 
-        #chart-container::before {
-            content:"";
-            position:absolute;
-            inset:0;
-            background:
-                repeating-linear-gradient(
-                    0deg,
-                    transparent,
-                    transparent 2px,
-                    rgba(0,255,128,0.035) 2px,
-                    rgba(0,255,128,0.035) 4px
-                );
-            pointer-events:none;
-        }
+.phone-frame{
+    width:390px;
+    max-height:96vh;
+    overflow-y:auto;
+    padding:14px;
+    border:2px solid var(--green);
+    border-radius:26px;
+    background:linear-gradient(180deg,#091a14,#020706);
+    box-shadow:
+        0 0 30px rgba(0,255,204,.3),
+        inset 0 0 20px rgba(0,255,204,.08);
+}
 
-        #chart { width:100%; height:100%; }
+.top-hud{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    border-bottom:1px solid rgba(0,255,204,.3);
+    padding-bottom:8px;
+    margin-bottom:10px;
+}
 
-        .box {
-            background:rgba(25,35,25,0.88);
-            border-radius:18px;
-            padding:14px;
-            margin-bottom:14px;
-            border:1px solid rgba(0,255,128,0.18);
-            box-shadow:0 0 18px rgba(0,255,128,0.12);
-        }
+.brand{
+    font-size:11px;
+    font-weight:bold;
+    letter-spacing:1px;
+}
 
-        h3 {
-            color:#00ff88;
-            margin-bottom:10px;
-            font-size:15px;
-            letter-spacing:0.5px;
-            text-shadow:0 0 6px rgba(0,255,136,0.55);
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-        }
+.status{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-size:8px;
+}
 
-        .tag-top {
-            font-size:12px;
-            background:rgba(0,255,128,0.15);
-            color:#00ff88;
-            padding:2px 8px;
-            border-radius:10px;
-            border:1px solid rgba(0,255,128,0.35);
-        }
+.dot{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:var(--green);
+    box-shadow:0 0 8px var(--green);
+}
 
-        select, button {
-            width:100%;
-            padding:11px;
-            border-radius:12px;
-            border:none;
-            font-size:16px;
-            margin-top:8px;
-        }
+.filter-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:7px 9px;
+    margin-bottom:10px;
+    border:1px solid rgba(0,255,204,.25);
+    border-radius:10px;
+    font-size:9px;
+}
 
-        select {
-            background:rgba(20,30,20,0.9);
-            color:#00ff88;
-            border:1px solid rgba(0,255,128,0.22);
-        }
+select{
+    background:#030908;
+    color:var(--green);
+    border:1px solid var(--green);
+    border-radius:6px;
+    padding:4px;
+    font-family:inherit;
+    font-size:9px;
+}
 
-        button {
-            background:
-                linear-gradient(135deg, #ff0066, #ff4081);
-            color:#fff;
-            font-weight:bold;
-            cursor:pointer;
-            font-size:17px;
-            padding:13px;
-            border:1px solid rgba(255,0,102,0.5);
-            box-shadow:0 0 18px rgba(255,0,102,0.45);
-        }
+.panel{
+    padding:10px;
+    margin-bottom:10px;
+    border:1px solid rgba(0,255,204,.3);
+    border-radius:13px;
+    background:rgba(0,255,204,.035);
+}
 
-        button:disabled {
-            background:#555;
-            cursor:not-allowed;
-            border-color:#777;
-            box-shadow:none;
-        }
+.panel-title{
+    font-size:10px;
+    font-weight:bold;
+    margin-bottom:8px;
+}
 
-        /* Dígitos 0–9 — COLORES POR NIVEL IGUAL A TU FOTO */
-        .digits-grid {
-            display:grid;
-            grid-template-columns:repeat(5, 1fr);
-            gap:10px;
-            margin:12px 0;
-            min-height:90px;
-        }
+/* =========================================================
+   GRÁFICO OHLC
+   ========================================================= */
 
-        .digit-circle {
-            aspect-ratio:1;
-            border-radius:50%;
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            justify-content:center;
-            border:2px solid rgba(0,255,128,0.75);
-            background:rgba(10,20,10,0.9);
-            box-shadow:0 0 12px rgba(0,255,128,0.25);
-            transition: all 0.3s ease;
-        }
+.chart-panel{
+    padding:8px;
+}
 
-        /* Nivel 1 — MÁS FUERTE: ROSA NEÓN */
-        .digit-circle.rank-1 {
-            border-color:#ff00cc;
-            background:rgba(255,0,204,0.18);
-            box-shadow:0 0 18px rgba(255,0,204,0.6);
-        }
-        .digit-circle.rank-1 .digit-num {
-            color:#ff00cc;
-            text-shadow:0 0 10px rgba(255,0,204,0.8);
-        }
+.chart-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:7px;
+}
 
-        /* Nivel 2 — AZUL NEÓN */
-        .digit-circle.rank-2 {
-            border-color:#00ccff;
-            background:rgba(0,204,255,0.12);
-            box-shadow:0 0 14px rgba(0,204,255,0.45);
-        }
-        .digit-circle.rank-2 .digit-num {
-            color:#00ccff;
-            text-shadow:0 0 8px rgba(0,204,255,0.6);
-        }
+.chart-title{
+    font-size:10px;
+    font-weight:bold;
+}
 
-        /* Nivel 3 — AMARILLO/VERDE NEÓN */
-        .digit-circle.rank-3 {
-            border-color:#ccff00;
-            background:rgba(204,255,0,0.10);
-            box-shadow:0 0 12px rgba(204,255,0,0.35);
-        }
-        .digit-circle.rank-3 .digit-num {
-            color:#ccff00;
-            text-shadow:0 0 6px rgba(204,255,0,0.5);
-        }
+.chart-live{
+    font-size:7px;
+    color:#00ff66;
+}
 
-        /* Nivel 4 — VERDE CLARO */
-        .digit-circle.rank-4 {
-            border-color:#00ff88;
-            background:rgba(0,255,136,0.08);
-            box-shadow:0 0 10px rgba(0,255,136,0.25);
-        }
-        .digit-circle.rank-4 .digit-num {
-            color:#00ff88;
-            text-shadow:0 0 5px rgba(0,255,136,0.4);
-        }
+.chart-wrap{
+    position:relative;
+    width:100%;
+    height:180px;
+    border:1px solid rgba(0,255,204,.25);
+    border-radius:9px;
+    overflow:hidden;
+    background:
+        linear-gradient(
+            rgba(0,255,204,.025) 1px,
+            transparent 1px
+        ),
+        linear-gradient(
+            90deg,
+            rgba(0,255,204,.025) 1px,
+            transparent 1px
+        );
+    background-size:20px 20px;
+}
 
-        .digit-num {
-            font-size:21px;
-            font-weight:bold;
-            color:#00ff88;
-            text-shadow:0 0 8px rgba(0,255,136,0.65);
-        }
+#candleCanvas{
+    display:block;
+    width:100%;
+    height:100%;
+}
 
-        .digit-pct {
-            font-size:11px;
-            color:#ccc;
-            margin-top:2px;
-        }
+.chart-price{
+    position:absolute;
+    right:5px;
+    top:5px;
+    padding:3px 5px;
+    border-radius:4px;
+    background:rgba(1,4,3,.85);
+    color:var(--yellow);
+    font-size:7px;
+    border:1px solid rgba(255,230,0,.25);
+}
 
-        /* CAJA DE RESULTADO — SOLO APARECE AL PREDECIR */
-        .result-box {
-            display:none;
-            background:rgba(25,35,25,0.92);
-            border:1px solid #00ff88;
-            border-radius:18px;
-            padding:16px;
-            margin:14px 0;
-            box-shadow:0 0 22px rgba(0,255,128,0.35);
-        }
+.chart-info{
+    display:flex;
+    justify-content:space-between;
+    margin-top:5px;
+    font-size:7px;
+    color:#72b5a8;
+}
 
-        .result-box.danger {
-            border-color:#ffcc00;
-            box-shadow:0 0 22px rgba(255,204,0,0.35);
-        }
+.hot-ranking{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:6px;
+}
 
-        .result-title {
-            color:#00ff88;
-            font-weight:bold;
-            font-size:18px;
-            margin-bottom:10px;
-            text-shadow:0 0 8px rgba(0,255,136,0.55);
-        }
+.hot{
+    padding:7px 3px;
+    text-align:center;
+    border:1px solid var(--pink);
+    border-radius:8px;
+    background:rgba(255,0,127,.06);
+}
 
-        .res-main {
-            font-size:28px;
-            font-weight:bold;
-            margin:8px 0;
-        }
+.hot-digit{
+    color:var(--pink);
+    font-size:18px;
+    font-weight:bold;
+}
 
-        .res-main.ok {
-            color:#00ff88;
-            text-shadow:0 0 10px rgba(0,255,136,0.65);
-        }
+.hot-score{
+    color:#baffef;
+    font-size:8px;
+    margin-top:3px;
+}
 
-        .res-main.warn {
-            color:#ffcc00;
-            text-shadow:0 0 10px rgba(255,204,0,0.65);
-        }
+.digits-grid{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:8px;
+}
 
-        .res-prec {
-            font-size:15px;
-            color:#aed581;
-            margin-bottom:10px;
-        }
+.digit-box{
+    text-align:center;
+    padding:4px 1px;
+    border-radius:9px;
+    transition:.2s;
+}
 
-        .res-text {
-            font-size:14px;
-            line-height:1.5;
-            color:#e0e0e0;
-        }
+.digit-box.top{
+    background:rgba(255,0,127,.08);
+}
 
-        /* RELOJ */
-        .timer-box {
-            display:none;
-            text-align:center;
-            margin:12px 0 0 0;
-        }
+.digit-box.top1{
+    background:rgba(255,230,0,.08);
+}
 
-        .timer-num {
-            font-size:48px;
-            font-weight:bold;
-            color:#ffcc00;
-            text-shadow:0 0 12px rgba(255,204,0,0.75);
-        }
+.circle{
+    width:36px;
+    height:36px;
+    margin:auto;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:50%;
+    border:1px solid var(--green);
+    font-size:14px;
+    font-weight:bold;
+}
 
-        /* Filas de datos */
-        .row {
-            display:flex;
-            justify-content:space-between;
-            margin:5px 0;
-            font-size:14px;
-        }
+.digit-box.top .circle{
+    border-color:var(--pink);
+    color:var(--pink);
+    box-shadow:0 0 10px rgba(255,0,127,.35);
+}
 
-        .label {
-            color:#90caf9;
-        }
+.digit-box.top1 .circle{
+    border-color:var(--yellow);
+    color:var(--yellow);
+    box-shadow:0 0 12px rgba(255,230,0,.35);
+}
 
-        .value {
-            font-weight:bold;
-            color:#00ff88;
-        }
+.d-score{
+    font-size:9px;
+    margin-top:4px;
+}
 
-        /* Interruptor de voz */
-        .toggle-row {
-            display:flex;
-            align-items:center;
-            justify-content:space-between;
-            margin-top:10px;
-        }
+.d-pct{
+    color:#75b9ab;
+    font-size:8px;
+    margin-top:2px;
+}
 
-        .toggle {
-            width:46px;
-            height:26px;
-            background:#555;
-            border-radius:13px;
-            position:relative;
-            cursor:pointer;
-            border:1px solid #888;
-        }
+.analysis{
+    font-size:9px;
+    line-height:1.5;
+    color:#d5fff5;
+}
 
-        .toggle.on {
-            background:#00ff88;
-            border-color:#00ff88;
-            box-shadow:0 0 12px rgba(0,255,136,0.65);
-        }
+.analysis span{
+    color:var(--yellow);
+}
 
-        .toggle::after {
-            content:'';
-            position:absolute;
-            top:3px;
-            left:3px;
-            width:20px;
-            height:20px;
-            background:#fff;
-            border-radius:50%;
-            transition:0.2s;
-        }
+.good{
+    color:#00ff66 !important;
+}
 
-        .toggle.on::after {
-            left:23px;
-        }
-    </style>
-</head>
+.bad{
+    color:#ff3355 !important;
+}
+
+.info{
+    color:#4da6ff !important;
+}
+
+.prediction{
+    display:none;
+    text-align:center;
+    padding:13px;
+    margin-bottom:10px;
+    border:2px solid var(--pink);
+    border-radius:14px;
+    background:rgba(255,0,127,.045);
+    box-shadow:0 0 20px rgba(255,0,127,.2);
+}
+
+.prediction.signal-good{border-color:#00ff80;background:rgba(0,255,128,.08)}.prediction.signal-good .pred-digit{color:#00ff80}.prediction.signal-bad{border-color:#ff3355;background:rgba(255,51,85,.08)}.prediction.signal-bad .pred-digit{color:#ff3355}
+.pred-title{
+    font-size:10px;
+    color:#b8fff1;
+}
+
+.pred-digit{
+    font-size:42px;
+    line-height:1;
+    color:var(--pink);
+    font-weight:bold;
+    text-shadow:0 0 15px rgba(255,0,127,.6);
+    margin:7px 0;
+}
+
+.pred-score{
+    font-size:15px;
+    font-weight:bold;
+}
+
+.pred-quality{
+    margin-top:5px;
+    font-size:10px;
+    color:var(--yellow);
+}
+
+.pred-gap{
+    font-size:9px;
+    margin-top:4px;
+    color:#9ce8d8;
+}
+
+.timer{
+    margin-top:10px;
+    padding:7px;
+    border-radius:8px;
+    background:#090d0c;
+    color:white;
+    font-size:11px;
+}
+
+button{
+    width:100%;
+    border:0;
+    padding:12px;
+    border-radius:20px;
+    color:white;
+    font-family:inherit;
+    font-weight:bold;
+    font-size:12px;
+    background:linear-gradient(90deg,#ff007f,#00ffcc);
+    cursor:pointer;
+}
+
+button:active{
+    transform:scale(.98);
+}
+
+.toast{
+    text-align:center;
+    font-size:8px;
+    margin-top:7px;
+    color:#83cfc0;
+}
+
+.stats-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:6px;
+}
+
+.stat{
+    padding:7px 3px;
+    text-align:center;
+    border:1px solid rgba(0,255,204,.2);
+    border-radius:8px;
+}
+
+.stat-value{
+    font-size:14px;
+    font-weight:bold;
+}
+
+.stat-label{
+    font-size:7px;
+    color:#7db9ae;
+    margin-top:3px;
+}
+
+#rankTable{
+    width:100%;
+    border-collapse:collapse;
+    font-size:8px;
+}
+
+#rankTable th{
+    color:var(--green);
+    padding:5px 2px;
+    border-bottom:1px solid rgba(0,255,204,.25);
+}
+
+#rankTable td{
+    padding:5px 2px;
+    text-align:center;
+    border-bottom:1px solid rgba(0,255,204,.08);
+}
+
+.rank1{
+    color:var(--pink);
+    font-weight:bold;
+}
+
+.small{
+    font-size:7px;
+    color:#6ca89d;
+    margin-top:6px;
+}
+
+.history-grid{
+    display:grid;
+    grid-template-columns:repeat(5,1fr);
+    gap:5px;
+}
+
+.history-item{
+    padding:5px 2px;
+    text-align:center;
+    border:1px solid rgba(0,255,204,.18);
+    border-radius:7px;
+}
+
+.history-digit{
+    font-size:12px;
+    color:var(--green);
+    font-weight:bold;
+}
+
+.history-rate{
+    font-size:7px;
+    margin-top:3px;
+    color:#baffef;
+}
+
+.history-count{
+    font-size:7px;
+    color:#6ca89d;
+}
+
+.signal-log{
+    max-height:130px;
+    overflow-y:auto;
+    font-size:7px;
+}
+
+.log-row{
+    display:flex;
+    justify-content:space-between;
+    gap:4px;
+    padding:5px 2px;
+    border-bottom:1px solid rgba(0,255,204,.08);
+}
+
+.log-win{
+    color:#00ff66;
+}
+
+.log-loss{
+    color:#ff3355;
+}
+
+.log-pending{
+    color:var(--yellow);
+}
+</style>
+<style>
+/* Mejor legibilidad en celular */
+body{font-size:14px}.panel-title{font-size:14px!important}.prediction.signal-good{border-color:#00ff80;background:rgba(0,255,128,.08)}.prediction.signal-good .pred-digit{color:#00ff80}.prediction.signal-bad{border-color:#ff3355;background:rgba(255,51,85,.08)}.prediction.signal-bad .pred-digit{color:#ff3355}
+.pred-title{font-size:13px!important}.pred-score{font-size:19px!important}.pred-quality,.pred-gap{font-size:12px!important}.timer{font-size:16px!important}.timer strong{font-size:28px!important}.history-digit{font-size:17px!important}.history-rate,.history-count{font-size:10px!important}.small,.toast{font-size:11px!important}#lastTickDisplay{font-size:18px!important;font-weight:900}#voiceButton{background:linear-gradient(90deg,#0066ff,#00ccff)!important}
+</style></head>
+
 <body>
-<div class="container">
-    <h2>📊 ANALIZADOR DERIV</h2>
 
-    <!-- GRÁFICO DE VELAS NEÓN -->
-    <div id="chart-container">
-        <div id="chart"></div>
+<div class="phone-frame">
+
+<div class="top-hud">
+
+    <div class="brand">
+        G2LUDE // MATH ENGINE PRO v3
     </div>
 
-    <!-- SELECCIÓN DE ACTIVO -->
-    <div class="box">
-        <label>Activo / Volatilidad:</label>
-        <select id="symbolSel">
-            <option value="R_10">Volatilidad 10</option>
-            <option value="R_20">Volatilidad 20</option>
-            <option value="R_50">Volatilidad 50</option>
-            <option value="R_75">Volatilidad 75</option>
-            <option value="R_100" selected>Volatilidad 100</option>
-        </select>
-    </div>
-
-    <!-- SELECCIÓN DE MODO -->
-    <div class="box">
-        <label>Modo de análisis:</label>
-        <select id="modeSel">
-            <option value="matches" selected>MATCHES</option>
-            <option value="over">OVER</option>
-            <option value="under">UNDER</option>
-            <option value="even">EVEN</option>
-            <option value="odd">ODD</option>
-        </select>
-    </div>
-
-    <!-- DIGIT MAP — COLORES POR RANGO -->
-    <div class="box">
-        <h3>DIGIT MAP — Frecuencia</h3>
-        <div class="digits-grid" id="digitMap"></div>
-    </div>
-
-    <!-- HOT RANKING — AHORA TOP 4 ✅ -->
-    <div class="box">
-        <h3>HOT RANKING — Más frecuentes <span class="tag-top">TOP 4</span></h3>
-        <div id="hotList">
-            <div class="row"><span class="label">#1 — Esperando datos…</span><span class="value">-</span></div>
-        </div>
-    </div>
-
-    <!-- MOMENTO DE COINCIDENCIA -->
-    <div class="box">
-        <h3>MOMENTO DE COINCIDENCIA <span class="tag-top">TOP 4</span></h3>
-        <div id="momentList">
-            <div class="row"><span class="label">Más frecuente:</span><span class="value">—</span></div>
-        </div>
-    </div>
-
-    <!-- CONTROLES -->
-    <div class="box">
-        <div class="toggle-row">
-            <span>🔊 Voz activada:</span>
-            <div class="toggle on" id="voiceToggle" onclick="toggleVoice()"></div>
-        </div>
-        <button id="btnPredict" style="margin-top:12px;">🔴 PREDECIR</button>
-    </div>
-
-    <!-- CAJA DE RESULTADO — SOLO AL DAR PREDECIR -->
-    <div class="result-box" id="resultBox">
-        <div class="result-title">Estrategia Matches/Differs</div>
-        <div class="res-main" id="resMain"></div>
-        <div class="res-prec" id="resPrec"></div>
-        <div class="res-text" id="resText"></div>
-
-        <div class="timer-box" id="timerBox">
-            <div style="font-size:14px; color:#ffcc00;">⏱️ TIEMPO PARA OPERAR:</div>
-            <div class="timer-num" id="timerNum">10</div>
-        </div>
+    <div class="status">
+        <div class="dot" id="liveDot"></div>
+        <span id="statusText">CONECTANDO</span>
     </div>
 
 </div>
 
+
+<div class="filter-row">
+
+    <span>ACTIVO</span>
+
+    <select id="assetSelector">
+
+        <option value="R_100">
+            VOLATILITY 100 (1s)
+        </option>
+
+        <option value="R_50">
+            VOLATILITY 50 (1s)
+        </option>
+
+        <option value="R_25">
+            VOLATILITY 25 (1s)
+        </option>
+
+        <option value="1HZ10V">
+            VOLATILITY 10 (1s)
+        </option>
+
+    </select>
+
+    <span id="lastTickDisplay">
+        TICK: --
+    </span>
+
+</div>
+
+
+<!-- =======================================================
+     GRÁFICO DE VELAS
+     ======================================================= -->
+
+<div class="panel chart-panel">
+
+    <div class="chart-header">
+
+        <div class="chart-title">
+            GRÁFICO OHLC — 1 SEGUNDO
+        </div>
+
+        <div class="chart-live">
+            ● LIVE
+        </div>
+
+    </div>
+
+    <div class="chart-wrap">
+
+        <canvas id="candleCanvas"></canvas>
+
+        <div
+            class="chart-price"
+            id="chartPrice">
+            PRECIO: --
+        </div>
+
+    </div>
+
+    <div class="chart-info">
+
+        <span id="candleCount">
+            VELAS: 0
+        </span>
+
+        <span id="candleOhlc">
+            O: -- H: -- L: -- C: --
+        </span>
+
+    </div>
+
+</div>
+
+
+<!-- TOP 3 -->
+
+<div class="panel">
+
+    <div class="panel-title">
+        HOT RANKING — MOTOR ESTADÍSTICO
+    </div>
+
+    <div class="hot-ranking" id="hotRanking">
+
+        <div class="hot">
+            <div class="hot-digit">--</div>
+            <div class="hot-score">--</div>
+        </div>
+
+        <div class="hot">
+            <div class="hot-digit">--</div>
+            <div class="hot-score">--</div>
+        </div>
+
+        <div class="hot">
+            <div class="hot-digit">--</div>
+            <div class="hot-score">--</div>
+        </div>
+
+    </div>
+
+</div>
+
+
+<!-- MAPA -->
+
+<div class="panel">
+
+    <div class="panel-title">
+        MAPA MATEMÁTICO 0 — 9
+    </div>
+
+    <div class="digits-grid" id="digitsGrid"></div>
+
+</div>
+
+
+<!-- DESCOMPOSICIÓN -->
+
+<div class="panel">
+
+    <div class="panel-title">
+        DESCOMPOSICIÓN DEL MODELO
+    </div>
+
+    <div class="analysis" id="analysisText">
+        Esperando suficientes ticks...
+    </div>
+
+</div>
+
+
+<!-- RANKING -->
+
+<div class="panel">
+
+    <div class="panel-title">
+        RANKING COMPLETO
+    </div>
+
+    <table id="rankTable">
+
+        <thead>
+
+            <tr>
+                <th>#</th>
+                <th>D</th>
+                <th>SCORE</th>
+                <th>20T</th>
+                <th>50T</th>
+                <th>100T</th>
+                <th>Z</th>
+                <th>CAL</th>
+            </tr>
+
+        </thead>
+
+        <tbody id="rankBody"></tbody>
+
+    </table>
+
+</div>
+
+
+<!-- PREDICCIÓN -->
+
+<div class="prediction" id="prediction">
+
+    <div class="pred-title">
+        CANDIDATO ESTADÍSTICO PRINCIPAL
+    </div>
+
+    <div class="pred-digit" id="predDigit">
+        7
+    </div>
+
+    <div id="liveMarket" style="margin:8px 0;padding:8px;border:1px solid #00ffcc;border-radius:8px;color:#eaffff;font-weight:900">PRECIO EN VIVO: — &nbsp; | &nbsp; ÚLTIMO DÍGITO: <strong id="liveDigitBig" style="font-size:28px;color:#00ffcc">—</strong></div>
+    <div id="predCurrent" class="pred-gap">ÚLTIMO DÍGITO EN VIVO: —</div>
+    <div class="pred-score" id="predScore">
+        SCORE 0.0
+    </div>
+
+    <div class="pred-quality" id="predQuality">
+        CALIDAD 0.0
+    </div>
+
+    <div class="pred-gap" id="predGap">
+        Ventaja contra segundo: 0.0
+    </div>
+
+    <div class="timer">
+
+        VENTANA DE OBSERVACIÓN:
+        <strong id="timerCount">
+            10s
+        </strong>
+
+    </div>
+
+</div>
+
+
+<!-- BACKTEST -->
+
+<div class="panel">
+
+    <div class="panel-title">
+        BACKTEST EN TIEMPO REAL
+    </div>
+
+    <div class="stats-grid">
+
+        <div class="stat">
+
+            <div
+                class="stat-value"
+                id="signalCount">
+                0
+            </div>
+
+            <div class="stat-label">
+                SEÑALES
+            </div>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div
+                class="stat-value"
+                id="winCount">
+                0
+            </div>
+
+            <div class="stat-label">
+                ACIERTO
+            </div>
+
+        </div>
+
+
+        <div class="stat">
+
+            <div
+                class="stat-value"
+                id="lossCount">
+                0
+            </div>
+
+            <div class="stat-label">
+                FALLO
+            </div>
+
+        </div>
+
+    </div>
+
+    <div
+        class="small"
+        id="backtestRate">
+        TASA OBSERVADA: --
+    </div>
+
+</div>
+
+
+<!-- HISTORIAL -->
+
+<div class="panel">
+
+    <div class="panel-title">
+        MEMORIA HISTÓRICA POR DÍGITO
+    </div>
+
+    <div
+        class="history-grid"
+        id="historyGrid">
+    </div>
+
+</div>
+
+
+<!-- LOG -->
+
+<div class="panel">
+
+    <div class="panel-title">
+        ÚLTIMAS SEÑALES
+    </div>
+
+    <div
+        class="signal-log"
+        id="signalLog">
+
+        <div class="small">
+            Todavía no hay señales.
+        </div>
+
+    </div>
+
+</div>
+
+
+<button id="voiceButton" style="margin-bottom:8px">🔊 ACTIVAR VOZ</button>
+<button id="predictButton">
+    ● EJECUTAR ANÁLISIS MATEMÁTICO
+</button>
+
+<div
+    class="toast"
+    id="systemToast">
+    INICIANDO MOTOR...
+</div>
+
+</div>
+
+
 <script>
-let voiceEnabled = true;
-let ws = null;
-let historyDigits = [];
-let historyTicks = [];
-let timerInterval = null;
-let predictionWindow = false;
-let countdownSecond = 0;
-let timingCounts = Array.from({length:10},()=>Array(11).fill(0));
-let timingTotal = 0;
-const MAX_HISTORY = 1000;
 
-let chart = null;
-let candleSeries = null;
-let candles = [];
-const CANDLE_INTERVAL = 60000;
-let lastCandleTime = null;
+/* =========================================================
+   G2LUDE MATH ENGINE PRO v3 + OHLC
+   ========================================================= */
 
-function inicializarGrafico() {
-    const container = document.getElementById('chart');
-    chart = LightweightCharts.createChart(container, {
-        layout: {
-            background: { type: 'solid', color: '#0a0f14' },
-            textColor: '#00ff88',
-        },
-        grid: {
-            vertLines: { color: 'rgba(0,255,128,0.08)' },
-            horzLines: { color: 'rgba(0,255,128,0.08)' },
-        },
-        crosshair: {
-            mode: LightweightCharts.CrosshairMode.Normal,
-        },
-        priceScale: {
-            borderColor: 'rgba(0,255,128,0.18)',
-        },
-        timeScale: {
-            borderColor: 'rgba(0,255,128,0.18)',
-            timeVisible: true,
-            secondsVisible: false,
-        },
-    });
 
-    candleSeries = chart.addCandlestickSeries({
-        upColor: '#00ff88',
-        downColor: '#ff0066',
-        borderVisible: false,
-        wickUpColor: '#00ff88',
-        wickDownColor: '#ff0066',
-    });
+/* =========================================================
+   MOTOR DE VELAS OHLC
+   ========================================================= */
+
+const candles = [];
+
+const MAX_CANDLES = 30;
+
+let currentCandle = null;
+
+const CANDLE_INTERVAL_MS = 1000;
+
+let lastCandleTime = 0;
+
+
+/* =========================================================
+   CANVAS
+   ========================================================= */
+
+const canvas =
+    document.getElementById(
+        "candleCanvas"
+    );
+
+const ctx =
+    canvas
+    ? canvas.getContext("2d")
+    : null;
+
+
+/* =========================================================
+   AJUSTAR CANVAS A LA PANTALLA
+   ========================================================= */
+
+function resizeCandleCanvas(){
+
+    if(!canvas || !ctx)
+        return;
+
+    const rect =
+        canvas.getBoundingClientRect();
+
+    const dpr =
+        window.devicePixelRatio || 1;
+
+    canvas.width =
+        Math.max(
+            1,
+            Math.floor(
+                rect.width*dpr
+            )
+        );
+
+    canvas.height =
+        Math.max(
+            1,
+            Math.floor(
+                rect.height*dpr
+            )
+        );
+
+    ctx.setTransform(
+        dpr,
+        0,
+        0,
+        dpr,
+        0,
+        0
+    );
+
+    renderCandles();
 }
 
-function agregarPrecioAlGrafico(precio) {
-    const ahora = Math.floor(Date.now() / CANDLE_INTERVAL) * CANDLE_INTERVAL / 1000;
 
-    if (!lastCandleTime || ahora !== lastCandleTime) {
-        candles.push({
-            time: ahora,
-            open: precio,
-            high: precio,
-            low: precio,
-            close: precio
-        });
-        lastCandleTime = ahora;
-    } else {
-        const ult = candles[candles.length - 1];
-        ult.high = Math.max(ult.high, precio);
-        ult.low = Math.min(ult.low, precio);
-        ult.close = precio;
-    }
+/* =========================================================
+   REINICIAR GRÁFICO
+   ========================================================= */
 
-    if (candles.length > 100) candles.shift();
-    candleSeries.setData(candles);
-    chart.timeScale().fitContent();
+function resetCandleChart(){
+
+    candles.length=0;
+
+    currentCandle=null;
+
+    lastCandleTime=0;
+
+    const priceEl =
+        document.getElementById(
+            "chartPrice"
+        );
+
+    const countEl =
+        document.getElementById(
+            "candleCount"
+        );
+
+    const ohlcEl =
+        document.getElementById(
+            "candleOhlc"
+        );
+
+    if(priceEl)
+        priceEl.textContent="PRECIO: --";
+
+    if(countEl)
+        countEl.textContent="VELAS: 0";
+
+    if(ohlcEl)
+        ohlcEl.textContent=
+            "O: -- H: -- L: -- C: --";
+
+    renderCandles();
 }
 
-function hablar(texto) {
-    if (!voiceEnabled) return;
-    window.speechSynthesis.cancel();
-    const msg = new SpeechSynthesisUtterance(texto);
-    msg.lang = 'es-ES';
-    msg.rate = 1.05;
-    window.speechSynthesis.speak(msg);
-}
 
-function toggleVoice() {
-    voiceEnabled = !voiceEnabled;
-    document.getElementById('voiceToggle').classList.toggle('on', voiceEnabled);
-    hablar(voiceEnabled ? "Voz activada" : "Voz desactivada");
-}
+/* =========================================================
+   PROCESAR TICK PARA VELA
+   ========================================================= */
 
-function ultimoDigito(precio) {
-    return parseInt(precio.toFixed(2).slice(-1));
-}
+function processTickForCandle(
+    tickObj
+){
 
-function inicializarDigitMap() {
-    let html = '';
-    for(let d=0;d<=9;d++){
-        html += `<div class="digit-circle">
-                    <div class="digit-num">${d}</div>
-                    <div class="digit-pct">0.0%</div>
-                 </div>`;
-    }
-    document.getElementById('digitMap').innerHTML = html;
-}
+    if(
+        !tickObj ||
+        tickObj.quote===undefined ||
+        tickObj.quote===null
+    ){
 
-function actualizarEstadisticas() {
-    const conteo = Array(10).fill(0);
-    historyDigits.forEach(d => conteo[d]++);
-    const total = historyDigits.length || 1;
-
-    // Digit Map con colores según posición TOP ✅
-    const orden = [...Array(10).keys()].sort((a,b)=>conteo[b]-conteo[a]);
-    let html = '';
-    for(let d=0;d<=9;d++){
-        const pct = ((conteo[d]/total)*100).toFixed(1);
-        let claseRango = '';
-        const pos = orden.indexOf(d) + 1; // posición 1..10
-        if(pos === 1) claseRango = 'rank-1';
-        else if(pos === 2) claseRango = 'rank-2';
-        else if(pos === 3) claseRango = 'rank-3';
-        else if(pos === 4) claseRango = 'rank-4';
-
-        html += `<div class="digit-circle ${claseRango}">
-                    <div class="digit-num">${d}</div>
-                    <div class="digit-pct">${pct}%</div>
-                 </div>`;
-    }
-    document.getElementById('digitMap').innerHTML = html;
-
-    // HOT RANKING — AHORA TOP 4 ✅
-    const top4 = orden.slice(0,4);
-    let hotHtml = '';
-    top4.forEach((d,i)=>{
-        hotHtml += `<div class="row"><span class="label">#${i+1} — Dígito ${d}</span><span class="value">${((conteo[d]/total)*100).toFixed(1)}%</span></div>`;
-    });
-    document.getElementById('hotList').innerHTML = hotHtml;
-
-    // Momento real: una sola línea por dígito y sus segundos
-    let momHtml = '';
-    for(let d=0; d<10; d++){
-        const n = timingCounts[d].reduce((a,b)=>a+b,0);
-        const momentos = timingCounts[d].map((v,sec)=>v && sec ? `${sec}s×${v}` : '').filter(Boolean).join(' · ');
-        if(n) momHtml += `<div class="row"><span class="label">${d} · ${momentos}</span><span class="value">${n} · ${(timingTotal ? n/timingTotal*100 : 0).toFixed(1)}%</span></div>`;
-    }
-    document.getElementById('momentList').innerHTML = momHtml || '<div class="row"><span class="label">Sin apariciones registradas</span><span class="value">—</span></div>';
-}
-
-function conectarDeriv(simbolo) {
-    if(ws) ws.close();
-    ws = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host);
-
-    ws.onopen = () => {
-        ws.send(JSON.stringify({ ticks: simbolo, subscribe: 1 }));
-        hablar(`Conectado a ${simbolo}`);
-    };
-
-    ws.onmessage = (evt) => {
-        const data = JSON.parse(evt.data);
-        if(data.status === 'TICK RECIBIDO' && data.symbol === simbolo) {
-            const precio = parseFloat(data.quote);
-            agregarPrecioAlGrafico(precio);
-            const dig = ultimoDigito(precio);
-            if(predictionWindow && countdownSecond > 0){
-                timingCounts[dig][countdownSecond]++;
-                timingTotal++;
-                localStorage.setItem('timingCounts', JSON.stringify({counts:timingCounts,total:timingTotal}));
-            }
-            historyDigits.push(dig);
-            if(historyDigits.length > MAX_HISTORY) historyDigits.shift();
-            historyTicks.push(data.tick);
-            if(historyTicks.length > MAX_HISTORY) historyTicks.shift();
-            actualizarEstadisticas();
-        }
-    };
-
-    ws.onerror = () => hablar("Error de conexión, revisa tu red");
-}
-
-function analizarYMostrar() {
-    if(historyDigits.length < 30) {
-        hablar("Aún no hay suficientes datos, espera unos segundos");
         return;
     }
 
-    const conteo = Array(10).fill(0);
-    historyDigits.forEach(d => conteo[d]++);
-    const total = historyDigits.length;
-    const orden = [...Array(10).keys()].sort((a,b)=>conteo[b]-conteo[a]);
-    const mejor = orden[0];
-    const pctMejor = (conteo[mejor]/total)*100;
-    const modo = document.getElementById('modeSel').value;
 
-    let recomendacion = '';
-    let nivelFuerza = 'buena';
-    let digitoObjetivo = mejor;
+    const price =
+        Number(
+            tickObj.quote
+        );
 
-    if(modo === 'over') {
-        const mayores = historyDigits.filter(d=>d>4).length;
-        digitoObjetivo = 5;
-        recomendacion = mayores/total >= 0.55 ? 'OK' : 'DEBIL';
-        nivelFuerza = recomendacion === 'OK' ? 'buena' : 'baja';
-    } else if(modo === 'under') {
-        const menores = historyDigits.filter(d=>d<=4).length;
-        digitoObjetivo = 3;
-        recomendacion = menores/total >= 0.55 ? 'OK' : 'DEBIL';
-        nivelFuerza = recomendacion === 'OK' ? 'buena' : 'baja';
-    } else if(modo === 'even') {
-        const pares = historyDigits.filter(d=>d%2===0).length;
-        digitoObjetivo = 6;
-        recomendacion = pares/total >= 0.55 ? 'OK' : 'DEBIL';
-        nivelFuerza = recomendacion === 'OK' ? 'buena' : 'baja';
-    } else if(modo === 'odd') {
-        const impares = historyDigits.filter(d=>d%2!==0).length;
-        digitoObjetivo = 7;
-        recomendacion = impares/total >= 0.55 ? 'OK' : 'DEBIL';
-        nivelFuerza = recomendacion === 'OK' ? 'buena' : 'baja';
-    } else {
-        recomendacion = pctMejor >= 18 ? 'OK' : 'DEBIL';
-        nivelFuerza = recomendacion === 'OK' ? 'buena' : 'baja';
+
+    if(
+        !Number.isFinite(price)
+    ){
+
+        return;
     }
 
-    const caja = document.getElementById('resultBox');
-    caja.style.display = 'block';
-    caja.classList.toggle('danger', nivelFuerza==='baja');
 
-    const resMain = document.getElementById('resMain');
-    const resPrec = document.getElementById('resPrec');
-    const resText = document.getElementById('resText');
+    const now =
+        Date.now();
 
-    if(nivelFuerza === 'buena') {
-        resMain.textContent = `GANA: ${digitoObjetivo}`;
-        resMain.className = 'res-main ok';
-        resPrec.textContent = `Frecuencia observada: ${pctMejor.toFixed(1)}%`;
-        resText.innerHTML = `El análisis de mercado predice que aparecerá el dígito ${digitoObjetivo}.<br>Se detectó fuerte consistencia de patrón en los datos de ticks.<br>Basado en los datos observados; la frecuencia no garantiza el resultado.`;
 
-        hablar(`Análisis listo. Dígito más probable: ${digitoObjetivo}. Frecuencia observada: ${pctMejor.toFixed(0)} por ciento. Tienes 10 segundos para tomar la operación.`);
+    /*
+       Primera vela.
+    */
 
-        document.getElementById('timerBox').style.display = 'block';
-        predictionWindow = true;
-        let seg = 10;
-        countdownSecond = 10;
-        document.getElementById('timerNum').textContent = seg;
-        if(timerInterval) clearInterval(timerInterval);
+    if(
+        !currentCandle
+    ){
 
-        timerInterval = setInterval(()=>{
-            seg--;
-            countdownSecond = seg;
-            document.getElementById('timerNum').textContent = seg;
-            if(voiceEnabled) hablar(seg.toString());
+        currentCandle={
+            open:price,
+            high:price,
+            low:price,
+            close:price,
+            time:now
+        };
 
-            if(seg <= 0) {
-                clearInterval(timerInterval);
-                predictionWindow = false;
-                countdownSecond = 0;
-                document.getElementById('timerBox').style.display = 'none';
-                hablar("Tiempo terminado. ¿Quieres tomar otra operación?");
-            }
-        }, 1000);
+        lastCandleTime=now;
 
-    } else {
-        resMain.textContent = `⚠️ ESPERA — NO RECOMENDABLE`;
-        resMain.className = 'res-main warn';
-        resPrec.textContent = `Fuerza baja — riesgo alto`;
-        resText.innerHTML = `La señal tiene poca consistencia.<br>Mejor espera más datos o cambia de activo.<br>Puede perder si entras ahora.`;
+    }
 
-        hablar("No es recomendable entrar ahora. La señal tiene menos fuerza, puede perder. Espérate mejor. ¿Quieres tomar otra operación?");
-        document.getElementById('timerBox').style.display = 'none';
+
+    /*
+       Si pasó un segundo,
+       cerramos la vela anterior
+       y comenzamos una nueva.
+    */
+
+    else if(
+        now-lastCandleTime >=
+        CANDLE_INTERVAL_MS
+    ){
+
+        candles.push(
+            currentCandle
+        );
+
+
+        if(
+            candles.length>
+            MAX_CANDLES
+        ){
+
+            candles.shift();
+        }
+
+
+        currentCandle={
+            open:price,
+            high:price,
+            low:price,
+            close:price,
+            time:now
+        };
+
+
+        lastCandleTime=now;
+    }
+
+
+    /*
+       Actualizamos OHLC.
+    */
+
+    else{
+
+        currentCandle.high =
+            Math.max(
+                currentCandle.high,
+                price
+            );
+
+        currentCandle.low =
+            Math.min(
+                currentCandle.low,
+                price
+            );
+
+        currentCandle.close =
+            price;
+    }
+
+
+    updateCandleInfo();
+
+    renderCandles();
+}
+
+
+/* =========================================================
+   INFORMACIÓN DE VELA ACTUAL
+   ========================================================= */
+
+function updateCandleInfo(){
+
+    if(
+        !currentCandle
+    ){
+
+        return;
+    }
+
+
+    const priceEl =
+        document.getElementById(
+            "chartPrice"
+        );
+
+    const countEl =
+        document.getElementById(
+            "candleCount"
+        );
+
+    const ohlcEl =
+        document.getElementById(
+            "candleOhlc"
+        );
+
+
+    if(priceEl){
+
+        priceEl.textContent =
+            `PRECIO: ${
+                currentCandle.close
+            }`;
+    }
+
+
+    if(countEl){
+
+        countEl.textContent =
+            `VELAS: ${
+                candles.length+
+                1
+            }`;
+    }
+
+
+    if(ohlcEl){
+
+        ohlcEl.textContent =
+            `O: ${currentCandle.open} `+
+            `H: ${currentCandle.high} `+
+            `L: ${currentCandle.low} `+
+            `C: ${currentCandle.close}`;
     }
 }
 
-document.getElementById('symbolSel').addEventListener('change', e=>{
-    const nom = e.target.options[e.target.selectedIndex].text;
-    hablar(`Seleccionado: ${nom}`);
-    conectarDeriv(e.target.value);
-    historyDigits = []; historyTicks = []; candles = []; lastCandleTime = null;
-    inicializarDigitMap();
-    document.getElementById('resultBox').style.display='none';
-});
 
-document.getElementById('modeSel').addEventListener('change', e=>{
-    hablar(`Modo cambiado a: ${e.target.options[e.target.selectedIndex].text}`);
-    document.getElementById('resultBox').style.display='none';
-});
+/* =========================================================
+   RENDERIZAR VELAS
+   ========================================================= */
 
-document.getElementById('btnPredict').addEventListener('click', ()=>{
-    hablar("Analizando datos del mercado…");
-    analizarYMostrar();
-});
+function renderCandles(){
 
-window.onload = () => {
-    try{ const saved=JSON.parse(localStorage.getItem('timingCounts')||'null'); if(saved){timingCounts=saved.counts;timingTotal=saved.total;} }catch(e){}
-    inicializarGrafico();
-    inicializarDigitMap();
-    hablar("Sistema listo. Conectando a Deriv…");
-    conectarDeriv(document.getElementById('symbolSel').value);
-};
+    if(
+        !ctx ||
+        !canvas
+    ){
+
+        return;
+    }
+
+
+    const rect =
+        canvas.getBoundingClientRect();
+
+
+    const width =
+        rect.width;
+
+
+    const height =
+        rect.height;
+
+
+    ctx.clearRect(
+        0,
+        0,
+        width,
+        height
+    );
+
+
+    const displayList =
+        currentCandle
+        ? [...candles,currentCandle]
+        : candles;
+
+
+    if(
+        displayList.length===0
+    ){
+
+        /*
+           Texto inicial.
+        */
+
+        ctx.fillStyle =
+            "rgba(0,255,204,.35)";
+
+        ctx.font =
+            "9px Courier New";
+
+        ctx.textAlign="center";
+
+        ctx.fillText(
+            "ESPERANDO TICKS...",
+            width/2,
+            height/2
+        );
+
+        return;
+    }
+
+
+    let minPrice=Infinity;
+
+    let maxPrice=-Infinity;
+
+
+    displayList.forEach(
+        c=>{
+
+            if(
+                c.low<minPrice
+            ){
+
+                minPrice=c.low;
+            }
+
+            if(
+                c.high>maxPrice
+            ){
+
+                maxPrice=c.high;
+            }
+        }
+    );
+
+
+    let range =
+        maxPrice-minPrice;
+
+
+    /*
+       Evitamos que una vela plana
+       desaparezca completamente.
+    */
+
+    if(
+        range===0
+    ){
+
+        range =
+            Math.abs(
+                maxPrice
+            )*0.00001 ||
+            1;
+
+        minPrice -= range/2;
+        maxPrice += range/2;
+    }
+
+
+    const paddingTop=14;
+    const paddingBottom=14;
+    const paddingLeft=7;
+    const paddingRight=7;
+
+
+    const chartWidth =
+        width-
+        paddingLeft-
+        paddingRight;
+
+
+    const chartHeight =
+        height-
+        paddingTop-
+        paddingBottom;
+
+
+    /*
+       Las velas ocupan todo el ancho
+       disponible.
+    */
+
+    const slotWidth =
+        chartWidth/
+        displayList.length;
+
+
+    const candleWidth =
+        Math.max(
+            3,
+            Math.min(
+                11,
+                slotWidth*0.62
+            )
+        );
+
+
+    function priceToY(price){
+
+        return (
+            paddingTop+
+            chartHeight*
+            (
+                1-
+                (
+                    price-minPrice
+                )/range
+            )
+        );
+    }
+
+
+    /*
+       Línea central de referencia.
+    */
+
+    ctx.strokeStyle =
+        "rgba(0,255,204,.07)";
+
+    ctx.lineWidth=1;
+
+    ctx.beginPath();
+
+    ctx.moveTo(
+        0,
+        height/2
+    );
+
+    ctx.lineTo(
+        width,
+        height/2
+    );
+
+    ctx.stroke();
+
+
+    /*
+       Dibujar cada vela.
+    */
+
+    displayList.forEach(
+        (c,index)=>{
+
+            const centerX =
+                paddingLeft+
+                index*slotWidth+
+                slotWidth/2;
+
+
+            const yHigh =
+                priceToY(
+                    c.high
+                );
+
+            const yLow =
+                priceToY(
+                    c.low
+                );
+
+            const yOpen =
+                priceToY(
+                    c.open
+                );
+
+            const yClose =
+                priceToY(
+                    c.close
+                );
+
+
+            const bullish =
+                c.close>=c.open;
+
+
+            const color =
+                bullish
+                ? "#00ff66"
+                : "#ff3355";
+
+
+            /*
+               MECHA
+            */
+
+            ctx.strokeStyle=color;
+
+            ctx.lineWidth=1;
+
+            ctx.beginPath();
+
+            ctx.moveTo(
+                centerX,
+                yHigh
+            );
+
+            ctx.lineTo(
+                centerX,
+                yLow
+            );
+
+            ctx.stroke();
+
+
+            /*
+               CUERPO
+            */
+
+            const bodyTop =
+                Math.min(
+                    yOpen,
+                    yClose
+                );
+
+
+            const bodyHeight =
+                Math.max(
+                    1,
+                    Math.abs(
+                        yClose-yOpen
+                    )
+                );
+
+
+            ctx.fillStyle=color;
+
+
+            ctx.fillRect(
+                centerX-
+                candleWidth/2,
+                bodyTop,
+                candleWidth,
+                bodyHeight
+            );
+
+
+            /*
+               Borde suave para la vela actual.
+            */
+
+            if(
+                index===
+                displayList.length-1
+            ){
+
+                ctx.strokeStyle =
+                    "rgba(255,230,0,.7)";
+
+                ctx.lineWidth=1;
+
+                ctx.strokeRect(
+                    centerX-
+                    candleWidth/2,
+                    bodyTop,
+                    candleWidth,
+                    bodyHeight
+                );
+            }
+        }
+    );
+
+
+    /*
+       Línea de precio actual.
+    */
+
+    if(
+        currentCandle
+    ){
+
+        const y =
+            priceToY(
+                currentCandle.close
+            );
+
+
+        ctx.strokeStyle =
+            "rgba(255,230,0,.35)";
+
+        ctx.setLineDash(
+            [3,3]
+        );
+
+        ctx.beginPath();
+
+        ctx.moveTo(
+            0,
+            y
+        );
+
+        ctx.lineTo(
+            width,
+            y
+        );
+
+        ctx.stroke();
+
+        ctx.setLineDash([]);
+    }
+}
+
+
+/* =========================================================
+   MOTOR MATEMÁTICO
+   ========================================================= */
+
+const MAX_TICKS = 100;
+const MAX_LOG = 20;
+
+let recentDigits = [];
+
+let ws = null;
+let voiceEnabled = false;
+function hablar(texto){if(!voiceEnabled || !("speechSynthesis" in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(texto);u.lang="es-CL";u.rate=1;speechSynthesis.speak(u);}
+
+let timerInterval = null;
+
+let pendingPrediction = null;
+
+let signals = 0;
+let wins = 0;
+let losses = 0;
+
+let signalHistory = [];
+
+
+const digitMemory =
+    Array.from(
+        {length:10},
+        ()=>({
+            signals:0,
+            wins:0,
+            losses:0
+        })
+    );
+
+
+/* =========================================================
+   DOM
+   ========================================================= */
+
+const digitsGrid =
+    document.getElementById("digitsGrid");
+
+const hotRanking =
+    document.getElementById("hotRanking");
+
+const rankBody =
+    document.getElementById("rankBody");
+
+const prediction =
+    document.getElementById("prediction");
+
+const predDigit =
+    document.getElementById("predDigit");
+
+const predScore =
+    document.getElementById("predScore");
+
+const predQuality =
+    document.getElementById("predQuality");
+
+const predGap =
+    document.getElementById("predGap");
+
+const timerCount =
+    document.getElementById("timerCount");
+
+const systemToast =
+    document.getElementById("systemToast");
+
+const historyGrid =
+    document.getElementById("historyGrid");
+
+const signalLog =
+    document.getElementById("signalLog");
+
+
+/* =========================================================
+   UTILIDADES
+   ========================================================= */
+
+function clamp(
+    value,
+    min,
+    max
+){
+
+    return Math.max(
+        min,
+        Math.min(
+            max,
+            value
+        )
+    );
+}
+
+
+function zToScore(z){
+
+    const capped =
+        clamp(
+            z,
+            -3,
+            3
+        );
+
+    return 50+
+        (capped/3)*50;
+}
+
+
+function standardDeviation(
+    values
+){
+
+    if(
+        !values.length
+    ){
+
+        return 0;
+    }
+
+
+    const mean =
+        values.reduce(
+            (a,b)=>a+b,
+            0
+        )/
+        values.length;
+
+
+    const variance =
+        values.reduce(
+            (sum,value)=>
+                sum+
+                Math.pow(
+                    value-mean,
+                    2
+                ),
+            0
+        )/
+        values.length;
+
+
+    return Math.sqrt(
+        variance
+    );
+}
+
+
+/* =========================================================
+   MEMORIA
+   ========================================================= */
+
+function getHistoricalRate(
+    digit
+){
+
+    const m =
+        digitMemory[digit];
+
+
+    return (
+        m.wins+5
+    )/
+    (
+        m.signals+10
+    );
+}
+
+
+/* =========================================================
+   VENTANA
+   ========================================================= */
+
+function countWindow(
+    digits,
+    size
+){
+
+    const window =
+        digits.slice(-size);
+
+
+    const counts =
+        new Array(10).fill(0);
+
+
+    window.forEach(
+        d=>{
+
+            if(
+                Number.isInteger(d) &&
+                d>=0 &&
+                d<=9
+            ){
+
+                counts[d]++;
+            }
+        }
+    );
+
+
+    return {
+
+        counts,
+
+        size:
+            window.length
+    };
+}
+
+
+/* =========================================================
+   Z SCORE
+   ========================================================= */
+
+function calculateZ(
+    count,
+    n
+){
+
+    if(
+        n<=0
+    ){
+
+        return 0;
+    }
+
+
+    const p=0.10;
+
+
+    const expected =
+        n*p;
+
+
+    const sd =
+        Math.sqrt(
+            n*p*(1-p)
+        );
+
+
+    if(
+        sd===0
+    ){
+
+        return 0;
+    }
+
+
+    return (
+        count-
+        expected
+    )/
+    sd;
+}
+
+
+/* =========================================================
+   ENTROPÍA
+   ========================================================= */
+
+function calculateEntropy(
+    digits
+){
+
+    if(
+        !digits.length
+    ){
+
+        return 100;
+    }
+
+
+    const counts =
+        new Array(10).fill(0);
+
+
+    digits.forEach(
+        d=>{
+
+            if(
+                d>=0 &&
+                d<=9
+            ){
+
+                counts[d]++;
+            }
+        }
+    );
+
+
+    let entropy=0;
+
+
+    counts.forEach(
+        count=>{
+
+            if(
+                count===0
+            ){
+
+                return;
+            }
+
+
+            const p =
+                count/
+                digits.length;
+
+
+            entropy -=
+                p*
+                Math.log2(p);
+        }
+    );
+
+
+    const maxEntropy =
+        Math.log2(10);
+
+
+    return clamp(
+        entropy/
+        maxEntropy*
+        100,
+        0,
+        100
+    );
+}
+
+
+/* =========================================================
+   MÉTRICAS
+   ========================================================= */
+
+function calculateDigitMetrics(
+    digit
+){
+
+    const w20 =
+        countWindow(
+            recentDigits,
+            20
+        );
+
+    const w50 =
+        countWindow(
+            recentDigits,
+            50
+        );
+
+    const w100 =
+        countWindow(
+            recentDigits,
+            100
+        );
+
+
+    const c20 =
+        w20.counts[digit];
+
+    const c50 =
+        w50.counts[digit];
+
+    const c100 =
+        w100.counts[digit];
+
+
+    const p20 =
+        w20.size>0
+        ? c20/w20.size
+        : 0;
+
+    const p50 =
+        w50.size>0
+        ? c50/w50.size
+        : 0;
+
+    const p100 =
+        w100.size>0
+        ? c100/w100.size
+        : 0;
+
+
+    const z20 =
+        calculateZ(
+            c20,
+            w20.size
+        );
+
+    const z50 =
+        calculateZ(
+            c50,
+            w50.size
+        );
+
+    const z100 =
+        calculateZ(
+            c100,
+            w100.size
+        );
+
+
+    const frequencyScore =
+        zToScore(
+            z100
+        );
+
+
+    const momentumRaw =
+        w100.size>0
+        ? (p20-p100)/0.10
+        : 0;
+
+
+    const momentumScore =
+        50+
+        clamp(
+            momentumRaw,
+            -1,
+            1
+        )*50;
+
+
+    const averageZ =
+        (
+            z20+
+            z50+
+            z100
+        )/3;
+
+
+    const consistencyScore =
+        zToScore(
+            averageZ
+        );
+
+
+    const rateSpread =
+        standardDeviation([
+            p20,
+            p50,
+            p100
+        ]);
+
+
+    const stabilityScore =
+        100-
+        clamp(
+            rateSpread/0.10,
+            0,
+            1
+        )*100;
+
+
+    const multiWindowScore =
+        consistencyScore*0.70+
+        stabilityScore*0.30;
+
+
+    let gap=999;
+
+
+    for(
+        let i=
+            recentDigits.length-1;
+        i>=0;
+        i--
+    ){
+
+        if(
+            recentDigits[i]===digit
+        ){
+
+            gap =
+                recentDigits.length-
+                1-
+                i;
+
+            break;
+        }
+    }
+
+
+    let recencyScore=50;
+
+
+    if(
+        gap!==999
+    ){
+
+        const distance =
+            Math.abs(
+                gap-9
+            );
+
+
+        recencyScore =
+            50-
+            clamp(
+                distance/9,
+                0,
+                1
+            )*10;
+    }
+
+
+    const historicalRate =
+        getHistoricalRate(
+            digit
+        );
+
+
+    const historicalScore =
+        historicalRate*100;
+
+
+    const structuralScore =
+        frequencyScore*0.35+
+        momentumScore*0.25+
+        multiWindowScore*0.20+
+        stabilityScore*0.10+
+        recencyScore*0.10;
+
+
+    const finalScore =
+        structuralScore*0.90+
+        historicalScore*0.10;
+
+
+    return {
+
+        digit,
+
+        c20,
+        c50,
+        c100,
+
+        p20,
+        p50,
+        p100,
+
+        z20,
+        z50,
+        z100,
+
+        frequencyScore,
+        momentumScore,
+        consistencyScore,
+        stabilityScore,
+        multiWindowScore,
+        recencyScore,
+
+        historicalRate,
+        historicalScore,
+
+        gap,
+
+        structuralScore,
+
+        score:
+            clamp(
+                finalScore,
+                0,
+                100
+            )
+    };
+}
+
+
+/* =========================================================
+   ANALIZAR
+   ========================================================= */
+
+function analyzeAllDigits(){
+
+    const results=[];
+
+
+    for(
+        let d=0;
+        d<10;
+        d++
+    ){
+
+        results.push(
+            calculateDigitMetrics(d)
+        );
+    }
+
+
+    results.sort(
+        (a,b)=>
+            b.score-
+            a.score
+    );
+
+
+    return results;
+}
+
+
+/* =========================================================
+   CALIDAD
+   ========================================================= */
+
+function calculateSignalQuality(
+    best,
+    second
+){
+
+    const n =
+        recentDigits.length;
+
+
+    let sampleQuality=0;
+
+
+    if(
+        n<20
+    ){
+
+        sampleQuality =
+            n/20*40;
+
+    }else if(
+        n<50
+    ){
+
+        sampleQuality =
+            40+
+            (n-20)/30*30;
+
+    }else{
+
+        sampleQuality =
+            70+
+            (
+                Math.min(
+                    n,
+                    100
+                )-50
+            )/
+            50*
+            30;
+    }
+
+
+    const gap =
+        best.score-
+        second.score;
+
+
+    const gapQuality =
+        clamp(
+            gap/8,
+            0,
+            1
+        )*100;
+
+
+    const zValues=[
+        best.z20,
+        best.z50,
+        best.z100
+    ];
+
+
+    const positiveCount =
+        zValues.filter(
+            z=>z>0
+        ).length;
+
+
+    let consistencyQuality =
+        positiveCount===3
+        ?100
+        :positiveCount===2
+        ?70
+        :40;
+
+
+    const zQuality =
+        clamp(
+            Math.abs(
+                best.z100
+            )/2,
+            0,
+            1
+        )*100;
+
+
+    const entropy =
+        calculateEntropy(
+            recentDigits.slice(-20)
+        );
+
+
+    const entropyQuality =
+        entropy;
+
+
+    const quality =
+        sampleQuality*0.30+
+        gapQuality*0.30+
+        consistencyQuality*0.20+
+        zQuality*0.15+
+        entropyQuality*0.05;
+
+
+    return clamp(
+        quality,
+        0,
+        100
+    );
+}
+
+
+/* =========================================================
+   UI
+   ========================================================= */
+
+function initUI(){
+
+    digitsGrid.innerHTML="";
+
+
+    for(
+        let d=0;
+        d<10;
+        d++
+    ){
+
+        digitsGrid.innerHTML += `
+
+            <div
+                class="digit-box"
+                id="box-${d}">
+
+                <div class="circle">
+                    ${d}
+                </div>
+
+                <div
+                    class="d-score"
+                    id="score-${d}">
+                    0.0
+                </div>
+
+                <div
+                    class="d-pct"
+                    id="pct-${d}">
+                    0.0%
+                </div>
+
+            </div>
+        `;
+    }
+
+
+    renderHistory();
+}
+
+
+/* =========================================================
+   ACTUALIZAR ANÁLISIS
+   ========================================================= */
+
+function updateAnalysis(){
+
+    if(
+        recentDigits.length<10
+    ){
+
+        systemToast.textContent =
+            `ESPERANDO TICKS: ${
+                recentDigits.length
+            }/10`;
+
+        return;
+    }
+
+
+    const results =
+        analyzeAllDigits();
+
+
+    results.forEach(
+        (item,index)=>{
+
+            const scoreEl =
+                document.getElementById(
+                    `score-${item.digit}`
+                );
+
+            const pctEl =
+                document.getElementById(
+                    `pct-${item.digit}`
+                );
+
+            const box =
+                document.getElementById(
+                    `box-${item.digit}`
+                );
+
+
+            scoreEl.textContent =
+                item.score.toFixed(1);
+
+
+            pctEl.textContent =
+                `${
+                    (
+                        item.p100*100
+                    ).toFixed(1)
+                }%`;
+
+
+            box.classList.remove(
+                "top",
+                "top1"
+            );
+
+
+            if(
+                index===0
+            ){
+
+                box.classList.add(
+                    "top1"
+                );
+
+            }else if(
+                index<3
+            ){
+
+                box.classList.add(
+                    "top"
+                );
+            }
+        }
+    );
+
+
+    hotRanking.innerHTML =
+        results
+        .slice(0,3)
+        .map(
+            item=>`
+
+            <div class="hot">
+
+                <div class="hot-digit">
+                    #${item.digit}
+                </div>
+
+                <div class="hot-score">
+                    SCORE ${
+                        item.score.toFixed(1)
+                    }
+                </div>
+
+            </div>
+        `
+        )
+        .join("");
+
+
+    rankBody.innerHTML =
+        results
+        .map(
+            (item,index)=>`
+
+            <tr class="${
+                index===0
+                ?"rank1"
+                :""
+            }">
+
+                <td>
+                    ${index+1}
+                </td>
+
+                <td>
+                    ${item.digit}
+                </td>
+
+                <td>
+                    ${item.score.toFixed(1)}
+                </td>
+
+                <td>
+                    ${item.c20}
+                </td>
+
+                <td>
+                    ${item.c50}
+                </td>
+
+                <td>
+                    ${item.c100}
+                </td>
+
+                <td>
+                    ${item.z100.toFixed(2)}
+                </td>
+
+                <td>
+                    ${getQualityShort(
+                        item,
+                        results[1]
+                    )}
+                </td>
+
+            </tr>
+        `
+        )
+        .join("");
+
+
+    const best =
+        results[0];
+
+    const second =
+        results[1];
+
+
+    const gap =
+        best.score-
+        second.score;
+
+
+    const entropy20 =
+        calculateEntropy(
+            recentDigits.slice(-20)
+        );
+
+
+    let regime="NORMAL";
+
+
+    if(
+        entropy20<70
+    ){
+
+        regime="CONCENTRADO";
+
+    }else if(
+        entropy20>95
+    ){
+
+        regime="MUY DISPERSO";
+    }
+
+
+    const quality =
+        calculateSignalQuality(
+            best,
+            second
+        );
+
+
+    let qualityClass="";
+
+
+    if(
+        quality>=70
+    ){
+
+        qualityClass="good";
+
+    }else if(
+        quality<45
+    ){
+
+        qualityClass="bad";
+
+    }else{
+
+        qualityClass="info";
+    }
+
+
+    document.getElementById(
+        "analysisText"
+    ).innerHTML = `
+
+        CANDIDATO PRINCIPAL:
+        <span>${best.digit}</span><br>
+
+        SCORE ESTADÍSTICO:
+        <span>${best.score.toFixed(2)}</span><br>
+
+        CALIDAD:
+        <span class="${qualityClass}">
+            ${quality.toFixed(1)}/100
+        </span><br>
+
+        FRECUENCIA 20T:
+        <span>${
+            (
+                best.p20*100
+            ).toFixed(1)
+        }%</span><br>
+
+        FRECUENCIA 50T:
+        <span>${
+            (
+                best.p50*100
+            ).toFixed(1)
+        }%</span><br>
+
+        FRECUENCIA 100T:
+        <span>${
+            (
+                best.p100*100
+            ).toFixed(1)
+        }%</span>
+        vs 10% teórico<br>
+
+        Z 20/50/100:
+        <span>
+            ${best.z20.toFixed(2)}
+            /
+            ${best.z50.toFixed(2)}
+            /
+            ${best.z100.toFixed(2)}
+        </span><br>
+
+        MOMENTUM:
+        <span>
+            ${best.momentumScore.toFixed(1)}
+        </span><br>
+
+        CONSISTENCIA:
+        <span>
+            ${best.consistencyScore.toFixed(1)}
+        </span><br>
+
+        ESTABILIDAD:
+        <span>
+            ${best.stabilityScore.toFixed(1)}
+        </span><br>
+
+        ENTROPÍA 20T:
+        <span>
+            ${entropy20.toFixed(1)}%
+        </span><br>
+
+        RÉGIMEN:
+        <span>${regime}</span><br>
+
+        VENTAJA VS #2:
+        <span>${gap.toFixed(2)}</span>
+    `;
+}
+
+
+/* =========================================================
+   CALIDAD CORTA
+   ========================================================= */
+
+function getQualityShort(
+    item,
+    second
+){
+
+    const q =
+        calculateSignalQuality(
+            item,
+            second
+        );
+
+
+    return q.toFixed(0);
+}
+
+
+/* =========================================================
+   PROCESAR TICK
+   ========================================================= */
+
+function processTick(
+    digit
+){
+
+    if(
+        pendingPrediction!==null
+    ){
+
+        evaluatePendingPrediction(
+            digit
+        );
+    }
+
+
+    recentDigits.push(
+        digit
+    );
+
+
+    if(
+        recentDigits.length>
+        MAX_TICKS
+    ){
+
+        recentDigits.shift();
+    }
+
+
+    document.getElementById("lastTickDisplay").textContent=`TICK: ${digit}`;
+    const currentPred=document.getElementById("predCurrent"); if(currentPred) currentPred.textContent=`ÚLTIMO DÍGITO EN VIVO: ${digit}`; const liveDigitBig=document.getElementById("liveDigitBig"); if(liveDigitBig) liveDigitBig.textContent=digit;
+
+
+    updateAnalysis();
+}
+
+
+/* =========================================================
+   GENERAR SEÑAL
+   ========================================================= */
+
+function generatePrediction(){
+
+    if(
+        recentDigits.length<20
+    ){
+
+        systemToast.textContent =
+            "NECESITAMOS AL MENOS 20 TICKS.";
+
+        return;
+    }
+
+
+    if(
+        pendingPrediction!==null
+    ){
+
+        systemToast.textContent =
+            "YA EXISTE UNA SEÑAL PENDIENTE.";
+
+        return;
+    }
+
+
+    const results =
+        analyzeAllDigits();
+
+
+    const best =
+        results[0];
+
+    const second =
+        results[1];
+
+
+    const difference =
+        best.score-
+        second.score;
+
+
+    const quality =
+        calculateSignalQuality(
+            best,
+            second
+        );
+
+
+    let requiredGap=4;
+
+
+    if(
+        recentDigits.length>=50
+    ){
+
+        requiredGap=3.5;
+    }
+
+
+    if(
+        recentDigits.length>=80
+    ){
+
+        requiredGap=3;
+    }
+
+
+    let requiredQuality=55;
+
+
+    if(
+        recentDigits.length>=50
+    ){
+
+        requiredQuality=58;
+    }
+
+
+    if(
+        recentDigits.length>=80
+    ){
+
+        requiredQuality=60;
+    }
+
+
+    if(
+        difference<requiredGap
+    ){
+
+        showNoSignal(
+            "CANDIDATOS DEMASIADO CERCANOS",
+            difference,
+            requiredGap
+        );
+
+        return;
+    }
+
+
+    if(
+        quality<requiredQuality
+    ){
+
+        showNoSignal(
+            "CALIDAD ESTADÍSTICA INSUFICIENTE",
+            quality,
+            requiredQuality
+        );
+
+        return;
+    }
+
+
+    prediction.style.display="block"; prediction.classList.remove("signal-bad"); prediction.classList.add("signal-good"); document.querySelector(".pred-title").textContent="SEÑAL POSITIVA — CANDIDATO PRINCIPAL";
+
+    predDigit.textContent =
+        best.digit;
+
+
+    predScore.textContent =
+        `SCORE ${
+            best.score.toFixed(2)
+        }`;
+
+
+    predQuality.textContent =
+        `CALIDAD ${
+            quality.toFixed(1)
+        }/100`;
+
+
+    predGap.textContent =
+        `Ventaja sobre #2: ${
+            difference.toFixed(2)
+        }`;
+
+
+    pendingPrediction={
+
+        digit:
+            best.digit,
+
+        score:
+            best.score,
+
+        quality,
+
+        difference,
+
+        metrics:{
+
+            frequency:
+                best.frequencyScore,
+
+            momentum:
+                best.momentumScore,
+
+            consistency:
+                best.consistencyScore,
+
+            stability:
+                best.stabilityScore,
+
+            recency:
+                best.recencyScore
+        },
+
+        createdAt:
+            Date.now()
+    };
+
+
+    signals++;
+
+
+    digitMemory[
+        best.digit
+    ].signals++;
+
+
+    document.getElementById(
+        "signalCount"
+    ).textContent =
+        signals;
+
+
+    addSignalLog(
+        best,
+        "PENDIENTE"
+    );
+
+
+    startTimer();
+
+
+    systemToast.textContent =
+        `CANDIDATO ${
+            best.digit
+        } GENERADO — ESPERANDO SIGUIENTE TICK`;
+}
+
+
+/* =========================================================
+   SIN SEÑAL
+   ========================================================= */
+
+function showNoSignal(
+    reason,
+    value,
+    minimum
+){
+
+    prediction.style.display="block"; prediction.classList.remove("signal-good"); prediction.classList.add("signal-bad"); document.querySelector(".pred-title").textContent="SEÑAL DÉBIL — ESPERAR / NO ENTRAR";
+
+    predDigit.textContent =
+        "—";
+
+
+    predScore.textContent =
+        "SIN SEÑAL";
+
+
+    predQuality.textContent =
+        reason;
+
+
+    predGap.textContent =
+        `Valor ${
+            value.toFixed(2)
+        } / mínimo ${
+            minimum
+        }`;
+
+
+    systemToast.textContent =
+        `ANÁLISIS COMPLETADO — ${
+            reason
+        }`;
+}
+
+
+/* =========================================================
+   BACKTEST
+   ========================================================= */
+
+function evaluatePendingPrediction(
+    actualDigit
+){
+
+    if(
+        pendingPrediction===null
+    ){
+
+        return;
+    }
+
+
+    const p =
+        pendingPrediction;
+
+
+    const correct =
+        actualDigit===
+        p.digit;
+
+
+    if(correct){
+
+        wins++;
+
+
+        digitMemory[
+            p.digit
+        ].wins++;
+
+    }else{
+
+        losses++;
+
+
+        digitMemory[
+            p.digit
+        ].losses++;
+    }
+
+
+    document.getElementById(
+        "winCount"
+    ).textContent =
+        wins;
+
+
+    document.getElementById(
+        "lossCount"
+    ).textContent =
+        losses;
+
+
+    const total =
+        wins+
+        losses;
+
+
+    if(
+        total>0
+    ){
+
+        const rate =
+            wins/
+            total*
+            100;
+
+
+        document.getElementById(
+            "backtestRate"
+        ).textContent =
+            `TASA OBSERVADA: ${
+                rate.toFixed(2)
+            }%`;
+    }
+
+
+    updateLastLog(
+        correct
+        ?"ACIERTO"
+        :"FALLO"
+    );
+
+
+    renderHistory();
+
+
+    if(correct){
+
+        systemToast.textContent =
+            `ACIERTO — SALIÓ ${
+                actualDigit
+            }`;
+
+    }else{
+
+        systemToast.textContent =
+            `FALLO — CANDIDATO ${
+                p.digit
+            } / SALIÓ ${
+                actualDigit
+            }`;
+    }
+
+
+    pendingPrediction=null;
+}
+
+
+/* =========================================================
+   HISTORIAL
+   ========================================================= */
+
+function renderHistory(){
+
+    historyGrid.innerHTML="";
+
+
+    for(
+        let d=0;
+        d<10;
+        d++
+    ){
+
+        const m =
+            digitMemory[d];
+
+
+        const rate =
+            m.signals>0
+            ?m.wins/
+             m.signals*
+             100
+            :0;
+
+
+        historyGrid.innerHTML += `
+
+            <div class="history-item">
+
+                <div class="history-digit">
+                    ${d}
+                </div>
+
+                <div class="history-rate">
+                    ${
+                        m.signals
+                        ?rate.toFixed(0)
+                        :"--"
+                    }%
+                </div>
+
+                <div class="history-count">
+                    ${m.wins}W /
+                    ${m.losses}L
+                </div>
+
+            </div>
+        `;
+    }
+}
+
+
+/* =========================================================
+   LOG
+   ========================================================= */
+
+function addSignalLog(
+    item,
+    status
+){
+
+    signalHistory.unshift({
+
+        digit:
+            item.digit,
+
+        score:
+            item.score,
+
+        status,
+
+        time:
+            new Date()
+    });
+
+
+    if(
+        signalHistory.length>
+        MAX_LOG
+    ){
+
+        signalHistory.pop();
+    }
+
+
+    renderSignalLog();
+}
+
+
+function updateLastLog(
+    status
+){
+
+    if(
+        signalHistory.length===0
+    ){
+
+        return;
+    }
+
+
+    signalHistory[0].status =
+        status;
+
+
+    renderSignalLog();
+}
+
+
+function renderSignalLog(){
+
+    if(
+        signalHistory.length===0
+    ){
+
+        signalLog.innerHTML =
+            `<div class="small">
+                Todavía no hay señales.
+            </div>`;
+
+        return;
+    }
+
+
+    signalLog.innerHTML =
+        signalHistory
+        .map(
+            item=>{
+
+                const cls =
+                    item.status===
+                    "ACIERTO"
+                    ?"log-win"
+                    :item.status===
+                    "FALLO"
+                    ?"log-loss"
+                    :"log-pending";
+
+
+                return `
+
+                    <div class="log-row">
+
+                        <span>
+                            ${
+                                item.time
+                                .toLocaleTimeString()
+                            }
+                        </span>
+
+                        <span>
+                            D${item.digit}
+                        </span>
+
+                        <span>
+                            ${
+                                item.score.toFixed(1)
+                            }
+                        </span>
+
+                        <span class="${cls}">
+                            ${item.status}
+                        </span>
+
+                    </div>
+                `;
+            }
+        )
+        .join("");
+}
+
+
+/* =========================================================
+   TIMER
+   ========================================================= */
+
+function startTimer(){
+
+    clearInterval(
+        timerInterval
+    );
+
+
+    let seconds=10;
+
+
+    timerCount.textContent =
+        `${seconds}s`;
+
+
+    timerInterval =
+        setInterval(
+            ()=>{
+
+                seconds--;
+                if(seconds>=0 && voiceEnabled) hablar(`${seconds} segundos`);
+
+                if(
+                    seconds>=0
+                ){
+
+                    timerCount.textContent =
+                        `${seconds}s`;
+
+                }else{
+
+                    clearInterval(
+                        timerInterval
+                    );
+
+                    timerCount.textContent =
+                        "FIN";
+                }
+
+            },
+            1000
+        );
+}
+
+
+/* =========================================================
+   EXTRAER ÚLTIMO DÍGITO
+   ========================================================= */
+
+function extractLastDigit(
+    tick
+){
+
+    if(
+        !tick ||
+        tick.quote===undefined ||
+        tick.quote===null
+    ){
+
+        return null;
+    }
+
+
+    let quote;
+
+
+    if(
+        typeof tick.pip_size===
+        "number" &&
+        Number.isFinite(
+            tick.pip_size
+        )
+    ){
+
+        const decimals =
+            Math.max(
+                0,
+                Math.floor(
+                    tick.pip_size
+                )
+            );
+
+
+        quote =
+            Number(
+                tick.quote
+            ).toFixed(
+                decimals
+            );
+
+    }else{
+
+        quote =
+            String(
+                tick.quote
+            );
+    }
+
+
+    const digitsOnly =
+        quote.replace(
+            /[^0-9]/g,
+            ""
+        );
+
+
+    if(
+        !digitsOnly.length
+    ){
+
+        return null;
+    }
+
+
+    const digit =
+        Number(
+            digitsOnly[
+                digitsOnly.length-1
+            ]
+        );
+
+
+    if(
+        !Number.isInteger(digit) ||
+        digit<0 ||
+        digit>9
+    ){
+
+        return null;
+    }
+
+
+    return digit;
+}
+
+
+/* =========================================================
+   CONEXIÓN DERIV
+   ========================================================= */
+
+function connectDeriv(symbol){
+    if(ws){try{ws.close()}catch(e){}}
+    recentDigits=[]; pendingPrediction=null; clearInterval(timerInterval); resetCandleChart();
+    document.getElementById('statusText').textContent='CONECTANDO';
+    document.getElementById('liveDot').style.background='#ffe600';
+    const proto=location.protocol==='https:'?'wss':'ws';
+    ws=new WebSocket(proto+'://'+location.host);
+    ws.onopen=()=>{try{ws.send(JSON.stringify({ticks:symbol,subscribe:1,symbol}))}catch(e){} document.getElementById('statusText').textContent='LIVE';document.getElementById('liveDot').style.background='#00ffcc';systemToast.textContent=`RECIBIENDO TICKS: ${symbol}`;};
+    ws.onmessage=event=>{try{const data=JSON.parse(event.data);if(data.error){systemToast.textContent='DERIV: '+(data.error.message||'ERROR');return;}const tick=data.tick||((data.status==='TICK RECIBIDO')?data:null);if(tick&&tick.quote!==undefined){processTickForCandle(tick); const liveMarket=document.getElementById("liveMarket"); if(liveMarket) liveMarket.innerHTML=`PRECIO EN VIVO: <strong>${tick.quote}</strong> &nbsp; | &nbsp; ÚLTIMO DÍGITO: <strong id="liveDigitBig" style="font-size:28px;color:#00ffcc">—</strong>`; const digit=extractLastDigit(tick);if(digit!==null)processTick(digit);}}catch(error){console.error('Error procesando tick',error)}};
+    ws.onerror=()=>{document.getElementById('statusText').textContent='ERROR';document.getElementById('liveDot').style.background='#ff3355';systemToast.textContent='ERROR DE CONEXIÓN CON EL SERVIDOR';};
+    ws.onclose=()=>{document.getElementById('statusText').textContent='DESCONECTADO';document.getElementById('liveDot').style.background='#ff3355';};
+}
+
+
+/* =========================================================
+   CAMBIO DE ACTIVO
+   ========================================================= */
+
+document.getElementById(
+    "assetSelector"
+).addEventListener(
+    "change",
+    function(){
+
+        recentDigits=[];
+
+        pendingPrediction=null;
+
+
+        signals=0;
+        wins=0;
+        losses=0;
+
+
+        signalHistory=[];
+
+
+        for(
+            let d=0;
+            d<10;
+            d++
+        ){
+
+            digitMemory[d]={
+                signals:0,
+                wins:0,
+                losses:0
+            };
+        }
+
+
+        clearInterval(
+            timerInterval
+        );
+
+
+        document.getElementById(
+            "signalCount"
+        ).textContent =
+            "0";
+
+
+        document.getElementById(
+            "winCount"
+        ).textContent =
+            "0";
+
+
+        document.getElementById(
+            "lossCount"
+        ).textContent =
+            "0";
+
+
+        document.getElementById(
+            "backtestRate"
+        ).textContent =
+            "TASA OBSERVADA: --";
+
+
+        prediction.style.display =
+            "none";
+
+
+        renderHistory();
+
+        renderSignalLog();
+
+
+        connectDeriv(
+            this.value
+        );
+    }
+);
+
+
+/* =========================================================
+   BOTÓN
+   ========================================================= */
+
+document.getElementById("voiceButton").addEventListener("click",()=>{voiceEnabled=!voiceEnabled;document.getElementById("voiceButton").textContent=voiceEnabled?"🔊 VOZ ACTIVADA":"🔇 VOZ DESACTIVADA";if(voiceEnabled)hablar("Voz activada. Sistema listo.");});
+document.getElementById("predictButton").addEventListener("click",()=>{hablar("Ejecutando análisis matemático");generatePrediction();});
+
+
+/* =========================================================
+   INICIO
+   ========================================================= */
+
+initUI();
+
+resizeCandleCanvas();
+
+window.addEventListener(
+    "resize",
+    resizeCandleCanvas
+);
+
+connectDeriv(
+    "R_100"
+);
+
 </script>
+
 </body>
 </html>
