@@ -505,6 +505,8 @@ button:active{
 .sync-panel{margin:0 0 14px;padding:14px;border:1px solid rgba(0,210,255,.45);border-radius:16px;background:linear-gradient(145deg,rgba(5,28,52,.99),rgba(2,14,28,.99));box-shadow:0 0 28px rgba(0,130,255,.12)}
 .sync-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:10px}.sync-state{font-size:22px;font-weight:1000;letter-spacing:1px;padding:14px;border-radius:12px;text-align:center;border:1px solid rgba(255,230,0,.35);background:rgba(255,230,0,.06);color:#ffe600}.sync-state.syncing{color:#ffd84d;border-color:#ffd84d;background:rgba(255,216,77,.08)}.sync-state.live{color:#19f5a5;border-color:#19f5a5;background:rgba(25,245,165,.08);box-shadow:0 0 22px rgba(25,245,165,.14)}.sync-state.error{color:#ff496d;border-color:#ff496d;background:rgba(255,73,109,.08)}
 .sync-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.sync-metric{padding:9px;border-radius:9px;background:#061a2e;border:1px solid rgba(22,140,255,.22);text-align:center}.sync-metric span{display:block;font-size:9px;color:#78bde6}.sync-metric b{display:block;margin-top:3px;font-size:15px;color:#fff}.sync-note{margin-top:8px;font-size:9px;color:#7199b8;text-align:center}
+.sync-integrity-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:7px;margin-top:8px}.sync-integrity-grid .sync-metric{min-width:0}.sync-integrity-grid .sync-metric b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sync-integrity-grid .sync-metric:nth-child(2) b{font-size:22px;color:#00ffcc}.sync-integrity-grid .sync-metric:nth-child(6) b{color:#ffe600}.sync-panel.sync-lock{border-color:rgba(255,73,109,.65);box-shadow:0 0 30px rgba(255,73,109,.10)}.sync-panel.sync-good{border-color:rgba(25,245,165,.55)}.price-proof{margin-top:10px;padding:10px;border:1px solid rgba(77,166,255,.35);border-radius:12px;background:rgba(0,20,40,.42)}.price-proof-title{font-size:9px;font-weight:900;letter-spacing:1px;color:#4da6ff;margin-bottom:8px}.price-proof-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.price-proof-grid>div{min-width:0}.price-proof-grid span{display:block;font-size:7px;color:#7fa9c8;margin-bottom:3px}.price-proof-grid b{display:block;font-size:11px;color:#eafff8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.price-proof-grid>div:nth-child(3) b{color:#00ffcc;font-size:14px}.price-proof-grid>div:nth-child(4) b{color:#ffe600;font-size:18px}.price-proof-rule{margin-top:8px;font-size:8px;line-height:1.4;color:#a9c6d8}@media(max-width:420px){.price-proof-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:700px){.sync-integrity-grid{grid-template-columns:repeat(3,1fr)}}
 .entry-panel{margin:0 0 14px;padding:20px;border-radius:18px;border:2px solid #168cff;background:radial-gradient(circle at 50% 35%,rgba(0,180,255,.20),rgba(3,18,34,.99) 65%);box-shadow:0 0 36px rgba(0,140,255,.20);text-align:center}.entry-kicker{font-size:13px;font-weight:1000;letter-spacing:2px;color:#9edcff}.entry-second{font-size:68px;line-height:.95;font-weight:1000;margin:8px 0;color:#fff;text-shadow:0 0 25px rgba(0,190,255,.65)}.entry-second small{font-size:22px}.entry-confidence{font-size:19px;font-weight:1000;color:#8fe1ff}.entry-history{font-size:14px;font-weight:900;color:#cdeaff;margin-top:6px}.entry-status{margin:12px auto 0;padding:11px 15px;max-width:680px;border-radius:12px;font-size:22px;font-weight:1000;letter-spacing:1px;background:#10283e;color:#fff;border:2px solid #3a6280}.entry-status.green{color:#071c13;background:#19f5a5;border-color:#19f5a5;box-shadow:0 0 24px rgba(25,245,165,.35)}.entry-status.yellow{color:#241d00;background:#ffe600;border-color:#ffe600}.entry-status.red{color:#fff;background:#d91e45;border-color:#ff496d}.entry-details{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}.entry-details div{padding:8px;border-radius:8px;background:rgba(0,20,40,.7);border:1px solid rgba(22,140,255,.25);font-size:10px;color:#9ec8e6}.entry-details b{display:block;color:#fff;font-size:12px;margin-top:2px}.smart-countdown{display:grid;grid-template-columns:repeat(10,1fr);gap:4px;margin-top:11px}.smart-countdown div{padding:7px 2px;border-radius:7px;border:1px solid rgba(22,140,255,.25);background:#061a2e;color:#789bb7;font-size:9px;font-weight:900}.smart-countdown div.active{color:#fff;border-color:#00d9ff;box-shadow:0 0 12px rgba(0,217,255,.2)}.smart-countdown div.target{color:#071c13;background:#19f5a5;border-color:#19f5a5}.smart-countdown div.past{opacity:.55}.smart-countdown b{display:block;font-size:15px;margin-bottom:2px}@media(max-width:700px){.sync-grid{grid-template-columns:1fr}.entry-second{font-size:54px}.entry-status{font-size:18px}.entry-details{grid-template-columns:1fr}.smart-countdown{grid-template-columns:repeat(5,1fr)}}
 
 /* =========================================================
@@ -581,9 +583,9 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 .full-result{margin-top:10px;padding:11px;border:1px solid rgba(25,245,165,.35);border-radius:10px;background:linear-gradient(180deg,rgba(0,90,70,.12),rgba(0,30,65,.25))}.full-result-title{font-size:12px;font-weight:1000;color:#7fffdc;letter-spacing:.8px;margin-bottom:8px}.full-result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.full-result-grid>div{padding:7px 4px;text-align:center;border:1px solid rgba(22,140,255,.22);border-radius:7px;background:#061a2e}.full-result-grid span{display:block;font-size:8px;color:#73b9e8}.full-result-grid b{display:block;margin-top:3px;font-size:13px;color:#fff}.full-result-text{margin-top:8px;font-size:11px;line-height:1.5;color:#ccecff}.voice-mode-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-top:7px}.voice-mode-row label{padding:7px 8px;border:1px solid rgba(22,140,255,.25);border-radius:7px;background:rgba(0,30,65,.45);font-size:9px;font-weight:900;color:#8fc9ec}.voice-mode-row select{height:30px}.voice-note{margin-top:5px;text-align:center;font-size:9px;color:#789cba}@media(max-width:700px){.full-result-grid{grid-template-columns:repeat(2,1fr)}.voice-mode-row{grid-template-columns:1fr}.voice-mode-row select{width:100%}}
 
 </style>
-</head>
+<style>#directMarketBanner{margin:8px 0 12px;padding:10px;border:1px solid #19f5a5;border-radius:10px;background:#062b29;color:#9fffd2;text-align:center;font-weight:900;font-size:12px;letter-spacing:.5px}</style></head>
 
-<body>
+<body><div id="directMarketBanner">🟢 DATOS DE MERCADO: DERIV DIRECTO · SIN RENDER NI SERVER.JS</div>
 <canvas id="scannerBg" class="scanner-bg"></canvas>
 
 <div class="phone-frame">
@@ -804,7 +806,27 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
       <div class="sync-metric"><span>FLUJO</span><b id="flowValue">ESPERANDO</b></div>
     </div>
   </div>
-  <div class="sync-note">LIVE CONFIRMADO solo después de 5 ticks válidos consecutivos. La latencia es una estimación basada en la marca temporal del tick y puede incluir desfase de reloj.</div>
+  <div class="sync-integrity-grid">
+    <div class="sync-metric"><span>ÚLTIMO PRECIO</span><b id="syncPrice">--</b></div>
+    <div class="sync-metric"><span>ÚLTIMO DÍGITO</span><b id="syncDigit">--</b></div>
+    <div class="sync-metric"><span>PRECISIÓN</span><b id="syncPrecision">--</b></div>
+    <div class="sync-metric"><span>SECUENCIA</span><b id="syncSequence">--</b></div>
+    <div class="sync-metric"><span>EDAD TICK</span><b id="syncAge">--</b></div>
+    <div class="sync-metric"><span>INTEGRIDAD</span><b id="syncIntegrity">0%</b></div>
+  </div>
+  <div class="sync-note" id="syncNote">LIVE confirmado solo después de 5 ticks válidos consecutivos. La entrada también queda bloqueada ante salto, duplicado, tick atrasado, precisión inválida o interrupción del flujo.</div>
+  <div class="price-proof" id="priceProof">
+    <div class="price-proof-title">PRUEBA DE PRECIO · FUENTE DIRECTA DERIV</div>
+    <div class="price-proof-grid">
+      <div><span>FUENTE</span><b id="priceSource">DERIV API</b></div>
+      <div><span>SÍMBOLO</span><b id="priceSymbol">--</b></div>
+      <div><span>QUOTE ORIGINAL</span><b id="priceQuoteRaw">--</b></div>
+      <div><span>ÚLTIMO DÍGITO</span><b id="priceDigitRaw">--</b></div>
+      <div><span>PIP SIZE</span><b id="pricePipSize">--</b></div>
+      <div><span>EPOCH</span><b id="priceEpoch">--</b></div>
+    </div>
+    <div class="price-proof-rule" id="priceProofRule">El último dígito se obtiene del QUOTE de Deriv respetando PIP SIZE; no se reconstruye desde otro precio.</div>
+  </div>
 </div>
 
 <!-- V17 · PANEL GIGANTE DE ENTRADA -->
@@ -1572,45 +1594,145 @@ const VOICE_ONLY_ON_ACTION = true;
 let voiceSpeaking = false;
 let voiceLastMilestone = 0;
 
-/* V17 · sincronización y puerta de confirmación */
+/* V18 · INTEGRIDAD DEL TICK + PUERTA DE SINCRONIZACIÓN */
 const LIVE_MIN_TICKS=5;
+const MAX_TICK_AGE_MS=2200;
+const MAX_INTERARRIVAL_MS=2500;
 let liveValidTicks=0;
 let lastTickReceiveMs=0;
 let lastTickEpochMs=0;
+let lastTickQuote=null;
+let lastTickRawQuote=null;
+let lastTickEpochValue=null;
+let lastTickDigit=null;
+let lastTickPrecision=null;
+let lastTickKey=null;
+let tickSequenceOk=true;
+let tickDuplicate=false;
+let tickOutOfOrder=false;
+let tickGapMs=null;
+let tickAgeMs=null;
 let clockOffsetMs=null;
 let estimatedLatencyMs=null;
+const DERIV_APP_ID='1089';
+const DERIV_WS_BASE='wss://ws.derivws.com/websockets/v3';
+let derivDirect=true;
 let flowStatus='ESPERANDO';
+let syncIntegrity=0;
+let syncLocked=true;
 let entryGate={confirmed:false,bestSecond:null,bestWindow:null,confidence:0,historyRate:null,gap:0};
 function setSyncState(kind,text){const el=document.getElementById('syncState');if(!el)return;el.className='sync-state '+kind;el.textContent=text;}
 function updateSyncUI(){
   const c=document.getElementById('syncTickCount'); if(c)c.textContent=Math.min(liveValidTicks,LIVE_MIN_TICKS)+'/'+LIVE_MIN_TICKS;
-  const lv=document.getElementById('latencyValue'); if(lv)lv.textContent=estimatedLatencyMs===null?'--':(estimatedLatencyMs/1000).toFixed(1)+'s';
+  const lv=document.getElementById('latencyValue'); if(lv)lv.textContent=estimatedLatencyMs===null?'--':Math.round(estimatedLatencyMs)+'ms';
   const fv=document.getElementById('flowValue'); if(fv)fv.textContent=flowStatus;
+  const sp=document.getElementById('syncPrice'); if(sp)sp.textContent=lastTickQuote===null?'--':String(lastTickQuote);
+  const sd=document.getElementById('syncDigit'); if(sd)sd.textContent=lastTickDigit===null?'--':String(lastTickDigit);
+  const pr=document.getElementById('syncPrecision'); if(pr)pr.textContent=lastTickPrecision===null?'--':String(lastTickPrecision)+' dec';
+  const sq=document.getElementById('syncSequence'); if(sq)sq.textContent=tickSequenceOk?'✓ OK':'✕ ROTO';
+  const sa=document.getElementById('syncAge'); if(sa)sa.textContent=tickAgeMs===null?'--':Math.round(tickAgeMs)+'ms';
+  const si=document.getElementById('syncIntegrity'); if(si)si.textContent=Math.round(syncIntegrity)+'%';
+  const panel=document.getElementById('syncPanel'); if(panel){panel.classList.toggle('sync-lock',syncLocked);panel.classList.toggle('sync-good',!syncLocked&&syncIntegrity>=90);}
+  const src=document.getElementById('priceSource'); if(src)src.textContent=derivDirect?'DERIV API DIRECTA':'PROXY';
+  const sym=document.getElementById('priceSymbol'); if(sym)sym.textContent=lastDerivSymbol||'--';
+  const raw=document.getElementById('priceQuoteRaw'); if(raw)raw.textContent=lastTickRawQuote===null?'--':lastTickRawQuote;
+  const rd=document.getElementById('priceDigitRaw'); if(rd)rd.textContent=lastTickDigit===null?'--':String(lastTickDigit);
+  const pp=document.getElementById('pricePipSize'); if(pp)pp.textContent=lastTickPrecision===null?'--':String(lastTickPrecision)+' dec';
+  const ep=document.getElementById('priceEpoch'); if(ep)ep.textContent=lastTickEpochValue===null?'--':String(lastTickEpochValue);
+}
+
+function hardSyncLock(reason){
+  syncLocked=true; liveValidTicks=0; flowStatus='BLOQUEADO'; tickSequenceOk=false;
+  setSyncState('error','🔴 ENTRADA BLOQUEADA');
+  const n=document.getElementById('syncNote'); if(n)n.textContent='BLOQUEO DE INTEGRIDAD: '+reason+' Se reinicia la confirmación y no se permite usar este tick para el motor matemático.';
+}
+function tickPrecision(tick){
+  const q=Number(tick?.quote);
+  if(!Number.isFinite(q))return null;
+  if(typeof tick?.pip_size==='number'&&Number.isFinite(tick.pip_size)){
+    const p=Math.round(Number(tick.pip_size));
+    if(p>=0&&p<=10)return p;
+  }
+  const str=String(tick.quote);
+  const m=str.match(/\.(\d+)/);
+  return m?m[1].length:0;
+}
+function normalizedQuote(tick,precision){
+  const q=Number(tick?.quote); if(!Number.isFinite(q))return null;
+  return precision===null?q:Number(q.toFixed(precision));
+}
+function displayDerivQuote(tick){
+  if(!tick || tick.quote===undefined || tick.quote===null) return null;
+  const q=Number(tick.quote);
+  if(!Number.isFinite(q)) return null;
+  const p=tickPrecision(tick);
+  return p===null?String(tick.quote):q.toFixed(p);
+}
+function lastDigitFromDerivQuote(tick){
+  const shown=displayDerivQuote(tick);
+  if(shown===null)return null;
+  const m=shown.match(/(\d)$/);
+  return m?Number(m[1]):null;
+}
+function tickIntegrityCheck(tick){
+  const now=Date.now();
+  const epoch=Number(tick?.epoch)*1000;
+  const precision=tickPrecision(tick);
+  const quote=normalizedQuote(tick,precision);
+  if(!Number.isFinite(quote)||precision===null)return {ok:false,reason:'precio o precisión inválidos'};
+  /* IMPORTANTE: epoch de Deriv y reloj del dispositivo pueden tener desfase.
+     No rechazamos un tick válido solo porque el reloj local esté adelantado/atrasado. */
+  const rawAge=Number.isFinite(epoch)&&epoch>0?now-epoch:null;
+  const gap=lastTickReceiveMs?now-lastTickReceiveMs:null;
+  const epochGap=Number.isFinite(epoch)&&lastTickEpochMs?epoch-lastTickEpochMs:null;
+  const key=(Number.isFinite(epoch)&&epoch>0?String(epoch):'noepoch')+'|'+quote;
+  const duplicate=key===lastTickKey;
+  const outOfOrder=epochGap!==null&&epochGap<0;
+  const badGap=gap!==null&&gap>MAX_INTERARRIVAL_MS;
+  const badEpochGap=epochGap!==null&&(epochGap<0||epochGap>10000);
+  /* La antigüedad real se calcula después de estimar el desfase del reloj. */
+  let correctedAge=null;
+  if(Number.isFinite(rawAge)){
+    if(clockOffsetMs===null) clockOffsetMs=rawAge;
+    correctedAge=Math.max(0,rawAge-clockOffsetMs);
+    clockOffsetMs=clockOffsetMs*.95+rawAge*.05;
+    correctedAge=Math.max(0,rawAge-clockOffsetMs);
+  }
+  tickAgeMs=correctedAge; tickGapMs=gap; tickDuplicate=duplicate; tickOutOfOrder=outOfOrder;
+  if(duplicate)return {ok:false,reason:'tick duplicado'};
+  if(outOfOrder)return {ok:false,reason:'tick fuera de orden'};
+  if(badGap)return {ok:false,reason:'interrupción de flujo ('+Math.round(gap)+'ms)'};
+  if(badEpochGap)return {ok:false,reason:'salto temporal de tick'};
+  return {ok:true,reason:'OK',quote,precision,epoch,key,age:correctedAge,gap,epochGap,rawAge};
 }
 function registerTickSync(tick){
+  const check=tickIntegrityCheck(tick);
   const now=Date.now(); const epoch=Number(tick?.epoch)*1000;
-  if(Number.isFinite(epoch)&&epoch>0){
-    const raw=now-epoch;
-    if(clockOffsetMs===null)clockOffsetMs=raw; else clockOffsetMs=clockOffsetMs*.9+raw*.1;
-    estimatedLatencyMs=Math.max(0,raw-clockOffsetMs);
-  }
-  const gap=lastTickReceiveMs?now-lastTickReceiveMs:null;
-  lastTickReceiveMs=now; lastTickEpochMs=Number.isFinite(epoch)?epoch:lastTickEpochMs;
-  /* En símbolos Volatility 1s, el exceso sobre ~1s entre recepciones
-     sirve como indicador práctico de retraso del flujo. */
-  if(gap!==null) estimatedLatencyMs=Math.max(0,gap-1000);
-  if(gap!==null && gap>2500){ liveValidTicks=0; flowStatus='INTERRUMPIDO'; setSyncState('syncing','🟡 SINCRONIZANDO TICKS...'); }
-  else {
+  if(check.ok){
+    lastTickQuote=check.quote; lastTickRawQuote=displayDerivQuote(tick); lastTickPrecision=check.precision; lastTickEpochValue=Number(tick?.epoch);
+    const d=lastDigitFromDerivQuote(tick); lastTickDigit=d;
+    if(Number.isFinite(epoch)&&epoch>0){
+      const raw=now-epoch;
+      if(clockOffsetMs===null)clockOffsetMs=raw;
+      clockOffsetMs=clockOffsetMs*.95+raw*.05;
+      estimatedLatencyMs=Math.max(0,raw-clockOffsetMs);
+    }
+    lastTickReceiveMs=now; lastTickEpochMs=Number.isFinite(epoch)?epoch:lastTickEpochMs; lastTickKey=check.key;
+    tickSequenceOk=true;
     liveValidTicks=Math.min(LIVE_MIN_TICKS,liveValidTicks+1);
     if(liveValidTicks>=LIVE_MIN_TICKS){
-      setSyncState('live','🟢 LIVE CONFIRMADO');
-      const st=document.getElementById('statusText'); if(st)st.textContent='LIVE CONFIRMADO';
-      if(estimatedLatencyMs!==null) flowStatus=estimatedLatencyMs<=800?'ÓPTIMO':estimatedLatencyMs<=1500?'ACEPTABLE':'RETRASADO';
-      else flowStatus='ESTABLE';
-    }else{setSyncState('syncing','🟡 SINCRONIZANDO TICKS...');flowStatus='ACUMULANDO';}
+      syncLocked=false; flowStatus=(estimatedLatencyMs!==null&&estimatedLatencyMs>1500)?'RETRASADO':'ESTABLE';
+      setSyncState('live','🟢 FLUJO ÍNTEGRO · LIVE');
+      const st=document.getElementById('statusText');if(st)st.textContent='LIVE CONFIRMADO · FLUJO ÍNTEGRO';
+    }else{syncLocked=true;flowStatus='ACUMULANDO';setSyncState('syncing','🟡 VALIDANDO FLUJO...');}
+    syncIntegrity=Math.min(100,50+liveValidTicks*10+(tickAgeMs!==null?Math.max(0,20-tickAgeMs/100):0));
+  }else{
+    syncIntegrity=Math.max(0,syncIntegrity-25);
+    hardSyncLock(check.reason);
+    lastTickReceiveMs=now;
   }
-  updateSyncUI();
-  updateEntryPanel();
+  updateSyncUI(); updateEntryPanel();
+  return check.ok;
 }
 function bestHistoricalTiming(){const b=getBestTimingSecond();return b?{second:b.index+1,rate:timingRate(b.stat),score:b.score,samples:b.stat.signals}:null;}
 function bestWindowCandidate(){const arr=MULTI_WINDOWS.map(w=>({w,st:multiWindows[w]?.stats})).filter(x=>x.st&&x.st.signals>0);arr.sort((a,b)=>multiRate(b.st)-multiRate(a.st));return arr[0]||null;}
@@ -1618,7 +1740,7 @@ function entryPointEngine(activeSecond=0){
   const p=pendingPrediction;
   const learned=bestHistoricalTiming();
   const windows=MULTI_WINDOWS.map(w=>({w,st:multiWindows[w]?.stats||emptyMultiStats()}));
-  const liveOk=liveValidTicks>=LIVE_MIN_TICKS;
+  const liveOk=liveValidTicks>=LIVE_MIN_TICKS && !syncLocked && tickSequenceOk;
   const latencyOk=estimatedLatencyMs===null || estimatedLatencyMs<=1500;
   const sampleReady=recentDigits.length>=20;
   const signalQuality=p?Number(p.quality)||0:0;
@@ -1654,6 +1776,7 @@ function updateEntryPanel(activeSecond=0){
   const els={second:document.getElementById('entrySecond'),conf:document.getElementById('entryConfidence'),hist:document.getElementById('entryHistory'),status:document.getElementById('entryStatus'),motor:document.getElementById('entryMotor'),win:document.getElementById('entryWindow'),gap:document.getElementById('entryGap'),score:document.getElementById('entryScore'),stability:document.getElementById('entryStability'),evidence:document.getElementById('entryEvidence'),risk:document.getElementById('entryFalseRisk'),reason:document.getElementById('entryReason'),audit:document.getElementById('entryAudit'),panel:document.getElementById('entryPanel')};
   if(!els.second||!els.status)return;
   const e=entryPointEngine(activeSecond), target=e.target;
+  if(syncLocked && els.status){ els.status.className='entry-status red'; els.status.textContent='🔴 BLOQUEADO · INTEGRIDAD DE TICK'; }
   els.second.innerHTML=target?`${target} <small>SEGUNDO</small>`:'-- <small>SEGUNDO</small>';
   els.score.textContent=Math.round(e.score); els.stability.textContent=Math.round(e.stabilityScore); els.evidence.textContent=Math.round(e.evidenceScore); els.risk.textContent=Math.round(e.falseRisk)+'%';
   els.motor.textContent=e.p?(e.p.mode==='matches'?'D'+e.p.digit:modeLabel(e.p.mode)):'—';
@@ -1668,7 +1791,8 @@ function updateEntryPanel(activeSecond=0){
   checks.forEach(([id,ok,label])=>{const x=document.getElementById(id);if(!x)return;x.className=ok?'ok':'bad';x.textContent=(ok?'✓ ':'✕ ')+label;});
   e.windows.forEach(x=>{const el=document.getElementById('entryW'+x.w);if(!el)return;const r=x.st.signals>=3?multiRate(x.st):null;el.className=r===null?'bad':r>=55?'ok':r>=45?'weak':'bad';el.textContent=`${x.w}S · ${r===null?'--':r.toFixed(0)+'%'}${x.st.signals?' · '+x.st.signals+'m':''}`;});
   let reason='';
-  if(!e.liveOk)reason='Sin LIVE confirmado: el motor de entrada queda bloqueado hasta acumular 5 ticks válidos consecutivos.';
+  if(syncLocked)reason='Integridad de flujo no confirmada: el motor de entrada está BLOQUEADO. Deben existir 5 ticks consecutivos, sin duplicados, saltos, ticks atrasados ni interrupciones.';
+  else if(!e.liveOk)reason='Sin LIVE confirmado: el motor de entrada queda bloqueado hasta acumular 5 ticks válidos consecutivos.';
   else if(!e.sampleReady)reason='Aún faltan datos para estabilizar el cálculo; se mantiene en observación.';
   else if(!e.p)reason='No existe una señal candidata activa. El sistema observa y aprende el momento antes de validar una entrada.';
   else if(!e.gapOk)reason=`Ventaja insuficiente frente al umbral del modo (${e.gapNeed|| (e.p.mode==='matches'?3:1.25)}).`;
@@ -3713,19 +3837,90 @@ function startTimer(){
    EXTRAER ÚLTIMO DÍGITO
    ========================================================= */
 
-let lastAcceptedDerivEpoch = 0;
+function extractLastDigit(
+    tick
+){
 
-function extractLastDigit(tick){
-    /* Fuente única del último dígito para Deriv y el escáner. */
-    if(!tick || tick.quote===undefined || tick.quote===null) return null;
-    const pipSize=Number(tick.pip_size);
-    const shownQuote=(Number.isFinite(pipSize) && pipSize>=0 && pipSize<=20)
-        ? Number(tick.quote).toFixed(Math.floor(pipSize))
-        : String(tick.quote);
-    const digitsOnly=shownQuote.replace(/[^0-9]/g,'');
-    if(!digitsOnly.length) return null;
-    const digit=Number(digitsOnly.charAt(digitsOnly.length-1));
-    return Number.isInteger(digit) && digit>=0 && digit<=9 ? digit : null;
+    if(
+        !tick ||
+        tick.quote===undefined ||
+        tick.quote===null
+    ){
+
+        return null;
+    }
+
+
+    let quote;
+
+
+    if(
+        typeof tick.pip_size===
+        "number" &&
+        Number.isFinite(
+            tick.pip_size
+        )
+    ){
+
+        const decimals =
+            Math.max(
+                0,
+                Math.floor(
+                    tick.pip_size
+                )
+            );
+
+
+        quote =
+            Number(
+                tick.quote
+            ).toFixed(
+                decimals
+            );
+
+    }else{
+
+        quote =
+            String(
+                tick.quote
+            );
+    }
+
+
+    const digitsOnly =
+        quote.replace(
+            /[^0-9]/g,
+            ""
+        );
+
+
+    if(
+        !digitsOnly.length
+    ){
+
+        return null;
+    }
+
+
+    const digit =
+        Number(
+            digitsOnly[
+                digitsOnly.length-1
+            ]
+        );
+
+
+    if(
+        !Number.isInteger(digit) ||
+        digit<0 ||
+        digit>9
+    ){
+
+        return null;
+    }
+
+
+    return digit;
 }
 
 
@@ -3794,19 +3989,18 @@ function connectDeriv(symbol){
     recentDigits=[]; pendingPrediction=null; clearInterval(timerInterval); resetTimingSession(); resetCandleChart();
     document.getElementById('statusText').textContent='CONECTANDO...';
     document.getElementById('liveDot').style.background='#ffe600';
-    liveValidTicks=0; lastTickReceiveMs=0; clockOffsetMs=null; estimatedLatencyMs=null; flowStatus='ESPERANDO'; updateSyncUI(); setSyncState('','🔴 CONECTANDO...'); updateEntryPanel();
-    /* Conexión directa a Deriv: Render ya no retransmite los ticks en vivo. */
-    /* Conexión directa pública a Deriv; sin Render, server.js ni App ID. */
-    ws=new WebSocket('wss://api.derivws.com/trading/v1/options/ws/public');
+    liveValidTicks=0; lastTickReceiveMs=0; lastTickEpochMs=0; lastTickQuote=null; lastTickRawQuote=null; lastTickEpochValue=null; lastTickDigit=null; lastTickPrecision=null; lastTickKey=null; tickSequenceOk=true; tickDuplicate=false; tickOutOfOrder=false; clockOffsetMs=null; estimatedLatencyMs=null; tickAgeMs=null; syncIntegrity=0; syncLocked=true; flowStatus='ESPERANDO'; updateSyncUI(); setSyncState('','🔴 CONECTANDO...'); updateEntryPanel();
+    const directUrl=DERIV_WS_BASE+'?app_id='+encodeURIComponent(DERIV_APP_ID);
+    ws=new WebSocket(directUrl);
     manualClose=false;
     ws.onopen=()=>{
       reconnectAttempts=0;
       requestVolatilityCatalog(ws);
-      try{ws.send(JSON.stringify({ticks:symbol,subscribe:1}))}catch(e){}
+      try{ws.send(JSON.stringify({ticks:symbol,subscribe:1,req_id:7002}))}catch(e){}
       document.getElementById('statusText').textContent='SINCRONIZANDO...';
       document.getElementById('liveDot').style.background='#ffe600';
-      liveValidTicks=0; flowStatus='ACUMULANDO'; updateSyncUI(); setSyncState('syncing','🟡 SINCRONIZANDO TICKS...');
-      systemToast.textContent=`RECIBIENDO TICKS: ${symbol}`; voiceLastMilestone=0; hablar(`Conexión en vivo establecida. Activo ${symbol}. Recibiendo ticks. El escáner está escuchando el mercado y acumulando datos.`);
+      liveValidTicks=0; syncLocked=true; flowStatus='ACUMULANDO'; updateSyncUI(); setSyncState('syncing','🟡 SINCRONIZANDO TICKS...');
+      systemToast.textContent=`RECIBIENDO TICKS: ${symbol}`; voiceLastMilestone=0;
     };
     ws.onmessage=event=>{
       if(myGeneration!==connectionGeneration) return;
@@ -3816,22 +4010,31 @@ function connectDeriv(symbol){
           populateVolatilitySymbols(data.active_symbols);
           return;
         }
-        if(data.error){systemToast.textContent='DERIV: '+(data.error.message||'ERROR');return;}
-        const tick=data.tick||((data.status==='TICK RECIBIDO')?data:null);
+        if(data.error){const msg='DERIV: '+(data.error.message||'ERROR');systemToast.textContent=msg;setSyncState('error','🔴 '+msg);flowStatus='ERROR DERIV';syncLocked=true;updateSyncUI();return;}
+        const tick=data.tick||null;
         if(tick&&tick.quote!==undefined){
-          const tickEpoch=Number(tick.epoch);
-          /* Ignorar duplicados o ticks atrasados para no desincronizar la pantalla. */
-          if(Number.isFinite(tickEpoch) && tickEpoch>0 && tickEpoch<lastAcceptedDerivEpoch) return;
-          if(Number.isFinite(tickEpoch) && tickEpoch>0) lastAcceptedDerivEpoch=tickEpoch;
-          registerTickSync(tick);
+          if(tick.symbol && String(tick.symbol)!==String(symbol)) return;
+          const cleanTick=registerTickSync(tick);
+          if(!cleanTick) return;
+          const shownQuote=displayDerivQuote(tick);
+          const digit=lastDigitFromDerivQuote(tick);
           processTickForCandle(tick);
-          const digit=extractLastDigit(tick);
           const liveMarket=document.getElementById("liveMarket");
-          if(liveMarket) liveMarket.innerHTML=`PRECIO EN VIVO: <strong>${String(tick.quote)}</strong> &nbsp; | &nbsp; ÚLTIMO DÍGITO: <strong id="liveDigitBig" style="font-size:28px;color:#00ffcc">${digit===null?'—':digit}</strong>`;
+          if(liveMarket) liveMarket.innerHTML=`PRECIO EN VIVO: <strong>${shownQuote}</strong> &nbsp; | &nbsp; ÚLTIMO DÍGITO: <strong id="liveDigitBig" style="font-size:28px;color:#00ffcc">${digit===null?'—':digit}</strong>`;
           if(digit!==null)processTick(digit);
+          updateSyncUI();
         }
       }catch(error){console.error('Error procesando tick',error)}
     };
+    setTimeout(()=>{
+      if(myGeneration!==connectionGeneration) return;
+      if(ws && ws.readyState===1 && liveValidTicks===0){
+        systemToast.textContent='CONEXIÓN ABIERTA PERO SIN TICKS: REVISAR SÍMBOLO/SUSCRIPCIÓN';
+        setSyncState('error','🔴 SIN TICKS DE DERIV');
+        flowStatus='SIN TICKS';
+        updateSyncUI();
+      }
+    },7000);
     ws.onerror=()=>{if(myGeneration!==connectionGeneration)return; document.getElementById('statusText').textContent='ERROR';document.getElementById('liveDot').style.background='#ff3355';setSyncState('error','🔴 CONEXIÓN CON ERROR');flowStatus='ERROR';updateSyncUI();systemToast.textContent='ERROR DE CONEXIÓN CON EL SERVIDOR';hablarPrioridad('Error de conexión. Reintentando automáticamente.',3,true);scheduleReconnect();};
     ws.onclose=()=>{if(myGeneration!==connectionGeneration)return; document.getElementById('statusText').textContent='DESCONECTADO';document.getElementById('liveDot').style.background='#ff3355';setSyncState('error','🔴 DESCONECTADO');flowStatus='DESCONECTADO';updateSyncUI();scheduleReconnect();};
 }
@@ -3852,6 +4055,7 @@ document.getElementById(
         if(startBtn){ startBtn.style.display="block"; startBtn.textContent="▶ INICIAR PREDICCIÓN"; }
 
         recentDigits=[];
+        liveValidTicks=0; lastTickReceiveMs=0; lastTickEpochMs=0; lastTickQuote=null; lastTickRawQuote=null; lastTickEpochValue=null; lastTickDigit=null; lastTickPrecision=null; lastTickKey=null; tickSequenceOk=true; syncLocked=true; syncIntegrity=0; estimatedLatencyMs=null; flowStatus='ESPERANDO'; updateSyncUI(); setSyncState('syncing','🟡 CAMBIO DE ACTIVO · VALIDANDO...');
 
         pendingPrediction=null;
 
