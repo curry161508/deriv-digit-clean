@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1723,7 +1724,7 @@ function entryPointEngine(activeSecond=0){
   const stable=liveOk&&latencyOk&&sampleReady&&gapOk&&timingReady&&qualityScore>=55&&evidenceScore>=45&&enoughWindows&&falseRisk<48;
   const confirmed=stable&&onTarget&&score>=68;
   const state=confirmed?'ENTRADA':preparing?'PREPARAR':(stable?'VALIDAR':'ESPERAR');
-  entryGate={confirmed,bestSecond:target,bestWindow:bestWin?.w||null,confidence:qualityScore,historyRate:learned?.rate||null,gap:rawGap,score,state,falseRisk};
+  entryGate={confirmed,bestSecond:target,bestWindow:bestWin?.w||null,confidence:qualityScore,historyRate:learned?.rate||null,gap:rawGap,score,state,falseRisk}; window.entryGate=entryGate;
   return {p,learned,windows,bestWin,liveOk,latencyOk,sampleReady,qualityScore,rawGap,gapOk,timingReady,target,onTarget,preparing,validRates,windowConsensus,qualityScore,historyScore,windowScore,stabilityScore,evidenceScore,timingScore22,score,falseRisk,enoughWindows,stable,confirmed,state};
 }
 function updateEntryPanel(activeSecond=0){
