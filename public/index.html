@@ -2009,9 +2009,14 @@ function startMultiEngine(predicted,score,mode){
   const candidatoVoz=mode==='matches' ? `dígito ${predicted}` : `condición ${modoVoz}`;
   hablar(`Predicción multiventana iniciada. Modo ${modoVoz}. ${candidatoVoz}. Ventanas de 4, 5, 7 y 10 segundos activas. En pantalla quedan cuatro resultados independientes para comparar la estabilidad.`);
 }
+
+/* Memoria temporal persistente en Render/Supabase */
+const CLOUD_LEARNING_BASE='https://deriv-digit-clean.onrender.com';
+function sendTimingLearning(event){try{fetch(CLOUD_LEARNING_BASE+'/timing-events',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(event),keepalive:true}).catch(()=>{})}catch(e){}}
+function recordTimingHit(windowSeconds,obj){const elapsed=Math.max(0,Number(obj.matchElapsedMs)||0);const second=Math.min(windowSeconds,Math.max(1,Math.floor(elapsed/1000)+1));const seq=recentDigits.slice(-8).join('');sendTimingLearning({asset:document.getElementById('assetSelector')?.value||'R_100',mode:obj.mode||document.getElementById('modeSelector')?.value||'matches',window_seconds:windowSeconds,sequence_key:seq,target_digit:obj.predicted,observed_second:second,hit:true,event_time:new Date().toISOString()})}
 function processMultiTick(digit){
   if(!multiActive)return;
-  MULTI_WINDOWS.forEach(w=>{const o=multiWindows[w];if(!o||o.state!=='active')return;o.tickCount=(o.tickCount||0)+1;if(o.firstTick===null){o.firstTick=digit;o.firstTickTime=Date.now();}if(modeMatches(o.mode,digit,o.predicted)&&!o.matched){o.matched=true;o.matchDigit=digit;o.matchedAt=Date.now();o.matchElapsedMs=o.matchedAt-o.start;o.matchTickCount=o.tickCount;o.stats.hitTimeMsTotal=(Number(o.stats.hitTimeMsTotal)||0)+o.matchElapsedMs;o.stats.hitCount=(Number(o.stats.hitCount)||0)+1;document.getElementById('prediction')?.classList.add('signal-good');const elapsed=(o.matchElapsedMs/1000).toFixed(1);const modo=modeLabel(o.mode);hablar(`Coincidencia en la ventana de ${w} segundos. Modo ${modo}. Salió el dígito ${digit} en el segundo ${elapsed}, en el tick número ${o.matchTickCount}.`);}});
+  MULTI_WINDOWS.forEach(w=>{const o=multiWindows[w];if(!o||o.state!=='active')return;o.tickCount=(o.tickCount||0)+1;if(o.firstTick===null){o.firstTick=digit;o.firstTickTime=Date.now();}if(modeMatches(o.mode,digit,o.predicted)&&!o.matched){o.matched=true;o.matchDigit=digit;o.matchedAt=Date.now();o.matchElapsedMs=o.matchedAt-o.start;o.matchTickCount=o.tickCount;o.stats.hitTimeMsTotal=(Number(o.stats.hitTimeMsTotal)||0)+o.matchElapsedMs;o.stats.hitCount=(Number(o.stats.hitCount)||0)+1;document.getElementById('prediction')?.classList.add('signal-good');recordTimingHit(w,o);const elapsed=(o.matchElapsedMs/1000).toFixed(1);const modo=modeLabel(o.mode);hablar(`Coincidencia en la ventana de ${w} segundos. Modo ${modo}. Salió el dígito ${digit} en el segundo ${elapsed}, en el tick número ${o.matchTickCount}.`);}});
   renderMultiStats();
   renderPredictionTrace();
 }
