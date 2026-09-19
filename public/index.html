@@ -5,24 +5,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCANNER AZUL V24 // MOTOR ESTADÍSTICO</title>
-<!-- V24 · CAMBIOS SOBRE V23
- 1. El bot demo se CONECTA solo (si hay token guardado con "Recordar"), pero OPERAR es opcional: la casilla "Operar automáticamente" viene APAGADA.
- 2. Límites de riesgo (stop-loss, take-profit, nº de ops, racha) se validan ANTES de cada compra y se guardan por día (sobreviven a recargar/reconectar).
- 3. Si una operación se liquida de forma estimada, cuando llega el resultado real del servidor se CORRIGE el P/L y el ledger.
- 4. Hora del tick = tick.epoch del servidor (no Date.now()).
- 5. Reconexión: cierra el socket anterior, un solo temporizador, y respeta DETENER. Botón RESETEAR SESIÓN.
- 6. Eliminadas las definiciones duplicadas de getBestTimingSecond / renderTimingStats.
--->
-<!-- V23 · CAMBIOS
- 1. Lectura del dígito: decimales por símbolo (no pierde ceros finales); acepta pip_size como nº de decimales o como valor.
- 2. Matemática: χ² de uniformidad + binomial exacta + corrección por comparaciones múltiples; se elimina el "gap ~9" (falacia del jugador).
- 3. Walk-forward real a 1 tick (lo que compra el bot) con intervalo de Wilson y comparación contra azar y contra el equilibrio del pago.
- 4. Ventanas 4S/5S/7S/10S: línea base correcta 1-(1-p)^ticks (antes se comparaba con 50%/10%; la de 10S "ganaba" 65% por azar).
- 5. Momento óptimo: resuelve por tick (antes no acumulaba muestras en índices de ~2 s) y exige 30 muestras + corrección por 7 candidatos.
- 6. Punto de entrada: MODO PRÁCTICA (demo) o MODO ESTRICTO (solo con ventaja demostrada); una disparada por señal.
- 7. Bot demo: 1 operación por señal (antes 2), UNDER con barrera 5, sin auto-arranque, límites de riesgo y ledger real.
- Paneles V18/V21/V22 ocultos (V23 los reemplaza). El código antiguo sigue en el archivo pero ya no decide nada. -->
+<title>SCANNER AZUL // MULTIWINDOW DIGIT ENGINE</title>
 
 <style>
 :root{
@@ -602,17 +585,76 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 .full-result{margin-top:10px;padding:11px;border:1px solid rgba(25,245,165,.35);border-radius:10px;background:linear-gradient(180deg,rgba(0,90,70,.12),rgba(0,30,65,.25))}.full-result-title{font-size:12px;font-weight:1000;color:#7fffdc;letter-spacing:.8px;margin-bottom:8px}.full-result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.full-result-grid>div{padding:7px 4px;text-align:center;border:1px solid rgba(22,140,255,.22);border-radius:7px;background:#061a2e}.full-result-grid span{display:block;font-size:8px;color:#73b9e8}.full-result-grid b{display:block;margin-top:3px;font-size:13px;color:#fff}.full-result-text{margin-top:8px;font-size:11px;line-height:1.5;color:#ccecff}.voice-mode-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-top:7px}.voice-mode-row label{padding:7px 8px;border:1px solid rgba(22,140,255,.25);border-radius:7px;background:rgba(0,30,65,.45);font-size:9px;font-weight:900;color:#8fc9ec}.voice-mode-row select{height:30px}.voice-note{margin-top:5px;text-align:center;font-size:9px;color:#789cba}@media(max-width:700px){.full-result-grid{grid-template-columns:repeat(2,1fr)}.voice-mode-row{grid-template-columns:1fr}.voice-mode-row select{width:100%}}
 
 </style>
-<style id="demo-trader-css">#demoTrader{position:sticky;top:6px;z-index:50;margin:8px 0 14px;padding:11px;border:1px solid rgba(22,140,255,.4);border-radius:12px;background:#061a2e;color:#dceaff;font-size:12px}#demoTrader .dt-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}#demoTrader input,#demoTrader select{width:100%;box-sizing:border-box;padding:7px;border-radius:6px;border:1px solid #236da8;background:#041525;color:#fff}#demoTrader button{padding:8px 10px;border-radius:7px;border:1px solid #168cff;background:#0757a8;color:#fff;font-weight:800;margin:5px 3px 0 0}#demoTrader button.stop{background:#75172e;border-color:#ff496d}#dtOn{display:inline-block}@media(max-width:600px){#demoTrader .dt-grid{grid-template-columns:1fr}}</style></head>
+<style id="demo-trader-css">
+/* Panel del bot: ya NO es flotante (antes era sticky y tapaba la pantalla) y se puede abrir/cerrar */
+#demoTrader{position:relative;z-index:5;margin:8px 0 14px;padding:0;border:1px solid rgba(22,140,255,.4);border-radius:12px;background:#061a2e;color:#dceaff;font-size:12px;overflow:hidden}
+#demoTrader .dt-head{display:flex;align-items:center;gap:8px;padding:8px 10px;flex-wrap:wrap}
+#demoTrader .dt-dot{flex:none;width:10px;height:10px;border-radius:50%;background:#4a6178}
+#demoTrader .dt-dot.on{background:#19f5a5;box-shadow:0 0 8px #19f5a5}
+#demoTrader .dt-dot.wait{background:#ffd84d;box-shadow:0 0 8px #ffd84d}
+#demoTrader .dt-dot.err{background:#ff496d;box-shadow:0 0 8px #ff496d}
+#demoTrader .dt-title{flex:none;white-space:nowrap;font-size:13px}
+#demoTrader .dt-mini{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8fb8d8}
+#demoTrader .dt-body{padding:10px;border-top:1px solid rgba(22,140,255,.25)}
+#demoTrader .dt-body[hidden]{display:none}
+#demoTrader .dt-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+#demoTrader input,#demoTrader select{width:100%;box-sizing:border-box;padding:7px;border-radius:6px;border:1px solid #236da8;background:#041525;color:#fff}
+#demoTrader button{padding:6px 12px!important;min-height:34px!important;margin:0!important;font-size:12px!important;border-radius:8px!important;box-shadow:none!important;white-space:nowrap}
+#demoTrader button.stop{background:#75172e!important;border-color:#ff496d!important}
+#demoTrader .dt-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+#demoTrader .dt-note{margin-top:6px;color:#7fa8c9;font-size:11px;line-height:1.35}
+#dtOn{display:none}
+@media(max-width:600px){#demoTrader .dt-grid{grid-template-columns:1fr}#demoTrader .dt-title{flex:1}#demoTrader .dt-mini{order:10;flex-basis:100%}}
+</style></head>
 
 <body>
 <canvas id="scannerBg" class="scanner-bg"></canvas>
 
-<div class="phone-frame"><section id="demoTrader"><b>🤖 BOT DEMO · 1 OPERACIÓN DE US$1 POR SEÑAL</b><div class="dt-grid"><input id="dtToken" type="password" placeholder="Token demo (solo local)"><input id="dtApp" inputmode="numeric" placeholder="App ID"><select id="dtDuration"><option value="1">1 tick</option></select><select id="dtDelay"><option value="0">Sin delay</option></select><select id="dtPause"><option value="3">Pausa entre ciclos: 3s</option><option value="5">Pausa entre ciclos: 5s</option></select></div><label style="display:block;margin-top:6px"><input id="dtConfirm" type="checkbox" style="width:auto"> Confirmo que es cuenta DEMO</label><label style="display:block;margin-top:4px"><input id="dtRemember" type="checkbox" style="width:auto"> Recordar conexión demo en este dispositivo</label><button id="dtConnect">CONECTAR DEMO</button><button id="dtOn">ACTIVAR BOT</button><button id="dtStop" class="stop">DETENER</button><div id="dtStatus" style="margin-top:7px;color:#8fb8d8">Estado: OFF · 0 operaciones</div></section>
+<div class="phone-frame"><section id="demoTrader">
+  <div class="dt-head">
+    <span id="dtDot" class="dt-dot"></span>
+    <b class="dt-title">🤖 BOT DEMO</b>
+    <span id="dtMini" class="dt-mini">OFF</span>
+    <button id="dtStopMini" class="stop" type="button" style="display:none">DETENER</button>
+    <button id="dtToggle" type="button" aria-expanded="false" aria-controls="dtBody">▼ ABRIR</button>
+  </div>
+  <div id="dtBody" class="dt-body" hidden>
+    <div class="dt-grid">
+      <input id="dtToken" type="password" placeholder="Token demo (solo local)">
+      <input id="dtApp" inputmode="numeric" placeholder="App ID">
+      <select id="dtDuration"><option value="1">1 tick</option></select>
+      <select id="dtDelay"><option value="0">Sin delay</option></select>
+      <select id="dtPause"><option value="3">Pausa entre ciclos: 3s</option><option value="5">Pausa entre ciclos: 5s</option></select>
+      <select id="dtEntry">
+        <option value="target">Entrada: segundo óptimo aprendido</option>
+        <option value="strict">Entrada: solo con 🟢 confirmada</option>
+      </select>
+      <select id="dtNudge">
+        <option value="-300">Ajuste fino: 300 ms ANTES</option>
+        <option value="-200">Ajuste fino: 200 ms ANTES</option>
+        <option value="-100">Ajuste fino: 100 ms ANTES</option>
+        <option value="0" selected>Ajuste fino: exacto (0 ms)</option>
+        <option value="100">Ajuste fino: 100 ms DESPUÉS</option>
+        <option value="200">Ajuste fino: 200 ms DESPUÉS</option>
+        <option value="300">Ajuste fino: 300 ms DESPUÉS</option>
+      </select>
+    </div>
+    <label style="display:block;margin-top:6px"><input id="dtConfirm" type="checkbox" style="width:auto"> Confirmo que es cuenta DEMO</label>
+    <label style="display:block;margin-top:4px"><input id="dtRemember" type="checkbox" style="width:auto"> Recordar conexión demo en este dispositivo</label>
+    <div class="dt-actions">
+      <button id="dtConnect" type="button">CONECTAR DEMO</button>
+      <button id="dtOn" type="button">ACTIVAR BOT</button>
+      <button id="dtStop" class="stop" type="button">DETENER</button>
+    </div>
+    <div id="dtStatus" style="margin-top:7px;color:#8fb8d8">Estado: OFF · operaciones: 0</div>
+    <div class="dt-note">US$1 por operación, 2 operaciones por señal. El bot compra en el segundo que marca “ENTRADA MÁS FAVORABLE” (no al hacer clic). Si ya pasó ese segundo, omite la señal. Mantén esta pestaña visible mientras opera.</div>
+  </div>
+</section>
 
 <div class="top-hud">
 
     <div class="brand">
-        SCANNER AZUL <span style="color:#ffe600">V23</span> // MOTOR ESTADÍSTICO
+        SCANNER AZUL // MULTIWINDOW DIGIT ENGINE
     </div>
 
     <div class="status">
@@ -1662,14 +1704,14 @@ function tickIntegrityCheck(tick){
   const precision=tickPrecision(tick);
   const quote=normalizedQuote(tick,precision);
   if(!Number.isFinite(quote)||precision===null)return {ok:false,reason:'precio o precisión inválidos'};
-  const rawAge=Number.isFinite(epoch)&&epoch>0?now-epoch:null;if(rawAge!==null&&clockOffsetMs===null)clockOffsetMs=rawAge;const age=rawAge===null?null:Math.max(0,rawAge-clockOffsetMs); /* V23: edad relativa al desfase del reloj del dispositivo */
+  const age=Number.isFinite(epoch)&&epoch>0?Math.max(0,now-epoch):null;
   const gap=lastTickReceiveMs?now-lastTickReceiveMs:null;
   const epochGap=Number.isFinite(epoch)&&lastTickEpochMs?epoch-lastTickEpochMs:null;
   const key=(Number.isFinite(epoch)&&epoch>0?String(epoch):'noepoch')+'|'+quote;
   const duplicate=key===lastTickKey;
   const outOfOrder=epochGap!==null&&epochGap<0;
   const badAge=age!==null&&age>MAX_TICK_AGE_MS;
-  const per23=(window.V23&&V23.period)?V23.period():null;const badGap=gap!==null&&gap>Math.max(MAX_INTERARRIVAL_MS,per23?per23*3.2:0);
+  const badGap=gap!==null&&gap>MAX_INTERARRIVAL_MS;
   const badEpochGap=epochGap!==null&&(epochGap<0||epochGap>5000);
   tickAgeMs=age; tickGapMs=gap; tickDuplicate=duplicate; tickOutOfOrder=outOfOrder;
   if(badAge)return {ok:false,reason:'tick atrasado ('+Math.round(age)+'ms)'};
@@ -1707,11 +1749,42 @@ function registerTickSync(tick){
   updateSyncUI(); updateEntryPanel();
   return check.ok;
 }
-function bestHistoricalTiming(){const b=getBestTimingSecond();return b?{second:b.index+1,rate:timingRate(b.stat),score:b.score,samples:b.stat.signals}:null;}
+/* ===== V23 · PUNTO DE ENTRADA PRECISO ===== */
+const ENTRY_MIN_SECOND=4; /* el motor siempre dijo "evaluando desde S4"; el parche V22 había perdido ese mínimo y el bot podía entrar en S1-S3 (demasiado pronto) */
+function bestHistoricalTiming(){
+  let best=null;
+  timingStats.forEach((stat,index)=>{
+    if(index+1<ENTRY_MIN_SECOND||!stat||stat.signals<TIMING_MIN_SAMPLES)return;
+    const score=timingScore(stat);
+    if(!best||score>best.score||(score===best.score&&stat.signals>best.stat.signals))best={stat,index,score};
+  });
+  return best?{second:best.index+1,rate:timingRate(best.stat),score:best.score,samples:best.stat.signals}:null;
+}
+/* Segundo activo según el RELOJ de la sesión (no según cuándo llegó el último tick).
+   Antes, con ticks cada 2 s, el segundo objetivo podía no "existir" y el panel se quedaba desactualizado hasta 2 s. */
+function entryClockSecond(fallback=0){
+  try{
+    if(timingSession && timingSession.startMs){
+      const s=Math.floor((Date.now()-timingSession.startMs)/1000)+1;
+      return (s>=1 && s<=TIMING_SECONDS)?s:0;
+    }
+  }catch(e){}
+  return fallback;
+}
 function bestWindowCandidate(){const arr=MULTI_WINDOWS.map(w=>({w,st:multiWindows[w]?.stats})).filter(x=>x.st&&x.st.signals>0);arr.sort((a,b)=>multiRate(b.st)-multiRate(a.st));return arr[0]||null;}
 function entryPointEngine(activeSecond=0){
+  activeSecond=entryClockSecond(activeSecond);
   const p=pendingPrediction;
-  const learned=bestHistoricalTiming();
+  let learned=bestHistoricalTiming();
+  /* El segundo objetivo se BLOQUEA al iniciar la sesión: no cambia a mitad del ciclo (si cambiaba hacia atrás, la entrada se perdía). */
+  const sess=(typeof timingSession!=='undefined')?timingSession:null;
+  if(sess){
+    if(!sess.entryTarget && learned) sess.entryTarget=learned.second;
+    if(sess.entryTarget && (!learned || learned.second!==sess.entryTarget)){
+      const st=timingStats[sess.entryTarget-1];
+      if(st && st.signals>0) learned={second:sess.entryTarget,rate:timingRate(st),score:timingScore(st),samples:st.signals};
+    }
+  }
   const windows=MULTI_WINDOWS.map(w=>({w,st:multiWindows[w]?.stats||emptyMultiStats()}));
   const liveOk=liveValidTicks>=LIVE_MIN_TICKS && !syncLocked && tickSequenceOk;
   const latencyOk=estimatedLatencyMs===null || estimatedLatencyMs<=1500;
@@ -1741,11 +1814,14 @@ function entryPointEngine(activeSecond=0){
   const enoughWindows=validRates.length>=2 && windowConsensus>=.5;
   const stable=liveOk&&latencyOk&&sampleReady&&gapOk&&timingReady&&qualityScore>=55&&evidenceScore>=45&&enoughWindows&&falseRisk<48;
   const confirmed=stable&&onTarget&&score>=68;
+  /* ¿estaría confirmada al entrar en el segundo objetivo? (el bot lo evalúa un instante antes de disparar) */
+  const readyIfOnTarget=stable&&(onTarget?score:Math.min(100,score+10))>=68;
   const state=confirmed?'ENTRADA':preparing?'PREPARAR':(stable?'VALIDAR':'ESPERAR');
-  entryGate={confirmed,bestSecond:target,bestWindow:bestWin?.w||null,confidence:qualityScore,historyRate:learned?.rate||null,gap:rawGap,score,state,falseRisk}; window.entryGate=entryGate;
-  return {p,learned,windows,bestWin,liveOk,latencyOk,sampleReady,qualityScore,rawGap,gapOk,timingReady,target,onTarget,preparing,validRates,windowConsensus,qualityScore,historyScore,windowScore,stabilityScore,evidenceScore,timingScore22,score,falseRisk,enoughWindows,stable,confirmed,state};
+  entryGate={confirmed,bestSecond:target,bestWindow:bestWin?.w||null,confidence:qualityScore,historyRate:learned?.rate||null,gap:rawGap,score,state,falseRisk,stable,onTarget,readyIfOnTarget,sessionStart:sess?.startMs||null}; window.entryGate=entryGate;
+  return {p,learned,windows,bestWin,liveOk,latencyOk,sampleReady,qualityScore,rawGap,gapOk,timingReady,target,onTarget,readyIfOnTarget,preparing,validRates,windowConsensus,qualityScore,historyScore,windowScore,stabilityScore,evidenceScore,timingScore22,score,falseRisk,enoughWindows,stable,confirmed,state};
 }
 function updateEntryPanel(activeSecond=0){
+  activeSecond=entryClockSecond(activeSecond);
   const els={second:document.getElementById('entrySecond'),conf:document.getElementById('entryConfidence'),hist:document.getElementById('entryHistory'),status:document.getElementById('entryStatus'),motor:document.getElementById('entryMotor'),win:document.getElementById('entryWindow'),gap:document.getElementById('entryGap'),score:document.getElementById('entryScore'),stability:document.getElementById('entryStability'),evidence:document.getElementById('entryEvidence'),risk:document.getElementById('entryFalseRisk'),reason:document.getElementById('entryReason'),audit:document.getElementById('entryAudit'),panel:document.getElementById('entryPanel')};
   if(!els.second||!els.status)return;
   const e=entryPointEngine(activeSecond), target=e.target;
@@ -1790,6 +1866,18 @@ function updateEntryPanel(activeSecond=0){
 function renderSmartCountdown(active,target){const box=document.getElementById('smartCountdown');if(!box)return;box.innerHTML='';for(let i=1;i<=10;i++){const d=document.createElement('div');let label='ESPERAR';if(target){if(i===target)label='ENTRAR';else if(i===target-1)label='PREPARAR';else if(i>target)label='EJECUTAR';}d.className=(i===active?'active ':'')+(target&&i===target?'target ':'')+(active&&i<active?'past':'');d.innerHTML=`<b>${i}</b>${label}`;box.appendChild(d);}}
 
 
+
+/* Reloj propio del punto de entrada: refresca el panel en cuanto cambia el segundo de la sesión. */
+(function(){
+  let last=-1;
+  setInterval(function(){
+    try{
+      const s=entryClockSecond(-1);
+      if(s===-1){last=-1;return;}
+      if(s!==last){last=s;updateEntryPanel(s);}
+    }catch(e){}
+  },100);
+})();
 
 function vozDetalle(){return document.getElementById('voiceDetailSelect')?.value||'full';}
 function hablarTick(digit,count){if(vozDetalle()!=='full')return; if(count<=20 || count%10===0) hablar(`Tick ${count}. Último dígito ${digit}.`);}
@@ -1922,7 +2010,7 @@ function renderMultiStats(){
     ['Wins','Loss','Rate'].forEach(()=>{});
     const we=document.getElementById('windowWins'+w);if(we)we.textContent=st.wins;
     const le=document.getElementById('windowLoss'+w);if(le)le.textContent=st.losses;
-    const re=document.getElementById('windowRate'+w);if(re)re.textContent=st.signals?multiRate(st).toFixed(1)+'%'+(st.baseN>0?' (azar '+(st.baseSum/st.baseN*100).toFixed(0)+'%)':''):'—';
+    const re=document.getElementById('windowRate'+w);if(re)re.textContent=st.signals?multiRate(st).toFixed(1)+'%':'—';
     const pr=document.getElementById('windowProgress'+w);if(pr)pr.style.width=o.state==='active'?Math.max(0,Math.min(100,((Date.now()-o.start)/(w*1000))*100))+'%':(o.state==='win'||o.state==='loss'?'100%':'0%');
     if(card){card.classList.remove('live','win','loss','wait');if(o.state==='active')card.classList.add('live');if(o.state==='win')card.classList.add('win');if(o.state==='loss')card.classList.add('loss');}
   });
@@ -2082,7 +2170,6 @@ function voiceStatusText(w){
 function finalizeMultiWindow(w){
   const o=multiWindows[w];if(!o||o.state!=='active')return;
   const correct=!!o.matched;o.state=correct?'win':'loss';
-  {const p0=(o.mode==='matches')?0.1:0.5;o.stats.baseN=(Number(o.stats.baseN)||0)+1;o.stats.baseSum=(Number(o.stats.baseSum)||0)+(1-Math.pow(1-p0,Math.max(1,o.tickCount||0)));o.stats.baseWins=(Number(o.stats.baseWins)||0)+(correct?1:0);}
   if(correct)o.stats.wins++;else o.stats.losses++;
   if(w===10){
     if(pendingPrediction){
@@ -2116,7 +2203,7 @@ let signalHistory = [];
    MOTOR DE MOMENTO ÓPTIMO 1-10s
    ========================================================= */
 const TIMING_SECONDS = 10;
-const TIMING_MIN_SAMPLES = 30;
+const TIMING_MIN_SAMPLES = 5;
 let timingStats = Array.from({length:TIMING_SECONDS},()=>({signals:0,wins:0,losses:0}));
 let timingSession = null;
 let timingLastSecond = 0;
@@ -2176,6 +2263,44 @@ function timingScore(stat){
     return edgeScore*.75+sampleFactor*25;
 }
 
+function getBestTimingSecond(){
+    const candidates=timingStats
+        .map((stat,index)=>({stat,index,score:timingScore(stat)}))
+        .filter(x=>x.stat.signals>=TIMING_MIN_SAMPLES);
+    if(!candidates.length) return null;
+    candidates.sort((a,b)=>b.score-a.score);
+    return candidates[0];
+}
+
+function renderTimingStats(activeSecond=0){
+    const grid=document.getElementById("timingGrid");
+    const bestEl=document.getElementById("timingBest");
+    const liveEl=document.getElementById("timingLive");
+    if(!grid || !bestEl || !liveEl) return;
+
+    const best=getBestTimingSecond();
+    liveEl.textContent=activeSecond>0 ? `SEGUNDO ${activeSecond}/10` : (best ? "MOMENTO APRENDIDO" : "APRENDIENDO");
+
+    if(best){
+        const st=best.stat;
+        bestEl.innerHTML=`<strong>MEJOR MOMENTO: S${best.index+1}</strong> &nbsp; | &nbsp; RENDIMIENTO: ${timingRate(st).toFixed(1)}% (${st.wins}/${st.signals}) &nbsp; | &nbsp; SCORE MOMENTO: ${best.score.toFixed(1)}`;
+    }else{
+        const total=timingStats.reduce((a,x)=>a+x.signals,0);
+        bestEl.innerHTML=`<strong>MEJOR MOMENTO: --</strong> &nbsp; | &nbsp; ACUMULANDO DATOS DESDE S4 (${total} muestras; mínimo ${TIMING_MIN_SAMPLES} por segundo)`;
+    }
+
+    grid.innerHTML=timingStats.map((st,i)=>{
+        const rate=st.signals ? timingRate(st) : null;
+        const isBest=best && best.index===i;
+        const active=activeSecond===i+1;
+        return `<div class="timing-cell ${active?"active":""} ${isBest?"best":""}">
+            <div class="timing-sec">S${i+1}</div>
+            <div class="timing-rate">${rate===null?"--":rate.toFixed(0)+"%"}</div>
+            <div class="timing-sample">${st.signals?st.wins+"/"+st.signals:"--"}</div>
+        </div>`;
+    }).join("");
+}
+
 function timingConfidence(best, secondBest){
     if(!best) return {level:'débil', strong:false, gap:0};
     const gap=secondBest ? best.score-secondBest.score : best.score;
@@ -2229,13 +2354,10 @@ function startTimingSession(){
 function processTimingTick(digit){
     if(!timingSession) return;
     const elapsed=(Date.now()-timingSession.startMs)/1000, second=Math.floor(elapsed)+1, resolveSecond=second-1;
-    { /* V23: cada tick resuelve el snapshot del tick anterior (aunque no sea el segundo consecutivo: índices de ~2 s) */
-      const ks=Object.keys(timingSession.pendingBySecond).map(Number).filter(k=>k<second&&k>=1&&k<=TIMING_SECONDS);
-      if(ks.length){
-        const k=Math.max(...ks),candidate=timingSession.pendingBySecond[k],st=timingStats[k-1];
-        if(st){st.signals++;if(timingConditionMatches(timingSession.mode,digit,candidate.candidate))st.wins++;else st.losses++;}
-        timingSession.pendingBySecond={};saveTimingStats();
-      }
+    if(resolveSecond>=1 && resolveSecond<=TIMING_SECONDS && timingSession.pendingBySecond[resolveSecond]){
+      const candidate=timingSession.pendingBySecond[resolveSecond], st=timingStats[resolveSecond-1]; st.signals++;
+      if(timingConditionMatches(timingSession.mode,digit,candidate.candidate)) st.wins++; else st.losses++;
+      delete timingSession.pendingBySecond[resolveSecond]; saveTimingStats();
     }
     if(second<1 || second>TIMING_SECONDS) return;
     const mode=timingSession.mode;
@@ -3404,9 +3526,8 @@ function representativeDigitForMode(mode){
 
 function generatePrediction(fromBot=false){
   const mode=document.getElementById("modeSelector")?.value||"matches";
-  if(recentDigits.length<20){systemToast.textContent=`NECESITAMOS AL MENOS 20 TICKS (llevas ${recentDigits.length}). ${(document.getElementById("syncNote")?.textContent||"").slice(0,90)}`;hablar(`Análisis solicitado en modo ${modeLabel(mode)}. No hay suficientes datos. Se necesitan al menos 20 ticks y actualmente hay ${recentDigits.length}.`);return;}
+  if(recentDigits.length<20){systemToast.textContent="NECESITAMOS AL MENOS 20 TICKS.";hablar(`Análisis solicitado en modo ${modeLabel(mode)}. No hay suficientes datos. Se necesitan al menos 20 ticks y actualmente hay ${recentDigits.length}.`);return;}
   hablar(`Iniciando análisis completo. Activo ${document.getElementById("assetSelector")?.value||"actual"}. Modo ${modeLabel(mode)}. Hay ${recentDigits.length} ticks disponibles.`);
-  if(!multiActive&&pendingPrediction!==null)pendingPrediction=null; /* V23: recupera un ciclo trabado */
   if(multiActive||pendingPrediction!==null){systemToast.textContent="YA EXISTE UN CICLO ACTIVO.";if(fromBot&&botAuto)scheduleBotCycle(500);return;}
 
   pendingMode=mode;
@@ -3436,7 +3557,6 @@ function generatePrediction(fromBot=false){
   const requiredQuality=mode==='matches'?(recentDigits.length>=80?60:recentDigits.length>=50?58:55):50;
   const modeBaseline=mode==='matches'?0.10:0.50;
   const observed=best.p100;
-  const weak23=[]; /* V23: motivos de baja confianza; ya no bloquean la predicción, bloquean solo la entrada */
 
   if(mode!=='matches'){
     /* Modos binarios: no se bloquean por no superar 55% exacto.
@@ -3445,20 +3565,32 @@ function generatePrediction(fromBot=false){
        ENTRADA sigue siendo más exigente que el filtro de ANÁLISIS. */
     const edge=observed-modeBaseline;
     const binaryEvidence=Math.abs(Number(best.z100))>=0.35 || Math.abs(edge)>=0.025;
-    if(!binaryEvidence){weak23.push('evidencia binaria baja');}
+    if(!binaryEvidence){
+      showNoSignal(`ESPERAR · ${modeLabel(mode)} SIN EVIDENCIA SUFICIENTE · ${(observed*100).toFixed(1)}% vs ${(modeBaseline*100).toFixed(0)}% BASE`,Math.abs(edge),0.025);
+      if(fromBot&&botAuto)scheduleBotCycle(Number(document.getElementById('botDelaySelect')?.value||3000));
+      return;
+    }
   }
 
-  if(difference<requiredGap){weak23.push('ventaja sobre #2 baja');}
-  if(quality<requiredQuality){weak23.push('calidad baja');}
+  if(difference<requiredGap){
+    showNoSignal(mode==='matches'?"EVIDENCIA MATEMÁTICA INSUFICIENTE":`EVIDENCIA ${modeLabel(mode)} TODAVÍA CORTA`,difference,requiredGap);
+    if(fromBot&&botAuto)scheduleBotCycle(1000);
+    return;
+  }
+  if(quality<requiredQuality){
+    showNoSignal(mode==='matches'?"CALIDAD ESTADÍSTICA INSUFICIENTE":`CALIDAD ${modeLabel(mode)} TODAVÍA CORTA`,quality,requiredQuality);
+    if(fromBot&&botAuto)scheduleBotCycle(1000);
+    return;
+  }
 
   prediction.style.display="block";prediction.classList.remove("signal-bad");prediction.classList.add("signal-good");
-  document.querySelector(".pred-title").textContent=mode==="matches"?`PREDICCIÓN — MATCHES · DÍGITO ${best.digit}`:`PREDICCIÓN — ${modeLabel(mode)} · CONDICIÓN ACTIVA`;
+  document.querySelector(".pred-title").textContent=mode==="matches"?`SEÑAL POSITIVA — MATCHES · DÍGITO ${best.digit}`:`SEÑAL POSITIVA — ${modeLabel(mode)} · CONDICIÓN ACTIVA`;
   predDigit.textContent=mode==='matches'?best.digit:modeLabel(mode);
   predScore.textContent=`SCORE ${best.score.toFixed(2)}`;
   predQuality.textContent=`CALIDAD ${quality.toFixed(1)}/100`;
   predGap.textContent=mode==='matches'?`Ventaja sobre #2: ${difference.toFixed(2)}`:`PROB. 100T: ${(best.p100*100).toFixed(1)}% · BASE ${(modeBaseline*100).toFixed(0)}%`;
 
-  pendingPrediction={digit:best.digit,score:best.score,quality,difference,metrics:{frequency:best.frequencyScore,momentum:best.momentumScore,consistency:best.consistencyScore,stability:best.stabilityScore,recency:best.recencyScore},createdAt:Date.now(),matched:false,matchDigit:null,mode:pendingMode,weak:weak23.slice()};
+  pendingPrediction={digit:best.digit,score:best.score,quality,difference,metrics:{frequency:best.frequencyScore,momentum:best.momentumScore,consistency:best.consistencyScore,stability:best.stabilityScore,recency:best.recencyScore},createdAt:Date.now(),matched:false,matchDigit:null,mode:pendingMode};
   updateEntryPanel();
   startTimingSession();signals++;digitMemory[best.digit].signals++;document.getElementById("signalCount").textContent=signals;
   addSignalLog(best,"PENDIENTE");startMultiEngine(best.digit,best.score,pendingMode);startTimer();
@@ -3947,12 +4079,12 @@ function connectDeriv(symbol){
         const tick=data.tick||((data.status==='TICK RECIBIDO')?data:null);
         if(tick&&tick.quote!==undefined){
           const cleanTick=registerTickSync(tick);
-          if(!cleanTick&&(tickDuplicate||tickOutOfOrder))return; /* V23: un tick tardío sigue siendo un dígito válido para la estadística; solo bloquea la ENTRADA */
+          if(!cleanTick) return;
           processTickForCandle(tick);
           const liveMarket=document.getElementById("liveMarket");
           if(liveMarket) liveMarket.innerHTML=`PRECIO EN VIVO: <strong>${tick.quote}</strong> &nbsp; | &nbsp; ÚLTIMO DÍGITO: <strong id="liveDigitBig" style="font-size:28px;color:#00ffcc">—</strong>`;
           const digit=extractLastDigit(tick);
-          if(digit!==null){window.__tickEpochMs=Number(tick.epoch)>0?Number(tick.epoch)*1000:0;processTick(digit);}
+          if(digit!==null)processTick(digit);
         }
       }catch(error){console.error('Error procesando tick',error)}
     };
@@ -4378,358 +4510,6 @@ connectDeriv(
 </script>
 
 
-<script id="v23-engine">
-/* =========================================================
-   V23 · MOTOR ESTADÍSTICO HONESTO
-   - Lee bien el último dígito (decimales por símbolo, sin perder ceros finales)
-   - Prueba χ² de uniformidad + binomial exacta con corrección por comparaciones múltiples
-   - Walk-forward real a 1 tick (lo mismo que compra el bot), con intervalo de Wilson
-   - Línea base correcta de las ventanas 4S/5S/7S/10S (1-(1-p)^ticks, no 10%)
-   - Puerta de entrada: MODO PRÁCTICA (demo) o MODO ESTRICTO (exige ventaja demostrada)
-   ========================================================= */
-(function(){
-'use strict';
-const ALPHA=0.05, WINDOW=500, HIST_MAX=1000, RTP=0.95;
-const BASE={matches:.10,even:.5,odd:.5,over:.5,under:.5};
-const MODES=['matches','even','odd','over','under'];
-const cond=(m,d)=>m==='even'?d%2===0:m==='odd'?d%2===1:m==='over'?d>4:m==='under'?d<=4:true;
-const clamp=(v,a=0,b=100)=>Math.max(a,Math.min(b,v));
-const mean=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
-const sd=a=>{if(a.length<2)return 0;const m=mean(a);return Math.sqrt(mean(a.map(x=>(x-m)**2)));};
-
-/* ---------- Estadística ---------- */
-function lgamma(x){
-  const c=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
-  if(x<0.5)return Math.log(Math.PI/Math.sin(Math.PI*x))-lgamma(1-x);
-  x-=1;let a=c[0];const t=x+7.5;
-  for(let i=1;i<9;i++)a+=c[i]/(x+i);
-  return 0.5*Math.log(2*Math.PI)+(x+0.5)*Math.log(t)-t+Math.log(a);
-}
-function gammaQ(a,x){ /* gamma incompleta regularizada superior */
-  if(x<=0)return 1;
-  if(x<a+1){
-    let ap=a,sum=1/a,del=sum;
-    for(let n=0;n<500;n++){ap++;del*=x/ap;sum+=del;if(Math.abs(del)<Math.abs(sum)*1e-14)break;}
-    return Math.max(0,1-sum*Math.exp(-x+a*Math.log(x)-lgamma(a)));
-  }
-  let b=x+1-a,c=1e300,d=1/b,h=d;
-  for(let i=1;i<500;i++){
-    const an=-i*(i-a);b+=2;d=an*d+b;if(Math.abs(d)<1e-300)d=1e-300;
-    c=b+an/c;if(Math.abs(c)<1e-300)c=1e-300;d=1/d;const del=d*c;h*=del;if(Math.abs(del-1)<1e-14)break;
-  }
-  return Math.min(1,Math.exp(-x+a*Math.log(x)-lgamma(a))*h);
-}
-const chi2sf=(x,df)=>gammaQ(df/2,x/2);
-function binomSf(k,n,p){ /* P(X>=k), exacta */
-  if(k<=0)return 1;if(k>n)return 0;
-  let t=Math.exp(lgamma(n+1)-lgamma(k+1)-lgamma(n-k+1)+k*Math.log(p)+(n-k)*Math.log(1-p));
-  let s=t;
-  for(let i=k;i<n;i++){t*=(n-i)/(i+1)*p/(1-p);s+=t;if(t<s*1e-16)break;}
-  return Math.min(1,s);
-}
-function wilson(k,n,z=1.96){
-  if(!n)return[0,1];
-  const p=k/n,z2=z*z,den=1+z2/n,ctr=p+z2/(2*n),rad=z*Math.sqrt((p*(1-p)+z2/(4*n))/n);
-  return[Math.max(0,(ctr-rad)/den),Math.min(1,(ctr+rad)/den)];
-}
-function entropyNorm(a,k){
-  if(!a.length)return 1;const c=Array(k).fill(0);a.forEach(x=>c[k===10?x:(x?1:0)]++);
-  return -c.filter(Boolean).reduce((s,n)=>{const q=n/a.length;return s+q*Math.log2(q);},0)/Math.log2(k);
-}
-
-/* ---------- Estado ---------- */
-const S={lastPreds:[],qHist:[],diag:{},hist:[],ver:0,symbol:null,maxSeen:0,gaps:[],lastTs:0,wf:{},cache:null,subs:[],strict:false,ledger:[],renderAt:0};
-function resetWF(){MODES.forEach(m=>{S.wf[m]={pending:null,all:{n:0,hits:0},open:{n:0,hits:0}};});}
-resetWF();
-try{S.strict=localStorage.getItem('v23_strict')==='1';}catch(e){}
-try{S.ledger=JSON.parse(localStorage.getItem('v23_ledger')||'[]');}catch(e){S.ledger=[];}
-
-/* ---------- Lectura correcta del dígito ---------- */
-function decimalsOf(tick){
-  let d=null;const ps=Number(tick&&tick.pip_size);
-  if(tick&&tick.pip_size!=null&&Number.isFinite(ps)){
-    if(ps>0&&ps<1)d=Math.round(-Math.log10(ps));          /* pip como valor (0.01) */
-    else if(Number.isInteger(ps)&&ps>=0&&ps<=10)d=ps;      /* pip como nº de decimales */
-  }
-  const m=String(tick&&tick.quote!=null?tick.quote:'').match(/\.(\d+)/);
-  const seen=m?m[1].length:0;
-  S.maxSeen=Math.max(S.maxSeen,seen);
-  return d!==null?Math.max(d,seen):Math.max(S.maxSeen,seen);
-}
-window.tickPrecision=function(tick){
-  const q=Number(tick&&tick.quote);if(!Number.isFinite(q))return null;return decimalsOf(tick);
-};
-window.extractLastDigit=function(tick){
-  if(!tick||tick.quote==null)return null;
-  const q=Number(tick.quote);if(!Number.isFinite(q))return null;
-  const s=q.toFixed(decimalsOf(tick));const d=Number(s[s.length-1]);
-  return Number.isInteger(d)&&d>=0&&d<=9?d:null;
-};
-
-/* ---------- Campos heredados (para no romper la UI antigua) ---------- */
-function legacy(pred,base,K){
-  const ws=[20,50,100].map(n=>S.hist.slice(-n));
-  const c=ws.map(a=>a.filter(pred).length);
-  const raw=ws.map((a,i)=>a.length?c[i]/a.length:0);
-  const sm=ws.map((a,i)=>(c[i]+1)/(a.length+K));
-  const z=ws.map((a,i)=>a.length?(raw[i]-base)/Math.sqrt(base*(1-base)/a.length):0);
-  const lo=ws.map((a,i)=>a.length?wilson(c[i],a.length)[0]:0);
-  return{c20:c[0],c50:c[1],c100:c[2],p20:sm[0],p50:sm[1],p100:sm[2],raw20:raw[0],raw50:raw[1],raw100:raw[2],
-    z20:z[0],z50:z[1],z100:z[2],lower20:lo[0],lower50:lo[1],lower100:lo[2],
-    frequencyScore:clamp(50+z[2]*12),momentumScore:clamp(50+(sm[0]-sm[2])*(K===10?220:170)),
-    consistencyScore:clamp(100-sd(sm)*(K===10?320:280)),recencyScore:clamp(50+z[0]*13),transitionScore:50};
-}
-
-/* ---------- Análisis de dígitos ---------- */
-function analyzeDigits(){
-  if(S.cache&&S.cache.ver===S.ver&&S.cache.digits)return S.cache.digits;
-  const n=Math.min(S.hist.length,WINDOW),w=S.hist.slice(-n);
-  const cnt=Array(10).fill(0);w.forEach(x=>cnt[x]++);
-  const E=n/10;let chi=0;if(n)cnt.forEach(c=>{chi+=(c-E)*(c-E)/E;});
-  const chiP=n>=50?chi2sf(chi,9):1;
-  const ent=entropyNorm(S.hist.slice(-100),10);
-  const out=[];
-  for(let d=0;d<10;d++){
-    const k=cnt[d],z=n?(k-E)/Math.sqrt(n*.09):0;
-    const pOne=n>=50?binomSf(k,n,.10):1,padj=Math.min(1,pOne*10);
-    const L=legacy(x=>x===d,.10,10);
-    const blend=0.5*L.z20+0.3*L.z50+0.2*L.z100;              /* ranking reactivo: 20/50/100 ticks */
-    const lp=S.lastPreds,rep=lp[lp.length-1]===d?7:lp[lp.length-2]===d?3:0;   /* variedad: no repetir el mismo dígito */
-    let gap=S.hist.length;for(let i=S.hist.length-1;i>=0;i--)if(S.hist[i]===d){gap=S.hist.length-1-i;break;}
-    out.push(Object.assign({digit:d,n,k,z,pval:pOne,padj,evidence:Math.round(100*(1-padj)),gap,entropy:ent,
-      stabilityScore:clamp(100-ent*55),score:clamp(50+12*blend-rep),blend},L));
-  }
-  out.sort((a,b)=>b.score-a.score||b.z-a.z);
-  out.meta={n,chi,df:9,p:chiP};
-  S.cache=Object.assign(S.cache&&S.cache.ver===S.ver?S.cache:{ver:S.ver},{digits:out});
-  return out;
-}
-function analyzeBinary(mode){
-  const n=Math.min(S.hist.length,WINDOW),w=S.hist.slice(-n);
-  const k=w.filter(x=>cond(mode,x)).length,p=n?k/n:.5,z=n?(p-.5)/Math.sqrt(.25/n):0;
-  const pOne=n>=50?binomSf(k,n,.5):1,padj=Math.min(1,pOne*2);
-  const L=legacy(x=>cond(mode,x),.5,2);
-  const ev=[L.p20,L.p50,L.p100].filter(x=>x>.5).length;
-  const ent=entropyNorm(S.hist.slice(-100).map(x=>cond(mode,x)?1:0),2);
-  return Object.assign({mode,baseline:.5,n,k,z,pval:pOne,padj,evidence:ev,evidenceP:Math.round(100*(1-padj)),entropy:ent,
-    stabilityScore:clamp(100-ent*25),score:clamp(50+12*(0.5*L.z20+0.3*L.z50+0.2*L.z100))},L);
-}
-
-/* ---------- Veredicto ---------- */
-function verdict(mode){
-  mode=mode||'matches';
-  const base=BASE[mode],be=base/RTP,wf=S.wf[mode];
-  let n,padj,z,k,label,chiP=null,digit=null;
-  if(mode==='matches'){
-    const A=analyzeDigits(),b=A[0];n=A.meta.n;padj=b.padj;z=b.z;k=b.k;digit=b.digit;chiP=A.meta.p;
-    label=n<50?'MUESTRA INSUFICIENTE':chiP<.01?'SESGO DETECTADO':chiP<.05?'INDICIO DÉBIL':'SIN SESGO DETECTABLE';
-  }else{
-    const B=analyzeBinary(mode);n=B.n;padj=B.padj;z=B.z;k=B.k;
-    label=n<50?'MUESTRA INSUFICIENTE':padj<.01?'SESGO DETECTADO':padj<.05?'INDICIO DÉBIL':'SIN SESGO DETECTABLE';
-  }
-  const signalOpen=n>=50&&z>0&&padj<ALPHA;
-  const openLo=wilson(wf.open.hits,wf.open.n,2.576)[0];
-  const edgeProven=wf.open.n>=100&&openLo>be;
-  return{mode,n,k,digit,z,padj,evidence:Math.round(100*(1-padj)),chiP,label,base,breakeven:be,
-    wfAll:wf.all,wfOpen:wf.open,wfOpenLower:openLo,signalOpen,edgeProven,gateOpen:signalOpen&&edgeProven};
-}
-function signalGate(mode){
-  if(!S.strict)return{pass:true};
-  const v=verdict(mode);
-  if(v.n<200)return{pass:false,reason:'ESTRICTO · MUESTRA INSUFICIENTE (mín. 200 ticks)',value:v.n,min:200};
-  if(!v.signalOpen)return{pass:false,reason:'ESTRICTO · SIN SESGO DETECTABLE (p ajustado '+v.padj.toFixed(2)+')',value:v.evidence,min:95};
-  if(!v.edgeProven)return{pass:false,reason:'ESTRICTO · VENTAJA NO DEMOSTRADA (walk-forward)',value:v.wfOpenLower*100,min:v.breakeven*100};
-  return{pass:true};
-}
-
-/* ---------- Ingesta de dígitos + walk-forward ---------- */
-function onDigit(d,ts){
-  if(!Number.isInteger(d)||d<0||d>9)return;
-  ts=ts||Date.now();
-  if(S.lastTs){const g=ts-S.lastTs;if(g>0&&g<10000){S.gaps.push(g);if(S.gaps.length>40)S.gaps.shift();}}
-  S.lastTs=ts;
-  if(S.pred&&S.pred.watch){const w=S.pred.watch;S.pred.n++;if(w.mode==='matches'?d===w.cand:cond(w.mode,d))S.pred.hits++;S.pred.watch=null;}
-  MODES.forEach(m=>{ /* 1) evaluar el candidato calculado ANTES de ver este dígito */
-    const w=S.wf[m],p=w.pending;if(!p)return;
-    const hit=m==='matches'?d===p.cand:cond(m,d);
-    w.all.n++;if(hit)w.all.hits++;
-    if(p.open){w.open.n++;if(hit)w.open.hits++;}
-    w.pending=null;
-  });
-  S.hist.push(d);if(S.hist.length>HIST_MAX)S.hist.shift();S.ver++;S.cache=null;
-  if(S.hist.length>=50){ /* 2) nuevos candidatos con datos hasta hoy */
-    const A=analyzeDigits();S.wf.matches.pending={cand:A[0].digit,open:A[0].padj<ALPHA&&A[0].z>0};
-    ['even','odd','over','under'].forEach(m=>{const B=analyzeBinary(m);S.wf[m].pending={cand:m,open:B.z>0&&B.padj<ALPHA};});
-  }
-  S.subs.forEach(f=>{try{f(d,ts);}catch(e){console.error(e);}});
-  scheduleRender();
-}
-function resetAll(){S.hist=[];S.ver++;S.cache=null;S.gaps=[];S.lastTs=0;S.maxSeen=0;resetWF();}
-
-/* ---------- Ledger de operaciones demo ---------- */
-function ledgerAdd(rec){
-  S.ledger.push(rec);if(S.ledger.length>300)S.ledger.shift();
-  try{localStorage.setItem('v23_ledger',JSON.stringify(S.ledger));}catch(e){}
-  scheduleRender();
-}
-function ledgerSave(){try{localStorage.setItem('v23_ledger',JSON.stringify(S.ledger));}catch(e){}scheduleRender();}
-function ledgerStats(){
-  let n=0,w=0,pnl=0,exp=0;
-  S.ledger.forEach(r=>{if(r.win==null)return;n++;if(r.win)w++;pnl+=Number(r.profit)||0;exp+=(BASE[r.mode]||.1)*(Number(r.payout)||0)-(Number(r.buy)||0);});
-  return{n,wins:w,pnl,expected:exp};
-}
-
-/* ---------- Motor de entrada ---------- */
-window.entryPointEngine=function(activeSecond=0){
-  const p=pendingPrediction;
-  const mode=p&&p.mode||document.getElementById('modeSelector')?.value||'matches';
-  const o10=multiWindows[10];
-  if(!activeSecond&&o10&&o10.state==='active')activeSecond=Math.min(10,Math.max(1,Math.floor((Date.now()-o10.start)/1000)+1));
-  const base=BASE[mode],v=verdict(mode),learned=bestHistoricalTiming();
-  const timingProven=!!learned&&learned.samples>=30&&wilson(Math.round(learned.rate/100*learned.samples),learned.samples,2.45)[0]>base;
-  const windows=MULTI_WINDOWS.map(w=>({w,st:multiWindows[w]?.stats||emptyMultiStats()}));
-  const liveOk=liveValidTicks>=LIVE_MIN_TICKS&&!syncLocked&&tickSequenceOk;
-  const latencyOk=estimatedLatencyMs===null||estimatedLatencyMs<=2500;
-  const sampleReady=recentDigits.length>=(S.strict?100:20);
-  const qualityScore=clamp(p?Number(p.quality)||0:0);
-  const rawGap=p?Number(p.difference)||0:0;
-  const gapNeed=mode==='matches'?3:1.25,gapOk=!!p&&rawGap>=gapNeed;
-  const target=timingProven?learned.second:(p?1:null);
-  const onTarget=!!activeSecond&&!!target&&(timingProven?activeSecond===target:true);
-  const preparing=timingProven&&!!activeSecond&&activeSecond===target-1;
-  const excess=windows.map(x=>{const n=Number(x.st.baseN)||0;return n<3?null:((Number(x.st.baseWins)||0)/n-(Number(x.st.baseSum)||0)/n)*100;});
-  const validRates=excess.filter(x=>x!==null);
-  const windowConsensus=validRates.length?validRates.filter(x=>x>0).length/validRates.length:0;
-  const enoughWindows=validRates.length>=2&&windowConsensus>=.5;
-  const bestWin=windows.filter(x=>x.st.signals>0).sort((a,b)=>multiRate(b.st)-multiRate(a.st)||b.st.signals-a.st.signals)[0]||null;
-  const statOk=S.strict?(v.signalOpen&&v.edgeProven):true;
-  if(p&&S.qHistId!==p.createdAt){S.qHistId=p.createdAt;S.qHist.push(qualityScore);if(S.qHist.length>40)S.qHist.shift();}
-  const srt=S.qHist.slice().sort((a,b)=>a-b),med=srt.length?srt[Math.floor(srt.length*0.5)]:0;
-  const rankOk=S.qHist.length<6||qualityScore>=med;          /* entra con las predicciones de fuerza igual o superior a la mediana reciente */
-  const predOk=!!p&&rankOk;
-  const stable=liveOk&&latencyOk&&sampleReady&&!!p&&predOk&&statOk;
-  const confirmed=stable&&onTarget;
-  const state=confirmed?'ENTRADA':preparing?'PREPARAR':(stable?'VALIDAR':'ESPERAR');
-  const evidenceScore=v.evidence;
-  const stabilityScore=sampleReady?clamp(100-(liveOk?0:50)-(latencyOk?0:25)):20;
-  const falseRisk=Math.round(clamp(v.padj*100));
-  let score=qualityScore*.3+evidenceScore*.3+stabilityScore*.2+(timingProven?100:50)*.2;
-  if(!liveOk)score-=35;if(!latencyOk)score-=15;if(!sampleReady)score-=15;score=clamp(score);
-  let reason;
-  if(!liveOk)reason='Flujo de ticks no confirmado: se necesitan 5 ticks válidos seguidos, sin duplicados, saltos ni retrasos.';
-  else if(!latencyOk)reason='Latencia alta: el tick que compras no sería el que ves.';
-  else if(!p)reason='Sin señal activa. El sistema observa.';
-  else if(!sampleReady)reason='Faltan ticks para estabilizar el cálculo.';
-  else if(!predOk)reason='Predicción emitida, pero es más débil que la mediana de las últimas ('+qualityScore.toFixed(0)+' < '+med.toFixed(0)+'): se espera una mejor para ENTRAR.';
-  else if(S.strict&&!v.signalOpen)reason='MODO ESTRICTO: no hay sesgo estadístico detectable (p ajustado '+v.padj.toFixed(2)+'). No entrar.';
-  else if(S.strict&&!v.edgeProven)reason='MODO ESTRICTO: sesgo posible, pero la ventaja no está demostrada a 1 tick (n='+v.wfOpen.n+').';
-  else if(confirmed)reason=S.strict?'Ventaja demostrada y flujo íntegro.':'MODO PRÁCTICA (demo): flujo íntegro y predicción en la mitad superior de las recientes. Sin ventaja demostrada: el resultado esperado sigue siendo negativo por el margen del pago.';
-  else reason=timingProven?'Esperando el segundo aprendido S'+target+'.':'Esperando confirmación.';
-  S.diag={liveOk,latencyOk,sampleReady,hasPred:!!p,predOk,statOk,strict:S.strict,lat:estimatedLatencyMs,liveTicks:liveValidTicks,locked:!!syncLocked};
-  const g={confirmed,bestSecond:target,bestWindow:bestWin?.w||null,confidence:qualityScore,historyRate:learned?.rate||null,gap:rawGap,score,state,falseRisk,
-    signalId:p?p.createdAt:null,mode,strict:S.strict,reason,timingProven};
-  entryGate=g;window.entryGate=g;
-  return{p,learned,windows,bestWin,liveOk,latencyOk,sampleReady,qualityScore,rawGap,gapOk,gapNeed,timingReady:timingProven,target,onTarget,preparing,
-    validRates,windowConsensus,historyScore:timingProven?100:0,windowScore:windowConsensus*100,stabilityScore,evidenceScore,timingScore22:timingProven?100:0,
-    score,falseRisk,enoughWindows,stable,confirmed,state};
-};
-(function(){const u=window.updateEntryPanel;if(typeof u!=='function')return;
-  window.updateEntryPanel=function(){let r;try{r=u.apply(this,arguments);}catch(e){console.error('updateEntryPanel',e);}
-    try{const el=document.getElementById('entryReason');if(el&&window.entryGate&&window.entryGate.reason)el.textContent=window.entryGate.reason;}catch(e){}
-    return r;};})();
-
-/* ---------- Sustituciones del motor matemático ---------- */
-window.analyzeAllDigits=analyzeDigits;
-window.calculateModeMetrics=analyzeBinary;
-window.timingAdjustedRate=function(stat){
-  if(!stat||!stat.signals)return 0;return wilson(Number(stat.wins)||0,Number(stat.signals)||0,2.45)[0]*100;
-};
-window.timingScore=function(stat){
-  if(!stat||!stat.signals)return 0;
-  const lo=wilson(Number(stat.wins)||0,Number(stat.signals)||0,2.45)[0];
-  return clamp(50+(lo-BASE[timingMode()])*250)*.7+clamp(Math.log10(1+stat.signals)/Math.log10(101)*100)*.3;
-};
-
-/* ---------- Contadores del filtro de integridad ---------- */
-(function(){const r=window.registerTickSync;if(typeof r!=='function')return;
-  S.accepted=0;S.rejected=0;
-  window.registerTickSync=function(t){const ok=r.apply(this,arguments);if(ok)S.accepted++;else S.rejected++;return ok;};})();
-
-/* ---------- ¿La predicción acierta de verdad? (siguiente tick tras emitirla) ---------- */
-S.pred={n:0,hits:0,watch:null};
-(function(){const s=window.startMultiEngine;if(typeof s!=='function')return;
-  window.startMultiEngine=function(predicted,score,mode){S.pred.watch={cand:predicted,mode};if(mode==='matches'){S.lastPreds.push(predicted);if(S.lastPreds.length>3)S.lastPreds.shift();S.cache=null;}return s.apply(this,arguments);};})();
-
-/* ---------- Ganchos ---------- */
-(function(){const pt=window.processTick;if(typeof pt!=='function')return;
-  window.processTick=function(d){try{onDigit(d,window.__tickEpochMs||undefined);}catch(e){console.error('V23',e);}return pt.apply(this,arguments);};})();
-(function(){const cd=window.connectDeriv;if(typeof cd!=='function')return;
-  S.symbol=document.getElementById('assetSelector')?.value||null;
-  window.connectDeriv=function(sym){
-    if(sym&&S.symbol!==sym){S.symbol=sym;resetAll();}
-    S.maxSeen=0;return cd.apply(this,arguments);};})();
-
-/* ---------- Panel ---------- */
-function period(){const g=S.gaps.slice().sort((a,b)=>a-b);return g.length?g[Math.floor(g.length/2)]/1000:null;}
-const pct=x=>(x*100).toFixed(1)+'%';
-function ci(o){if(!o.n)return'— (n=0)';const[lo,hi]=wilson(o.hits,o.n);return pct(o.hits/o.n)+' ['+pct(lo)+' – '+pct(hi)+'] n='+o.n;}
-function addPanel(){
-  if(document.getElementById('v23Panel'))return;
-  const st=document.createElement('style');
-  st.textContent='#mathUpgradePanel,#v21StatusPanel,#v22MathPanel{display:none!important}#v23Panel small{color:#8fb8d8}';
-  document.head.appendChild(st);
-  const box=document.createElement('section');box.id='v23Panel';box.className='panel';
-  box.style.cssText='margin:12px 0 14px;padding:14px;border:1px solid #00ffcc;border-radius:14px;background:linear-gradient(145deg,#06283a,#03121c);color:#dceaff;font-size:10px;line-height:1.5';
-  box.innerHTML='<h3 style="margin:0 0 6px;color:#00ffcc;font-size:12px">V23 · VEREDICTO ESTADÍSTICO</h3>'+
-    '<label style="display:block;margin-bottom:6px"><input type="checkbox" id="v23Strict" style="width:auto"> MODO ESTRICTO (solo entra con ventaja demostrada)</label>'+
-    '<div id="v23Text">Acumulando datos…</div>';
-  const anchor=document.querySelector('.top-hud');
-  if(anchor&&anchor.parentNode)anchor.parentNode.insertBefore(box,anchor.nextSibling);else document.body.prepend(box);
-  const cb=document.getElementById('v23Strict');cb.checked=S.strict;
-  cb.addEventListener('change',()=>{S.strict=cb.checked;try{localStorage.setItem('v23_strict',S.strict?'1':'0');}catch(e){}
-    if(typeof updateEntryPanel==='function')updateEntryPanel(0);render();});
-}
-function render(){
-  addPanel();const el=document.getElementById('v23Text');if(!el)return;
-  const mode=document.getElementById('modeSelector')?.value||'matches',v=verdict(mode),per=period(),L=ledgerStats();
-  const bias=mode==='matches'?'χ² uniformidad p='+(v.chiP<.001?'<0.001':v.chiP.toFixed(3)):'Condición '+mode.toUpperCase()+': '+v.k+'/'+v.n+' ('+pct(v.n?v.k/v.n:0)+')';
-  const cand=mode==='matches'?'Dígito más caliente: D'+v.digit+' ('+v.k+'/'+v.n+')':'Sesgo hacia '+mode.toUpperCase();
-  el.innerHTML=
-    '<b>Muestra:</b> '+v.n+' ticks'+(per?' · <b>período medido:</b> '+per.toFixed(1)+'s/tick':'')+'<br>'+
-    '<b>'+bias+'</b> → '+v.label+'<br>'+
-    cand+' · <b>p ajustado</b> '+v.padj.toFixed(2)+' <small>(≈ prob. de que sea azar tras comparar todos los candidatos)</small><br>'+
-    '<b>Acierto real a 1 tick</b> (walk-forward)<br>· todos los ticks: '+ci(v.wfAll)+'<br>· con puerta abierta: '+ci(v.wfOpen)+'<br>'+
-    '· azar '+pct(v.base)+' · equilibrio del pago ≥ '+pct(v.breakeven)+' <small>(asumiendo RTP 95%)</small><br>'+
-    (L.n?'<b>Demo:</b> '+L.n+' ops · '+L.wins+' aciertos ('+pct(L.wins/L.n)+') · P/L '+L.pnl.toFixed(2)+' USD · esperado por azar '+L.expected.toFixed(2)+'<br>':'')+
-    (S.pred.n?'<b>Predicciones emitidas:</b> '+S.pred.n+' · acierto en el siguiente tick: '+S.pred.hits+' ('+pct(S.pred.hits/S.pred.n)+') vs azar '+pct(v.base)+'<br>':'')+
-    (v.n<30||S.rejected>0?'<b>Flujo:</b> '+S.accepted+' ticks aceptados · '+S.rejected+' con aviso de integridad'+(v.n<20?' · faltan '+(20-v.n)+' para poder predecir':'')+'<br>':'')+
-    '<b>Bot:</b> '+why()+'<br>'+
-    '<b>PUERTA ESTADÍSTICA: '+(v.gateOpen?'ABIERTA':'CERRADA')+'</b> · modo '+(S.strict?'ESTRICTO':'PRÁCTICA')+
-    '<br><small>'+(v.gateOpen?'Hay evidencia de ventaja; sigue verificándola con más muestra.':'Sin ventaja demostrable: los dígitos pasados no predicen el siguiente tick si el generador es uniforme.')+'</small>';
-}
-function why(){
-  const d=S.diag||{},t=window.__demoTrader,f=[];
-  if(!t||!t.connected)f.push('bot sin conectar a DEMO');
-  else if(!t.armed)f.push('bot conectado pero NO activo');
-  if(d.locked)f.push('flujo de ticks bloqueado');else if(d.liveOk===false)f.push('flujo de ticks sin confirmar ('+(d.liveTicks||0)+' válidos)');
-  if(d.latencyOk===false)f.push('latencia alta ('+Math.round(d.lat||0)+' ms)');
-  if(d.sampleReady===false)f.push('faltan ticks de muestra');
-  if(!d.hasPred)f.push('sin predicción activa');
-  else if(d.predOk===false)f.push('predicción más débil que la mediana reciente');
-  if(d.strict&&d.statOk===false)f.push('modo estricto sin ventaja demostrada');
-  if(t&&t.busy)f.push('operación en curso');else if(t&&t.cooldownMs>0)f.push('enfriamiento '+Math.ceil(t.cooldownMs/1000)+'s');
-  return f.length?'<span style="color:#ffb84d">NO ENTRA POR: '+f.join(' · ')+'</span>':'<span style="color:#00ffcc">LISTO PARA ENTRAR</span>';
-}
-function scheduleRender(){const now=Date.now();if(now-S.renderAt<500)return;S.renderAt=now;try{render();}catch(e){console.error(e);}}
-setInterval(()=>{try{render();}catch(e){}},1000);
-setTimeout(()=>{try{render();}catch(e){}},400);
-
-window.V23={S,period:()=>{const p=(function(){const g=S.gaps.slice().sort((a,b)=>a-b);return g.length?g[Math.floor(g.length/2)]:null;})();return p;},analyzeDigits,analyzeBinary,verdict,signalGate,onDigit,wilson,chi2sf,binomSf,lgamma,ledgerAdd,ledgerSave,ledgerStats,
-  subscribe:f=>S.subs.push(f),get strict(){return S.strict;},BASE,RTP,cond};
-})();
-
-</script>
-
 <!-- ENTRY FOCUS V2 · TELEMETRÍA LOCAL -->
 <script>
 (function(){
@@ -4753,239 +4533,280 @@ window.V23={S,period:()=>{const p=(function(){const g=S.gaps.slice().sort((a,b)=
 </script>
 
 <script id="demo-trader-js">
-/* =========================================================
-   BOT DEMO V23 · EJECUCIÓN CONTROLADA
-   Cambios frente a la versión anterior:
-   - 1 operación por señal (antes enviaba 2 propuestas aunque el banner decía 1)
-   - Una sola disparada por señal (signalId); sin "puente manual" que se saltaba la puerta
-   - UNDER usa barrera 5 (gana con 0-4, igual que el análisis); antes barrera 4 (gana con 0-3)
-   - Compra al precio de la propuesta (ask_price) y calcula el punto de equilibrio real
-   - V24: la CONEXIÓN es automática (con credenciales guardadas); OPERAR solo si activas la casilla o pulsas ACTIVAR BOT
-   - Límites de sesión: nº de operaciones, racha de pérdidas, stop-loss y take-profit
-   - Ledger real (servidor; si no responde, liquidación local marcada como estimada)
-   ========================================================= */
+/* V23 · EJECUTOR SINCRONIZADO (solo DEMO)
+   Qué cambia frente a la versión anterior:
+   - Ya no entra al hacer clic en "INICIAR PREDICCIÓN" ni depende de que llegue un tick: compra en el
+     segundo exacto que marca el panel "ENTRADA MÁS FAVORABLE" (reloj propio, no reloj de ticks).
+   - La propuesta se pide con adelanto (PREFETCH_MS); en el segundo objetivo solo se envía la compra.
+   - Compensa la latencia (medida con ping y propuestas) y tiene ajuste fino en ms.
+   - Si el punto de entrada ya pasó, la señal se OMITE en vez de entrar tarde.
+   - Solo opera con una señal real (pendingPrediction) y con el flujo de ticks íntegro. */
 (()=>{
 'use strict';
 const $=id=>document.getElementById(id);
-const CFG={OPS_PER_SIGNAL:1,STAKE:1,MAX_OPS:60,MAX_LOSS_STREAK:6,STOP_LOSS:10,TAKE_PROFIT:15,SETTLE_TIMEOUT_MS:6000,BUSY_FAILSAFE_MS:9000};
-let sock=null,connected=false,armed=false,busy=false,reqSeq=1,cooldownUntil=0,firedFor=null,retryMs=1500,lastMsg='OFF',resumeArm=false,userStop=false,retryTimer=null;
-const SESS_KEY='dt_session',today=()=>new Date().toLocaleDateString('en-CA');
-function loadSess(){try{const j=JSON.parse(localStorage.getItem(SESS_KEY)||'null');if(j&&j.day===today())return j;}catch(e){}return null;}
-const S=Object.assign({ops:0,wins:0,losses:0,pnl:0,streak:0},(()=>{const j=loadSess();return j?{ops:j.ops|0,wins:j.wins|0,losses:j.losses|0,pnl:Number(j.pnl)||0,streak:j.streak|0}:{};})());
-function saveSess(){try{localStorage.setItem(SESS_KEY,JSON.stringify({day:today(),ops:S.ops,wins:S.wins,losses:S.losses,pnl:S.pnl,streak:S.streak}));}catch(e){}}
-function limitHit(mode){
-  if(S.pnl<=-CFG.STOP_LOSS)return 'STOP-LOSS alcanzado';
-  if(S.pnl>=CFG.TAKE_PROFIT)return 'TAKE-PROFIT alcanzado';
-  if(S.ops>=CFG.MAX_OPS)return 'límite de operaciones';
-  if(mode&&mode!=='matches'&&S.streak>=CFG.MAX_LOSS_STREAK)return 'racha de '+S.streak+' pérdidas'; /* en MATCHES perder ~90% es lo normal */
-  return null;
-}
-const pending=new Map(),open=new Map(),estimated=new Map();
+const store={
+  get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},
+  set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}
+};
 
-/* Casilla: OPERAR automáticamente al conectar (por defecto NO). La CONEXIÓN a la cuenta demo sí es automática si hay credenciales guardadas. */
-function autoOn(){const c=$('dtAuto');return c?c.checked:false;}
-(function(){
-  if($('dtAuto')||!$('dtRemember'))return;
-  const l=document.createElement('label');l.style.cssText='display:block;margin-top:4px';
-  l.innerHTML='<input id="dtAuto" type="checkbox" style="width:auto"> Operar automáticamente al conectar (por defecto apagado)';
-  $('dtRemember').parentNode.after(l);
-  let v='0';try{v=localStorage.getItem('dt_auto')||'0';}catch(e){}
-  $('dtAuto').checked=v==='1';
-  $('dtAuto').addEventListener('change',()=>{try{localStorage.setItem('dt_auto',$('dtAuto').checked?'1':'0');}catch(e){}});
-})();
-function ledgerEl(){
-  let el=$('dtLedger');
-  if(!el&&$('dtStatus')){el=document.createElement('div');el.id='dtLedger';el.style.cssText='margin-top:4px;color:#8fb8d8;font-size:10px';$('dtStatus').after(el);}
-  return el;
+/* ---------- Parámetros de entrada ---------- */
+const TRADES_PER_SIGNAL=2;   // igual que antes: 2 propuestas de US$1 por señal
+const FALLBACK_SECOND=4;     // si aún no hay segundo aprendido (el motor evalúa desde S4)
+const PREFETCH_MS=1800;      // adelanto con que se pide la propuesta
+const MAX_LAT_MS=400;        // tope de compensación de latencia
+const LATE_LIMIT_MS=600;     // si ya pasó más que esto del punto, se omite (no entra tarde)
+const PING_EVERY_MS=15000;
+const CONTRACTS={matches:'DIGITMATCH',even:'DIGITEVEN',odd:'DIGITODD',over:'DIGITOVER',under:'DIGITUNDER'};
+
+let sock=null,connected=false,connecting=false,armed=false,ops=0,reqSeq=1,cooldownUntil=0,rtt=null,retryMs=1500;
+let plan=null,lastSession=null,lastInfo='',msg='OFF',dot='';
+const reqs=new Map(),traded=new Set();
+
+/* ---------- Panel abrir / cerrar ---------- */
+const body=$('dtBody'),tgl=$('dtToggle');
+function setOpen(open,persist){
+  body.hidden=!open;
+  tgl.textContent=open?'▲ CERRAR':'▼ ABRIR';
+  tgl.setAttribute('aria-expanded',String(open));
+  if(persist!==false)store.set('dt_panel_open',open?'1':'0');
 }
-function status(t){
-  if(t)lastMsg=t;
-  if($('dtStatus'))$('dtStatus').textContent='Estado: '+lastMsg+' · operaciones: '+S.ops;
-  const mini=$('dtMini');if(mini)mini.textContent=lastMsg.slice(0,60)+' · P/L '+S.pnl.toFixed(2);
-  const el=ledgerEl();
-  if(el)el.textContent='P/L '+S.pnl.toFixed(2)+' USD · '+S.wins+'G/'+S.losses+'P · racha '+S.streak+' · límites: '+CFG.MAX_OPS+' ops, racha '+CFG.MAX_LOSS_STREAK+', SL -'+CFG.STOP_LOSS+', TP +'+CFG.TAKE_PROFIT;
+tgl.onclick=()=>setOpen(body.hidden);
+
+/* ---------- Estado visible (barra cerrada + panel abierto) ---------- */
+function render(){
+  const full='Estado: '+msg+' · operaciones: '+ops;
+  const st=$('dtStatus');if(st.textContent!==full)st.textContent=full;
+  const mt=msg+(ops?' · '+ops+' op.':'');
+  const mi=$('dtMini');if(mi.textContent!==mt){mi.textContent=mt;mi.title=mt}
+  const d=$('dtDot'),cls='dt-dot'+(dot?' '+dot:'');if(d.className!==cls)d.className=cls;
+  $('dtOn').style.display=(connected&&!armed)?'inline-block':'none';
+  $('dtStopMini').style.display=armed?'inline-block':'none';
 }
+function setMsg(t,d){msg=t;dot=d||'';render()}
+
+/* ---------- Utilidades ---------- */
+function appState(){
+  let ts=null,pp=null;
+  try{ts=timingSession}catch(e){}      // variables globales de la app principal
+  try{pp=pendingPrediction}catch(e){}
+  return {ts,pp};
+}
+function spec(pp){
+  const m=pp.mode||'matches',type=CONTRACTS[m];
+  if(!type)return null;
+  let barrier;
+  if(m==='matches'){
+    const d=Number(pp.digit);
+    if(!Number.isInteger(d)||d<0||d>9)return null;
+    barrier=String(d);
+  }else if(m==='over')barrier='4';    // gana si el último dígito es > 4  (igual que la señal)
+  else if(m==='under')barrier='5';    // gana si el último dígito es < 5   (igual que la señal)
+  return {m,type,barrier};
+}
+function sampleRtt(d){if(d>0&&d<3000)rtt=rtt==null?d:rtt*.7+d*.3}
 function send(o){
   if(!sock||sock.readyState!==1)throw Error('conexión demo no activa');
-  const id=reqSeq++;sock.send(JSON.stringify({...o,req_id:id}));return id;
-}
-const CONTRACT={matches:'DIGITMATCH',even:'DIGITEVEN',odd:'DIGITODD',over:'DIGITOVER',under:'DIGITUNDER'};
-function barrierFor(mode,digit){
-  if(mode==='matches')return String(digit);
-  if(mode==='over')return '4';   /* gana con 5-9 */
-  if(mode==='under')return '5';  /* gana con 0-4 */
-  return null;
-}
-function localWin(ctx,d){
-  switch(ctx.mode){
-    case 'matches':return d===ctx.digit;
-    case 'even':return d%2===0;
-    case 'odd':return d%2===1;
-    case 'over':return d>4;
-    case 'under':return d<5;
-  }
-  return false;
-}
-function off(why){armed=false;busy=false;status(why?('BOT OFF · '+why):(connected?'conectado DEMO · BOT OFF':'OFF'));}
-
-function settle(ctx,src,serverProfit){
-  if(ctx.done)return;ctx.done=true;
-  open.delete(String(ctx.cid));
-  let win=null,profit=null;
-  if(Number.isFinite(serverProfit)){profit=serverProfit;win=serverProfit>0;}
-  else if(ctx.localDigit!=null){win=localWin(ctx,ctx.localDigit);profit=win?ctx.payout-ctx.buyPrice:-ctx.buyPrice;src='local (estimado)';}
-  if(win!=null){
-    if(win){S.wins++;S.streak=0;}else{S.losses++;S.streak++;}
-    S.pnl+=profit;
-  }
-  const rec={t:Date.now(),mode:ctx.mode,digit:ctx.digit,type:ctx.type,barrier:ctx.barrier,buy:ctx.buyPrice,payout:ctx.payout,be:ctx.be,win,profit,src};
-  if(window.V23)V23.ledgerAdd(rec);
-  if(src!=='servidor')estimated.set(String(ctx.cid),{rec,win,profit}); /* se corrige cuando llegue el resultado real */
-  saveSess();
-  busy=false;cooldownUntil=Date.now()+Math.max(3,Number($('dtPause')?.value||3))*1000;
-  status(win==null?'operación sin resultado verificable':('resultado '+(win?'GANADA':'PERDIDA')+' '+(profit>=0?'+':'')+profit.toFixed(2)+' ('+src+')'));
-  const lim=limitHit(ctx.mode);if(lim)off(lim);
-}
-function reconcile(cid,est,profit){
-  estimated.delete(cid);
-  const win=profit>0;
-  if(est.win!=null){if(est.win)S.wins--;else S.losses--;S.pnl-=est.profit;}
-  if(win){S.wins++;if(est.win===false)S.streak=Math.max(0,S.streak-1);}
-  else{S.losses++;if(est.win!==false)S.streak++;}
-  S.pnl+=profit;
-  Object.assign(est.rec,{win,profit,src:'servidor (corregido)'});
-  saveSess();if(window.V23&&V23.ledgerSave)V23.ledgerSave();
-  status('resultado REAL del servidor: '+(win?'GANADA':'PERDIDA')+' '+(profit>=0?'+':'')+profit.toFixed(2)+' (corrige la estimación local)');
-  const lim=limitHit();if(lim&&armed)off(lim);
+  const id=reqSeq++;
+  sock.send(JSON.stringify({...o,req_id:id}));
+  return id;
 }
 
+/* ---------- Plan de entrada por señal ---------- */
+function makePlan(ts,pp,now){
+  const p={sk:String(ts.startMs),pp,skipped:false,done:false,fired:false,pre:false,need:TRADES_PER_SIGNAL,
+           ids:[],inflight:0,buysSent:0,bought:0,retries:0,errors:0};
+  const skip=t=>{p.skipped=true;setMsg('señal omitida · '+t,'wait');return p};
+  if(traded.has(p.sk))return skip('ya se operó esta señal');
+  const s=spec(pp);if(!s)return skip('modo sin contrato operable');
+  p.s=s;p.sym=$('assetSelector')?.value||'R_100';
+  const g=window.entryGate||{};
+  p.mode=$('dtEntry')?.value||'target';
+  let target=Number(g.bestSecond)||0;
+  p.learned=target>0;
+  if(!target){
+    if(p.mode==='strict')return skip('aún aprendiendo el segundo óptimo (modo estricto)');
+    target=FALLBACK_SECOND;
+  }
+  p.target=target;
+  const nudge=Number($('dtNudge')?.value||0)+Number($('dtDelay')?.value||0)*1000;
+  const comp=Math.min(MAX_LAT_MS,Math.max(0,(rtt||0)/2));
+  p.boundary=ts.startMs+(target-1)*1000;   // instante en que el panel entra en el segundo objetivo
+  p.fireAt=p.boundary+nudge-comp;           // se envía antes para que llegue justo en el punto
+  if(now>p.fireAt+LATE_LIMIT_MS)return skip('el punto S'+target+' ya había pasado');
+  if(p.fireAt<cooldownUntil)return skip('pausa entre ciclos activa');
+  return p;
+}
+function reqProposal(p,kind){
+  const o={proposal:1,amount:1,basis:'stake',contract_type:p.s.type,currency:'USD',
+           duration:Number($('dtDuration')?.value||1)||1,duration_unit:'t',underlying_symbol:p.sym};
+  if(p.s.barrier!==undefined)o.barrier=p.s.barrier;
+  try{
+    const id=send(o);
+    reqs.set(id,{kind,p,t0:performance.now()});
+    p.inflight++;
+  }catch(e){p.errors++;setMsg('error al enviar propuesta: '+e.message,'err')}
+}
+function sendBuy(p,proposalId){
+  try{
+    const id=send({buy:proposalId,price:1});
+    reqs.set(id,{kind:'buy',p,t0:performance.now(),sentAt:Date.now()});
+    p.buysSent++;
+  }catch(e){p.errors++;setMsg('error al enviar compra: '+e.message,'err')}
+}
+function flush(p){
+  while(p.ids.length&&p.buysSent<p.need)sendBuy(p,p.ids.shift());
+  const missing=p.need-p.buysSent-p.ids.length-p.inflight;   // propuestas que faltan (respaldo)
+  for(let i=0;i<missing;i++)reqProposal(p,'fb');
+}
+function abort(p,t){p.skipped=true;setMsg('señal omitida · '+t,'wait')}
+function fire(p,now){
+  const {ts,pp}=appState();
+  if(!ts||pp!==p.pp||String(ts.startMs)!==p.sk)return abort(p,'la señal se cerró antes del punto de entrada');
+  if(now>p.fireAt+LATE_LIMIT_MS)return abort(p,'demasiado tarde para S'+p.target+' (¿pestaña en segundo plano?)');
+  let locked=false;try{locked=!!syncLocked}catch(e){}
+  if(locked)return abort(p,'flujo de ticks no íntegro (bloqueado)');
+  if(p.mode==='strict'){
+    try{updateEntryPanel()}catch(e){}
+    const g=window.entryGate||{};
+    if(!g.readyIfOnTarget)return abort(p,'sin confirmación 🟢 en S'+p.target+' (score '+Math.round(g.score||0)+')');
+  }
+  p.fired=true;traded.add(p.sk);
+  setMsg('ENTRANDO en S'+p.target+' · enviando compra…','on');
+  flush(p);
+}
+
+/* ---------- Bucle principal (reloj propio, cada 15 ms) ---------- */
+function loop(){
+  if(!armed||!connected)return;
+  const now=Date.now(),{ts,pp}=appState();
+  if(!ts||!pp||!ts.startMs){
+    if(!plan||plan.skipped||plan.done)setMsg('DEMO conectado · ARMADO · esperando señal'+(lastInfo?' · última: '+lastInfo:''),'on');
+    return;
+  }
+  const sk=String(ts.startMs);
+  if(sk!==lastSession){lastSession=sk;plan=makePlan(ts,pp,now)}
+  if(!plan||plan.skipped||plan.done||plan.fired)return;
+  if(!plan.pre&&now>=plan.fireAt-PREFETCH_MS){plan.pre=true;for(let i=0;i<plan.need;i++)reqProposal(plan,'pre')}
+  if(now<plan.fireAt){
+    setMsg('ARMADO · entra en S'+plan.target+' → '+((plan.fireAt-now)/1000).toFixed(1)+'s'+
+           (plan.learned?'':' (S'+FALLBACK_SECOND+' por defecto: aún aprendiendo)'),'wait');
+    return;
+  }
+  fire(plan,now);
+}
+
+/* ---------- Mensajes del servidor ---------- */
 function onMessage(e){
-  let m;try{m=JSON.parse(e.data);}catch(err){return;}
-  const ctx=m.req_id!=null?pending.get(m.req_id):null;
-  if(m.error){if(ctx){pending.delete(m.req_id);busy=false;}status('error: '+(m.error.message||m.error.code||'desconocido'));return;}
-  if(m.msg_type==='proposal'&&m.proposal&&m.proposal.id&&ctx&&ctx.kind==='proposal'){
-    pending.delete(m.req_id);
-    const ask=Number(m.proposal.ask_price),payout=Number(m.proposal.payout);
-    if(!(ask>0)||!(payout>0)){busy=false;status('propuesta inválida');return;}
-    ctx.ask=ask;ctx.payout=payout;ctx.be=ask/payout;
-    if(window.V23&&V23.strict){
-      const v=V23.verdict(ctx.mode);
-      if(!v.edgeProven||v.wfOpenLower<=ctx.be){busy=false;status('ESTRICTO: compra cancelada (equilibrio '+(ctx.be*100).toFixed(1)+'% > ventaja demostrada)');return;}
-    }
-    try{const id=send({buy:m.proposal.id,price:ask});pending.set(id,{...ctx,kind:'buy'});}
-    catch(err){busy=false;status('error al comprar');}
+  let m;try{m=JSON.parse(e.data)}catch(_){return}
+  const rid=m.req_id!==undefined?m.req_id:m.echo_req?.req_id,r=reqs.get(rid);
+  if(r)reqs.delete(rid);
+  if(r&&r.kind==='ping'){if(!m.error)sampleRtt(performance.now()-r.t0);return}
+  if(!r){if(m.error)setMsg('error: '+m.error.message,'err');return}
+  const p=r.p;
+  if(r.kind==='pre'||r.kind==='fb'){
+    p.inflight--;
+    if(m.error||!m.proposal?.id){p.errors++;setMsg('error en propuesta: '+(m.error?.message||'sin id'),'err');return}
+    if(r.kind==='pre')sampleRtt(performance.now()-r.t0);
+    p.ids.push(m.proposal.id);
+    if(p.fired)flush(p);
     return;
   }
-  if(m.msg_type==='buy'&&m.buy&&ctx&&ctx.kind==='buy'){
-    pending.delete(m.req_id);
-    ctx.cid=m.buy.contract_id;ctx.buyPrice=Number(m.buy.buy_price)||ctx.ask;ctx.payout=Number(m.buy.payout)||ctx.payout;ctx.boughtAt=Date.now();ctx.boughtAtSrv=Number(m.buy.purchase_time)>0?Number(m.buy.purchase_time)*1000:0;ctx.localDigit=null;ctx.done=false;
-    open.set(String(ctx.cid),ctx);S.ops++;saveSess();status('operación DEMO abierta · $'+ctx.buyPrice.toFixed(2)+' · pago '+ctx.payout.toFixed(2));
-    try{send({proposal_open_contract:1,contract_id:ctx.cid,subscribe:1});}catch(err){}
-    setTimeout(()=>settle(ctx,'local',NaN),CFG.SETTLE_TIMEOUT_MS);
-    return;
-  }
-  if(m.msg_type==='proposal_open_contract'&&m.proposal_open_contract){
-    const c=m.proposal_open_contract,cid=String(c.contract_id),x=open.get(cid),est=estimated.get(cid);
-    if(c.is_sold===1||c.is_sold===true||c.status==='won'||c.status==='lost'){
-      let profit=Number(c.profit);
-      if(!Number.isFinite(profit)&&c.sell_price!=null)profit=Number(c.sell_price)-Number(c.buy_price);
-      if(x)settle(x,'servidor',profit);
-      else if(est&&Number.isFinite(profit))reconcile(cid,est,profit);
+  if(r.kind==='buy'){
+    if(m.error){
+      p.buysSent--;p.retries++;
+      const retry=p.retries<=p.need;
+      setMsg('error en compra: '+m.error.message+(retry?' · reintentando con propuesta nueva':''),'err');
+      if(retry)flush(p);
+      return;
     }
+    p.bought++;ops++;
+    cooldownUntil=Math.max(cooldownUntil,r.sentAt+Math.max(3,Number($('dtPause')?.value||3))*1000);
+    const off=Math.round(r.sentAt-p.boundary);
+    lastInfo='S'+p.target+' · envío '+(off>=0?'+':'')+off+' ms del punto · RTT '+(rtt?Math.round(rtt)+' ms':'—');
+    if(p.bought>=p.need)p.done=true;
+    setMsg('operación DEMO ejecutada · $1 · ('+p.bought+'/'+p.need+') · '+lastInfo,'on');
   }
 }
 
+/* ---------- Conexión ---------- */
+function ping(){
+  try{const id=send({ping:1});reqs.set(id,{kind:'ping',t0:performance.now()})}catch(e){}
+}
 async function connect(){
-  if(!$('dtConfirm').checked){status('bloqueado: confirma DEMO');return;}
+  if(connecting)return;
+  if(!$('dtConfirm').checked){setMsg('bloqueado: confirma que es cuenta DEMO','err');return}
   const token=$('dtToken').value.trim(),app=$('dtApp').value.trim();
-  if(!token||!app){status('faltan token demo o App ID');return;}
-  if($('dtRemember').checked){localStorage.setItem('dt_demo_token',token);localStorage.setItem('dt_demo_app',app);}
+  if(!token||!app){setMsg('faltan token demo o App ID','err');return}
+  if($('dtRemember').checked){store.set('dt_demo_token',token);store.set('dt_demo_app',app)}
+  connecting=true;
   try{
     const h={'Authorization':'Bearer '+token,'Deriv-App-ID':app};
     const r=await fetch('https://api.derivws.com/trading/v1/options/accounts',{headers:h});
-    const j=await r.json();if(!r.ok)throw Error('no se pudo verificar la cuenta demo');
+    const j=await r.json();
+    if(!r.ok)throw Error('no se pudo verificar la cuenta demo');
     const a=(j.data?.accounts||j.data||[]).find(x=>String(x.account_type||x.type||'').toLowerCase()==='demo');
     if(!a)throw Error('no se encontró cuenta DEMO');
     const id=a.account_id||a.id;
     const q=await fetch('https://api.derivws.com/trading/v1/options/accounts/'+encodeURIComponent(id)+'/otp',{method:'POST',headers:h});
     const z=await q.json();
     if(!q.ok||!z.data?.url||!/\/ws\/demo\?/.test(z.data.url))throw Error('no se obtuvo canal DEMO');
-    if(sock){resumeArm=resumeArm||(armed&&!userStop);try{sock.onclose=null;sock.onmessage=null;sock.onerror=null;sock.close();}catch(e){}sock=null;connected=false;armed=false;busy=false;pending.clear();}
-    sock=new WebSocket(z.data.url);
-    sock.onopen=()=>{connected=true;retryMs=1500;const lim=limitHit();armed=((autoOn()&&!userStop)||resumeArm)&&!lim;resumeArm=false;
-      status(lim?('conectado a DEMO · BOT OFF · '+lim):armed?'conectado a DEMO automáticamente · BOT ACTIVO · '+CFG.OPS_PER_SIGNAL+' operación por señal':'conectado a DEMO automáticamente · pulsa ACTIVAR BOT para operar');};
-    sock.onmessage=onMessage;
-    sock.onerror=()=>{connected=false;status('error de conexión DEMO');};
-    sock.onclose=()=>{resumeArm=armed&&!userStop;connected=false;armed=false;busy=false;status('desconectado · reintentando');
-      if($('dtRemember')?.checked&&localStorage.getItem('dt_demo_token')){if(retryTimer)clearTimeout(retryTimer);retryTimer=setTimeout(()=>{retryTimer=null;connect();},retryMs);retryMs=Math.min(30000,retryMs*2);}};
-  }catch(e){connected=false;status(e.message);}
+    if(sock){const old=sock;sock=null;try{old.close()}catch(e){}}
+    const my=new WebSocket(z.data.url);sock=my;
+    my.onopen=()=>{
+      if(sock!==my)return;
+      connected=true;armed=true;retryMs=1500;
+      plan=null;lastSession=null;
+      setMsg('conectado a DEMO · BOT ACTIVO','on');
+      setOpen(false);            // al conectar se cierra el panel para dejar la pantalla libre
+      ping();
+    };
+    my.onmessage=e=>{if(sock===my)onMessage(e)};
+    my.onerror=()=>{if(sock!==my)return;connected=false;setMsg('error de conexión DEMO','err')};
+    my.onclose=()=>{
+      if(sock!==my)return;
+      connected=false;armed=false;plan=null;
+      setMsg('desconectado','');
+      if($('dtRemember')?.checked&&store.get('dt_demo_token')){setTimeout(connect,retryMs);retryMs=Math.min(30000,retryMs*2)}
+    };
+  }catch(e){connected=false;setMsg(e.message,'err')}
+  finally{connecting=false}
 }
 function on(){
-  if(!connected){status('conecta DEMO primero');return;}
-  const lim=limitHit();if(lim){status('no se puede activar: '+lim+' (usa RESETEAR SESIÓN)');return;}
-  userStop=false;armed=true;status('BOT ACTIVO · '+CFG.OPS_PER_SIGNAL+' operación por señal');
+  if(!connected){setMsg('conecta DEMO primero','err');return}
+  armed=true;plan=null;lastSession=null;
+  setMsg('BOT ACTIVO · esperando señal','on');
+}
+function off(){
+  armed=false;plan=null;lastSession=null;
+  setMsg(connected?'conectado DEMO · BOT OFF':'OFF','');
 }
 
-function trade(){
-  if(!armed||!connected||busy||Date.now()<cooldownUntil)return;
-  const lim0=limitHit();if(lim0){off(lim0);return;}
-  const g=window.entryGate||{},sid=g.signalId;
-  if(!g.confirmed||!sid||sid===firedFor)return;
-  const p=pendingPrediction;if(!p||p.createdAt!==sid)return;
-  const mode=p.mode,type=CONTRACT[mode];if(!type)return;
-  if(mode==='matches'&&!Number.isInteger(p.digit))return;
-  const lim1=limitHit(mode);if(lim1){off(lim1);return;}
-  firedFor=sid;busy=true;
-  const delay=Math.max(0,Number($('dtDelay')?.value||0))*1000;
-  status('ENTRADA CONFIRMADA · '+(delay?'esperando '+delay/1000+'s':'enviando'));
-  setTimeout(()=>{
-    const now=window.entryGate;
-    if(!connected||!armed||!now||!now.confirmed||now.signalId!==sid){busy=false;status('entrada cancelada · señal vencida');return;}
-    const b=barrierFor(mode,p.digit);
-    const payload={proposal:1,amount:CFG.STAKE,basis:'stake',contract_type:type,currency:'USD',duration:1,duration_unit:'t',underlying_symbol:$('assetSelector')?.value||'R_100'};
-    if(b!==null)payload.barrier=b;
-    try{
-      for(let i=0;i<CFG.OPS_PER_SIGNAL;i++){const id=send(payload);pending.set(id,{kind:'proposal',mode,digit:p.digit,type,barrier:b,sid});}
-      status('propuesta enviada');
-    }catch(err){busy=false;status('error al enviar');return;}
-    setTimeout(()=>{if(busy&&open.size===0&&pending.size===0){busy=false;}},CFG.BUSY_FAILSAFE_MS);
-  },delay);
+/* ---------- Eventos y arranque ---------- */
+$('dtConnect').onclick=connect;
+$('dtOn').onclick=on;
+$('dtStop').onclick=off;
+$('dtStopMini').onclick=off;
+$('dtEntry').onchange=()=>store.set('dt_entry',$('dtEntry').value);
+$('dtNudge').onchange=()=>store.set('dt_nudge',$('dtNudge').value);
+
+setInterval(loop,15);
+setInterval(()=>{
+  if(connected)ping();
+  const t=performance.now();
+  reqs.forEach((v,k)=>{if(t-v.t0>30000)reqs.delete(k)});
+},PING_EVERY_MS);
+
+const savedT=store.get('dt_demo_token'),savedA=store.get('dt_demo_app');
+const savedEntry=store.get('dt_entry'),savedNudge=store.get('dt_nudge'),savedOpen=store.get('dt_panel_open');
+if(savedEntry&&[...$('dtEntry').options].some(o=>o.value===savedEntry))$('dtEntry').value=savedEntry;
+if(savedNudge!==null&&[...$('dtNudge').options].some(o=>o.value===savedNudge))$('dtNudge').value=savedNudge;
+setOpen(savedOpen===null?!(savedT&&savedA):savedOpen==='1',false);   // primera vez abierto; luego recuerda tu elección
+if(savedT&&savedA){
+  $('dtToken').value=savedT;$('dtApp').value=savedA;
+  $('dtRemember').checked=true;$('dtConfirm').checked=true;
+  setTimeout(connect,500);
 }
-
-$('dtConnect').onclick=connect;$('dtOn').onclick=on;$('dtStop').onclick=()=>{userStop=true;off();};
-(function(){const b=document.createElement('button');b.id='dtReset';b.type='button';b.textContent='RESETEAR SESIÓN';
-  b.onclick=()=>{off();S.ops=0;S.wins=0;S.losses=0;S.pnl=0;S.streak=0;userStop=false;estimated.clear();saveSess();status('sesión reiniciada (límites a cero)');};
-  $('dtStop').after(b);})();
-if(window.V23)V23.subscribe((d,ts)=>{
-  open.forEach(c=>{if(c.localDigit!=null)return;const after=(window.__tickEpochMs&&c.boughtAtSrv)?ts>c.boughtAtSrv:Date.now()>=c.boughtAt;if(after)c.localDigit=d;});
-  trade();
-});
-const savedT=localStorage.getItem('dt_demo_token'),savedA=localStorage.getItem('dt_demo_app');
-if(savedT&&savedA){$('dtToken').value=savedT;$('dtApp').value=savedA;$('dtRemember').checked=true;$('dtConfirm').checked=true;setTimeout(connect,500);}
-/* ---------- Panel plegable: 1 clic abre, 1 clic cierra ---------- */
-(function(){
-  const sec=$('demoTrader');if(!sec||$('dtToggle'))return;
-  const head=sec.querySelector('b');
-  const st=document.createElement('style');
-  st.textContent='#demoTrader .dt-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer}#demoTrader .dt-bar b{flex:1}#demoTrader #dtToggle{margin:0;padding:6px 12px;min-width:74px}#demoTrader #dtMini{display:block;margin-top:4px;font-size:10px;color:#8fb8d8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#demoTrader.dt-collapsed{padding:7px 11px;margin-bottom:8px}#demoTrader.dt-collapsed #dtBody{display:none}#demoTrader:not(.dt-collapsed) #dtMini{display:none}';
-  document.head.appendChild(st);
-  const body=document.createElement('div');body.id='dtBody';
-  Array.from(sec.childNodes).forEach(n=>{if(n!==head)body.appendChild(n);});
-  const bar=document.createElement('div');bar.className='dt-bar';
-  const btn=document.createElement('button');btn.id='dtToggle';btn.type='button';
-  const mini=document.createElement('span');mini.id='dtMini';
-  bar.appendChild(head);bar.appendChild(btn);
-  sec.appendChild(bar);sec.appendChild(mini);sec.appendChild(body);
-  function set(open){sec.classList.toggle('dt-collapsed',!open);btn.textContent=open?'▲ CERRAR':'▼ ABRIR';try{localStorage.setItem('dt_panel_open',open?'1':'0');}catch(e){}}
-  let saved=null;try{saved=localStorage.getItem('dt_panel_open');}catch(e){}
-  const hasCreds=!!(localStorage.getItem('dt_demo_token')&&localStorage.getItem('dt_demo_app'));
-  set(saved!==null?saved==='1':!hasCreds);   /* primera vez: abierto para poner el token; luego recuerda tu elección */
-  bar.addEventListener('click',()=>set(sec.classList.contains('dt-collapsed')));
-})();
-
-status();
-setInterval(trade,250);
-window.__demoTrader={S,CFG,get armed(){return armed;},get connected(){return connected;},get busy(){return busy;},get cooldownMs(){return Math.max(0,cooldownUntil-Date.now());}};
+render();
 })();
 
 </script></body>
