@@ -5,7 +5,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCANNER AZUL // MULTIWINDOW DIGIT ENGINE</title>
+<title>SCANNER AZUL V23 // MOTOR ESTADÍSTICO</title>
 <!-- V23 · CAMBIOS
  1. Lectura del dígito: decimales por símbolo (no pierde ceros finales); acepta pip_size como nº de decimales o como valor.
  2. Matemática: χ² de uniformidad + binomial exacta + corrección por comparaciones múltiples; se elimina el "gap ~9" (falacia del jugador).
@@ -604,7 +604,7 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 <div class="top-hud">
 
     <div class="brand">
-        SCANNER AZUL // MULTIWINDOW DIGIT ENGINE
+        SCANNER AZUL <span style="color:#ffe600">V23</span> // MOTOR ESTADÍSTICO
     </div>
 
     <div class="status">
@@ -1654,14 +1654,14 @@ function tickIntegrityCheck(tick){
   const precision=tickPrecision(tick);
   const quote=normalizedQuote(tick,precision);
   if(!Number.isFinite(quote)||precision===null)return {ok:false,reason:'precio o precisión inválidos'};
-  const age=Number.isFinite(epoch)&&epoch>0?Math.max(0,now-epoch):null;
+  const rawAge=Number.isFinite(epoch)&&epoch>0?now-epoch:null;if(rawAge!==null&&clockOffsetMs===null)clockOffsetMs=rawAge;const age=rawAge===null?null:Math.max(0,rawAge-clockOffsetMs); /* V23: edad relativa al desfase del reloj del dispositivo */
   const gap=lastTickReceiveMs?now-lastTickReceiveMs:null;
   const epochGap=Number.isFinite(epoch)&&lastTickEpochMs?epoch-lastTickEpochMs:null;
   const key=(Number.isFinite(epoch)&&epoch>0?String(epoch):'noepoch')+'|'+quote;
   const duplicate=key===lastTickKey;
   const outOfOrder=epochGap!==null&&epochGap<0;
   const badAge=age!==null&&age>MAX_TICK_AGE_MS;
-  const badGap=gap!==null&&gap>MAX_INTERARRIVAL_MS;
+  const per23=(window.V23&&V23.period)?V23.period():null;const badGap=gap!==null&&gap>Math.max(MAX_INTERARRIVAL_MS,per23?per23*3.2:0);
   const badEpochGap=epochGap!==null&&(epochGap<0||epochGap>5000);
   tickAgeMs=age; tickGapMs=gap; tickDuplicate=duplicate; tickOutOfOrder=outOfOrder;
   if(badAge)return {ok:false,reason:'tick atrasado ('+Math.round(age)+'ms)'};
@@ -3434,7 +3434,7 @@ function representativeDigitForMode(mode){
 
 function generatePrediction(fromBot=false){
   const mode=document.getElementById("modeSelector")?.value||"matches";
-  if(recentDigits.length<20){systemToast.textContent="NECESITAMOS AL MENOS 20 TICKS.";hablar(`Análisis solicitado en modo ${modeLabel(mode)}. No hay suficientes datos. Se necesitan al menos 20 ticks y actualmente hay ${recentDigits.length}.`);return;}
+  if(recentDigits.length<20){systemToast.textContent=`NECESITAMOS AL MENOS 20 TICKS (llevas ${recentDigits.length}). ${(document.getElementById("syncNote")?.textContent||"").slice(0,90)}`;hablar(`Análisis solicitado en modo ${modeLabel(mode)}. No hay suficientes datos. Se necesitan al menos 20 ticks y actualmente hay ${recentDigits.length}.`);return;}
   hablar(`Iniciando análisis completo. Activo ${document.getElementById("assetSelector")?.value||"actual"}. Modo ${modeLabel(mode)}. Hay ${recentDigits.length} ticks disponibles.`);
   if(multiActive||pendingPrediction!==null){systemToast.textContent="YA EXISTE UN CICLO ACTIVO.";if(fromBot&&botAuto)scheduleBotCycle(500);return;}
 
@@ -3989,7 +3989,7 @@ function connectDeriv(symbol){
         const tick=data.tick||((data.status==='TICK RECIBIDO')?data:null);
         if(tick&&tick.quote!==undefined){
           const cleanTick=registerTickSync(tick);
-          if(!cleanTick) return;
+          if(!cleanTick&&(tickDuplicate||tickOutOfOrder))return; /* V23: un tick tardío sigue siendo un dígito válido para la estadística; solo bloquea la ENTRADA */
           processTickForCandle(tick);
           const liveMarket=document.getElementById("liveMarket");
           if(liveMarket) liveMarket.innerHTML=`PRECIO EN VIVO: <strong>${tick.quote}</strong> &nbsp; | &nbsp; ÚLTIMO DÍGITO: <strong id="liveDigitBig" style="font-size:28px;color:#00ffcc">—</strong>`;
@@ -4683,6 +4683,11 @@ window.timingScore=function(stat){
   return clamp(50+(lo-BASE[timingMode()])*250)*.7+clamp(Math.log10(1+stat.signals)/Math.log10(101)*100)*.3;
 };
 
+/* ---------- Contadores del filtro de integridad ---------- */
+(function(){const r=window.registerTickSync;if(typeof r!=='function')return;
+  S.accepted=0;S.rejected=0;
+  window.registerTickSync=function(t){const ok=r.apply(this,arguments);if(ok)S.accepted++;else S.rejected++;return ok;};})();
+
 /* ---------- Ganchos ---------- */
 (function(){const pt=window.processTick;if(typeof pt!=='function')return;
   window.processTick=function(d){try{onDigit(d);}catch(e){console.error('V23',e);}return pt.apply(this,arguments);};})();
@@ -4724,6 +4729,7 @@ function render(){
     '<b>Acierto real a 1 tick</b> (walk-forward)<br>· todos los ticks: '+ci(v.wfAll)+'<br>· con puerta abierta: '+ci(v.wfOpen)+'<br>'+
     '· azar '+pct(v.base)+' · equilibrio del pago ≥ '+pct(v.breakeven)+' <small>(asumiendo RTP 95%)</small><br>'+
     (L.n?'<b>Demo:</b> '+L.n+' ops · '+L.wins+' aciertos ('+pct(L.wins/L.n)+') · P/L '+L.pnl.toFixed(2)+' USD · esperado por azar '+L.expected.toFixed(2)+'<br>':'')+
+    (v.n<30||S.rejected>0?'<b>Flujo:</b> '+S.accepted+' ticks aceptados · '+S.rejected+' con aviso de integridad'+(v.n<20?' · faltan '+(20-v.n)+' para poder predecir':'')+'<br>':'')+
     '<b>PUERTA ESTADÍSTICA: '+(v.gateOpen?'ABIERTA':'CERRADA')+'</b> · modo '+(S.strict?'ESTRICTO':'PRÁCTICA')+
     '<br><small>'+(v.gateOpen?'Hay evidencia de ventaja; sigue verificándola con más muestra.':'Sin ventaja demostrable: los dígitos pasados no predicen el siguiente tick si el generador es uniforme.')+'</small>';
 }
@@ -4731,7 +4737,7 @@ function scheduleRender(){const now=Date.now();if(now-S.renderAt<500)return;S.re
 setInterval(()=>{try{render();}catch(e){}},1000);
 setTimeout(()=>{try{render();}catch(e){}},400);
 
-window.V23={S,analyzeDigits,analyzeBinary,verdict,signalGate,onDigit,wilson,chi2sf,binomSf,lgamma,ledgerAdd,ledgerStats,
+window.V23={S,period:()=>{const p=(function(){const g=S.gaps.slice().sort((a,b)=>a-b);return g.length?g[Math.floor(g.length/2)]:null;})();return p;},analyzeDigits,analyzeBinary,verdict,signalGate,onDigit,wilson,chi2sf,binomSf,lgamma,ledgerAdd,ledgerStats,
   subscribe:f=>S.subs.push(f),get strict(){return S.strict;},BASE,RTP,cond};
 })();
 
