@@ -3436,6 +3436,7 @@ function generatePrediction(fromBot=false){
   const mode=document.getElementById("modeSelector")?.value||"matches";
   if(recentDigits.length<20){systemToast.textContent=`NECESITAMOS AL MENOS 20 TICKS (llevas ${recentDigits.length}). ${(document.getElementById("syncNote")?.textContent||"").slice(0,90)}`;hablar(`Análisis solicitado en modo ${modeLabel(mode)}. No hay suficientes datos. Se necesitan al menos 20 ticks y actualmente hay ${recentDigits.length}.`);return;}
   hablar(`Iniciando análisis completo. Activo ${document.getElementById("assetSelector")?.value||"actual"}. Modo ${modeLabel(mode)}. Hay ${recentDigits.length} ticks disponibles.`);
+  if(!multiActive&&pendingPrediction!==null)pendingPrediction=null; /* V23: recupera un ciclo trabado */
   if(multiActive||pendingPrediction!==null){systemToast.textContent="YA EXISTE UN CICLO ACTIVO.";if(fromBot&&botAuto)scheduleBotCycle(500);return;}
 
   pendingMode=mode;
@@ -3465,8 +3466,7 @@ function generatePrediction(fromBot=false){
   const requiredQuality=mode==='matches'?(recentDigits.length>=80?60:recentDigits.length>=50?58:55):50;
   const modeBaseline=mode==='matches'?0.10:0.50;
   const observed=best.p100;
-  const g23=(window.V23&&V23.signalGate)?V23.signalGate(mode):null;
-  if(g23&&!g23.pass){showNoSignal(g23.reason,g23.value,g23.min);if(fromBot&&botAuto)scheduleBotCycle(Number(document.getElementById('botDelaySelect')?.value||3000));return;}
+  const weak23=[]; /* V23: motivos de baja confianza; ya no bloquean la predicción, bloquean solo la entrada */
 
   if(mode!=='matches'){
     /* Modos binarios: no se bloquean por no superar 55% exacto.
@@ -3475,32 +3475,20 @@ function generatePrediction(fromBot=false){
        ENTRADA sigue siendo más exigente que el filtro de ANÁLISIS. */
     const edge=observed-modeBaseline;
     const binaryEvidence=Math.abs(Number(best.z100))>=0.35 || Math.abs(edge)>=0.025;
-    if(!binaryEvidence){
-      showNoSignal(`ESPERAR · ${modeLabel(mode)} SIN EVIDENCIA SUFICIENTE · ${(observed*100).toFixed(1)}% vs ${(modeBaseline*100).toFixed(0)}% BASE`,Math.abs(edge),0.025);
-      if(fromBot&&botAuto)scheduleBotCycle(Number(document.getElementById('botDelaySelect')?.value||3000));
-      return;
-    }
+    if(!binaryEvidence){weak23.push('evidencia binaria baja');}
   }
 
-  if(difference<requiredGap){
-    showNoSignal(mode==='matches'?"EVIDENCIA MATEMÁTICA INSUFICIENTE":`EVIDENCIA ${modeLabel(mode)} TODAVÍA CORTA`,difference,requiredGap);
-    if(fromBot&&botAuto)scheduleBotCycle(1000);
-    return;
-  }
-  if(quality<requiredQuality){
-    showNoSignal(mode==='matches'?"CALIDAD ESTADÍSTICA INSUFICIENTE":`CALIDAD ${modeLabel(mode)} TODAVÍA CORTA`,quality,requiredQuality);
-    if(fromBot&&botAuto)scheduleBotCycle(1000);
-    return;
-  }
+  if(difference<requiredGap){weak23.push('ventaja sobre #2 baja');}
+  if(quality<requiredQuality){weak23.push('calidad baja');}
 
   prediction.style.display="block";prediction.classList.remove("signal-bad");prediction.classList.add("signal-good");
-  document.querySelector(".pred-title").textContent=mode==="matches"?`SEÑAL POSITIVA — MATCHES · DÍGITO ${best.digit}`:`SEÑAL POSITIVA — ${modeLabel(mode)} · CONDICIÓN ACTIVA`;
+  document.querySelector(".pred-title").textContent=mode==="matches"?`${weak23.length?'PREDICCIÓN · CONFIANZA BAJA':'SEÑAL POSITIVA'} — MATCHES · DÍGITO ${best.digit}`:`${weak23.length?'PREDICCIÓN · CONFIANZA BAJA':'SEÑAL POSITIVA'} — ${modeLabel(mode)} · CONDICIÓN ACTIVA`;
   predDigit.textContent=mode==='matches'?best.digit:modeLabel(mode);
   predScore.textContent=`SCORE ${best.score.toFixed(2)}`;
   predQuality.textContent=`CALIDAD ${quality.toFixed(1)}/100`;
   predGap.textContent=mode==='matches'?`Ventaja sobre #2: ${difference.toFixed(2)}`:`PROB. 100T: ${(best.p100*100).toFixed(1)}% · BASE ${(modeBaseline*100).toFixed(0)}%`;
 
-  pendingPrediction={digit:best.digit,score:best.score,quality,difference,metrics:{frequency:best.frequencyScore,momentum:best.momentumScore,consistency:best.consistencyScore,stability:best.stabilityScore,recency:best.recencyScore},createdAt:Date.now(),matched:false,matchDigit:null,mode:pendingMode};
+  pendingPrediction={digit:best.digit,score:best.score,quality,difference,metrics:{frequency:best.frequencyScore,momentum:best.momentumScore,consistency:best.consistencyScore,stability:best.stabilityScore,recency:best.recencyScore},createdAt:Date.now(),matched:false,matchDigit:null,mode:pendingMode,weak:weak23.slice()};
   updateEntryPanel();
   startTimingSession();signals++;digitMemory[best.digit].signals++;document.getElementById("signalCount").textContent=signals;
   addSignalLog(best,"PENDIENTE");startMultiEngine(best.digit,best.score,pendingMode);startTimer();
@@ -4588,6 +4576,7 @@ function onDigit(d,ts){
   ts=ts||Date.now();
   if(S.lastTs){const g=ts-S.lastTs;if(g>0&&g<10000){S.gaps.push(g);if(S.gaps.length>40)S.gaps.shift();}}
   S.lastTs=ts;
+  if(S.pred&&S.pred.watch){const w=S.pred.watch;S.pred.n++;if(w.mode==='matches'?d===w.cand:cond(w.mode,d))S.pred.hits++;S.pred.watch=null;}
   MODES.forEach(m=>{ /* 1) evaluar el candidato calculado ANTES de ver este dígito */
     const w=S.wf[m],p=w.pending;if(!p)return;
     const hit=m==='matches'?d===p.cand:cond(m,d);
@@ -4641,7 +4630,8 @@ window.entryPointEngine=function(activeSecond=0){
   const enoughWindows=validRates.length>=2&&windowConsensus>=.5;
   const bestWin=windows.filter(x=>x.st.signals>0).sort((a,b)=>multiRate(b.st)-multiRate(a.st)||b.st.signals-a.st.signals)[0]||null;
   const statOk=S.strict?(v.signalOpen&&v.edgeProven):true;
-  const stable=liveOk&&latencyOk&&sampleReady&&!!p&&gapOk&&statOk;
+  const predOk=!!p&&!(p.weak&&p.weak.length);
+  const stable=liveOk&&latencyOk&&sampleReady&&!!p&&predOk&&statOk;
   const confirmed=stable&&onTarget;
   const state=confirmed?'ENTRADA':preparing?'PREPARAR':(stable?'VALIDAR':'ESPERAR');
   const evidenceScore=v.evidence;
@@ -4654,7 +4644,7 @@ window.entryPointEngine=function(activeSecond=0){
   else if(!latencyOk)reason='Latencia alta: el tick que compras no sería el que ves.';
   else if(!p)reason='Sin señal activa. El sistema observa.';
   else if(!sampleReady)reason='Faltan ticks para estabilizar el cálculo.';
-  else if(!gapOk)reason='Ventaja insuficiente frente al umbral del modo.';
+  else if(!predOk)reason='Predicción emitida con confianza baja ('+(p.weak||[]).join(', ')+'): se espera una mejor para ENTRAR.';
   else if(S.strict&&!v.signalOpen)reason='MODO ESTRICTO: no hay sesgo estadístico detectable (p ajustado '+v.padj.toFixed(2)+'). No entrar.';
   else if(S.strict&&!v.edgeProven)reason='MODO ESTRICTO: sesgo posible, pero la ventaja no está demostrada a 1 tick (n='+v.wfOpen.n+').';
   else if(confirmed)reason=S.strict?'Ventaja demostrada y flujo íntegro.':'MODO PRÁCTICA (demo): flujo íntegro y señal activa. Sin ventaja demostrada: el resultado esperado es negativo por el margen del pago.';
@@ -4667,7 +4657,7 @@ window.entryPointEngine=function(activeSecond=0){
     score,falseRisk,enoughWindows,stable,confirmed,state};
 };
 (function(){const u=window.updateEntryPanel;if(typeof u!=='function')return;
-  window.updateEntryPanel=function(){const r=u.apply(this,arguments);
+  window.updateEntryPanel=function(){let r;try{r=u.apply(this,arguments);}catch(e){console.error('updateEntryPanel',e);}
     try{const el=document.getElementById('entryReason');if(el&&window.entryGate&&window.entryGate.reason)el.textContent=window.entryGate.reason;}catch(e){}
     return r;};})();
 
@@ -4687,6 +4677,11 @@ window.timingScore=function(stat){
 (function(){const r=window.registerTickSync;if(typeof r!=='function')return;
   S.accepted=0;S.rejected=0;
   window.registerTickSync=function(t){const ok=r.apply(this,arguments);if(ok)S.accepted++;else S.rejected++;return ok;};})();
+
+/* ---------- ¿La predicción acierta de verdad? (siguiente tick tras emitirla) ---------- */
+S.pred={n:0,hits:0,watch:null};
+(function(){const s=window.startMultiEngine;if(typeof s!=='function')return;
+  window.startMultiEngine=function(predicted,score,mode){S.pred.watch={cand:predicted,mode};return s.apply(this,arguments);};})();
 
 /* ---------- Ganchos ---------- */
 (function(){const pt=window.processTick;if(typeof pt!=='function')return;
@@ -4729,6 +4724,7 @@ function render(){
     '<b>Acierto real a 1 tick</b> (walk-forward)<br>· todos los ticks: '+ci(v.wfAll)+'<br>· con puerta abierta: '+ci(v.wfOpen)+'<br>'+
     '· azar '+pct(v.base)+' · equilibrio del pago ≥ '+pct(v.breakeven)+' <small>(asumiendo RTP 95%)</small><br>'+
     (L.n?'<b>Demo:</b> '+L.n+' ops · '+L.wins+' aciertos ('+pct(L.wins/L.n)+') · P/L '+L.pnl.toFixed(2)+' USD · esperado por azar '+L.expected.toFixed(2)+'<br>':'')+
+    (S.pred.n?'<b>Predicciones emitidas:</b> '+S.pred.n+' · acierto en el siguiente tick: '+S.pred.hits+' ('+pct(S.pred.hits/S.pred.n)+') vs azar '+pct(v.base)+'<br>':'')+
     (v.n<30||S.rejected>0?'<b>Flujo:</b> '+S.accepted+' ticks aceptados · '+S.rejected+' con aviso de integridad'+(v.n<20?' · faltan '+(20-v.n)+' para poder predecir':'')+'<br>':'')+
     '<b>PUERTA ESTADÍSTICA: '+(v.gateOpen?'ABIERTA':'CERRADA')+'</b> · modo '+(S.strict?'ESTRICTO':'PRÁCTICA')+
     '<br><small>'+(v.gateOpen?'Hay evidencia de ventaja; sigue verificándola con más muestra.':'Sin ventaja demostrable: los dígitos pasados no predicen el siguiente tick si el generador es uniforme.')+'</small>';
