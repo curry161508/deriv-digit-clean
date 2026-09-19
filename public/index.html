@@ -4800,6 +4800,7 @@ function ledgerEl(){
 function status(t){
   if(t)lastMsg=t;
   if($('dtStatus'))$('dtStatus').textContent='Estado: '+lastMsg+' · operaciones: '+S.ops;
+  const mini=$('dtMini');if(mini)mini.textContent=lastMsg.slice(0,60)+' · P/L '+S.pnl.toFixed(2);
   const el=ledgerEl();
   if(el)el.textContent='P/L '+S.pnl.toFixed(2)+' USD · '+S.wins+'G/'+S.losses+'P · racha '+S.streak+' · límites: '+CFG.MAX_OPS+' ops, racha '+CFG.MAX_LOSS_STREAK+', SL -'+CFG.STOP_LOSS+', TP +'+CFG.TAKE_PROFIT;
 }
@@ -4940,6 +4941,27 @@ if(window.V23)V23.subscribe((d,ts)=>{
 });
 const savedT=localStorage.getItem('dt_demo_token'),savedA=localStorage.getItem('dt_demo_app');
 if(savedT&&savedA){$('dtToken').value=savedT;$('dtApp').value=savedA;$('dtRemember').checked=true;$('dtConfirm').checked=true;setTimeout(connect,500);}
+/* ---------- Panel plegable: 1 clic abre, 1 clic cierra ---------- */
+(function(){
+  const sec=$('demoTrader');if(!sec||$('dtToggle'))return;
+  const head=sec.querySelector('b');
+  const st=document.createElement('style');
+  st.textContent='#demoTrader .dt-bar{display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer}#demoTrader .dt-bar b{flex:1}#demoTrader #dtToggle{margin:0;padding:6px 12px;min-width:74px}#demoTrader #dtMini{display:block;margin-top:4px;font-size:10px;color:#8fb8d8;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#demoTrader.dt-collapsed{padding:7px 11px;margin-bottom:8px}#demoTrader.dt-collapsed #dtBody{display:none}#demoTrader:not(.dt-collapsed) #dtMini{display:none}';
+  document.head.appendChild(st);
+  const body=document.createElement('div');body.id='dtBody';
+  Array.from(sec.childNodes).forEach(n=>{if(n!==head)body.appendChild(n);});
+  const bar=document.createElement('div');bar.className='dt-bar';
+  const btn=document.createElement('button');btn.id='dtToggle';btn.type='button';
+  const mini=document.createElement('span');mini.id='dtMini';
+  bar.appendChild(head);bar.appendChild(btn);
+  sec.appendChild(bar);sec.appendChild(mini);sec.appendChild(body);
+  function set(open){sec.classList.toggle('dt-collapsed',!open);btn.textContent=open?'▲ CERRAR':'▼ ABRIR';try{localStorage.setItem('dt_panel_open',open?'1':'0');}catch(e){}}
+  let saved=null;try{saved=localStorage.getItem('dt_panel_open');}catch(e){}
+  const hasCreds=!!(localStorage.getItem('dt_demo_token')&&localStorage.getItem('dt_demo_app'));
+  set(saved!==null?saved==='1':!hasCreds);   /* primera vez: abierto para poner el token; luego recuerda tu elección */
+  bar.addEventListener('click',()=>set(sec.classList.contains('dt-collapsed')));
+})();
+
 status();
 setInterval(trade,250);
 window.__demoTrader={S,CFG,get armed(){return armed;},get connected(){return connected;}};
