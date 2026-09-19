@@ -5,7 +5,15 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCANNER AZUL V23 // MOTOR ESTADÍSTICO</title>
+<title>SCANNER AZUL V24 // MOTOR ESTADÍSTICO</title>
+<!-- V24 · CAMBIOS SOBRE V23
+ 1. El bot demo se CONECTA solo (si hay token guardado con "Recordar"), pero OPERAR es opcional: la casilla "Operar automáticamente" viene APAGADA.
+ 2. Límites de riesgo (stop-loss, take-profit, nº de ops, racha) se validan ANTES de cada compra y se guardan por día (sobreviven a recargar/reconectar).
+ 3. Si una operación se liquida de forma estimada, cuando llega el resultado real del servidor se CORRIGE el P/L y el ledger.
+ 4. Hora del tick = tick.epoch del servidor (no Date.now()).
+ 5. Reconexión: cierra el socket anterior, un solo temporizador, y respeta DETENER. Botón RESETEAR SESIÓN.
+ 6. Eliminadas las definiciones duplicadas de getBestTimingSecond / renderTimingStats.
+-->
 <!-- V23 · CAMBIOS
  1. Lectura del dígito: decimales por símbolo (no pierde ceros finales); acepta pip_size como nº de decimales o como valor.
  2. Matemática: χ² de uniformidad + binomial exacta + corrección por comparaciones múltiples; se elimina el "gap ~9" (falacia del jugador).
@@ -2168,44 +2176,6 @@ function timingScore(stat){
     return edgeScore*.75+sampleFactor*25;
 }
 
-function getBestTimingSecond(){
-    const candidates=timingStats
-        .map((stat,index)=>({stat,index,score:timingScore(stat)}))
-        .filter(x=>x.stat.signals>=TIMING_MIN_SAMPLES);
-    if(!candidates.length) return null;
-    candidates.sort((a,b)=>b.score-a.score);
-    return candidates[0];
-}
-
-function renderTimingStats(activeSecond=0){
-    const grid=document.getElementById("timingGrid");
-    const bestEl=document.getElementById("timingBest");
-    const liveEl=document.getElementById("timingLive");
-    if(!grid || !bestEl || !liveEl) return;
-
-    const best=getBestTimingSecond();
-    liveEl.textContent=activeSecond>0 ? `SEGUNDO ${activeSecond}/10` : (best ? "MOMENTO APRENDIDO" : "APRENDIENDO");
-
-    if(best){
-        const st=best.stat;
-        bestEl.innerHTML=`<strong>MEJOR MOMENTO: S${best.index+1}</strong> &nbsp; | &nbsp; RENDIMIENTO: ${timingRate(st).toFixed(1)}% (${st.wins}/${st.signals}) &nbsp; | &nbsp; SCORE MOMENTO: ${best.score.toFixed(1)}`;
-    }else{
-        const total=timingStats.reduce((a,x)=>a+x.signals,0);
-        bestEl.innerHTML=`<strong>MEJOR MOMENTO: --</strong> &nbsp; | &nbsp; ACUMULANDO DATOS DESDE S4 (${total} muestras; mínimo ${TIMING_MIN_SAMPLES} por segundo)`;
-    }
-
-    grid.innerHTML=timingStats.map((st,i)=>{
-        const rate=st.signals ? timingRate(st) : null;
-        const isBest=best && best.index===i;
-        const active=activeSecond===i+1;
-        return `<div class="timing-cell ${active?"active":""} ${isBest?"best":""}">
-            <div class="timing-sec">S${i+1}</div>
-            <div class="timing-rate">${rate===null?"--":rate.toFixed(0)+"%"}</div>
-            <div class="timing-sample">${st.signals?st.wins+"/"+st.signals:"--"}</div>
-        </div>`;
-    }).join("");
-}
-
 function timingConfidence(best, secondBest){
     if(!best) return {level:'débil', strong:false, gap:0};
     const gap=secondBest ? best.score-secondBest.score : best.score;
@@ -3482,7 +3452,7 @@ function generatePrediction(fromBot=false){
   if(quality<requiredQuality){weak23.push('calidad baja');}
 
   prediction.style.display="block";prediction.classList.remove("signal-bad");prediction.classList.add("signal-good");
-  document.querySelector(".pred-title").textContent=mode==="matches"?`${weak23.length?'PREDICCIÓN · CONFIANZA BAJA':'SEÑAL POSITIVA'} — MATCHES · DÍGITO ${best.digit}`:`${weak23.length?'PREDICCIÓN · CONFIANZA BAJA':'SEÑAL POSITIVA'} — ${modeLabel(mode)} · CONDICIÓN ACTIVA`;
+  document.querySelector(".pred-title").textContent=mode==="matches"?`PREDICCIÓN — MATCHES · DÍGITO ${best.digit}`:`PREDICCIÓN — ${modeLabel(mode)} · CONDICIÓN ACTIVA`;
   predDigit.textContent=mode==='matches'?best.digit:modeLabel(mode);
   predScore.textContent=`SCORE ${best.score.toFixed(2)}`;
   predQuality.textContent=`CALIDAD ${quality.toFixed(1)}/100`;
@@ -3982,7 +3952,7 @@ function connectDeriv(symbol){
           const liveMarket=document.getElementById("liveMarket");
           if(liveMarket) liveMarket.innerHTML=`PRECIO EN VIVO: <strong>${tick.quote}</strong> &nbsp; | &nbsp; ÚLTIMO DÍGITO: <strong id="liveDigitBig" style="font-size:28px;color:#00ffcc">—</strong>`;
           const digit=extractLastDigit(tick);
-          if(digit!==null)processTick(digit);
+          if(digit!==null){window.__tickEpochMs=Number(tick.epoch)>0?Number(tick.epoch)*1000:0;processTick(digit);}
         }
       }catch(error){console.error('Error procesando tick',error)}
     };
@@ -4468,7 +4438,7 @@ function entropyNorm(a,k){
 }
 
 /* ---------- Estado ---------- */
-const S={hist:[],ver:0,symbol:null,maxSeen:0,gaps:[],lastTs:0,wf:{},cache:null,subs:[],strict:false,ledger:[],renderAt:0};
+const S={lastPreds:[],qHist:[],diag:{},hist:[],ver:0,symbol:null,maxSeen:0,gaps:[],lastTs:0,wf:{},cache:null,subs:[],strict:false,ledger:[],renderAt:0};
 function resetWF(){MODES.forEach(m=>{S.wf[m]={pending:null,all:{n:0,hits:0},open:{n:0,hits:0}};});}
 resetWF();
 try{S.strict=localStorage.getItem('v23_strict')==='1';}catch(e){}
@@ -4523,9 +4493,11 @@ function analyzeDigits(){
     const k=cnt[d],z=n?(k-E)/Math.sqrt(n*.09):0;
     const pOne=n>=50?binomSf(k,n,.10):1,padj=Math.min(1,pOne*10);
     const L=legacy(x=>x===d,.10,10);
+    const blend=0.5*L.z20+0.3*L.z50+0.2*L.z100;              /* ranking reactivo: 20/50/100 ticks */
+    const lp=S.lastPreds,rep=lp[lp.length-1]===d?7:lp[lp.length-2]===d?3:0;   /* variedad: no repetir el mismo dígito */
     let gap=S.hist.length;for(let i=S.hist.length-1;i>=0;i--)if(S.hist[i]===d){gap=S.hist.length-1-i;break;}
     out.push(Object.assign({digit:d,n,k,z,pval:pOne,padj,evidence:Math.round(100*(1-padj)),gap,entropy:ent,
-      stabilityScore:clamp(100-ent*55),score:clamp(50+15*z)},L));
+      stabilityScore:clamp(100-ent*55),score:clamp(50+12*blend-rep),blend},L));
   }
   out.sort((a,b)=>b.score-a.score||b.z-a.z);
   out.meta={n,chi,df:9,p:chiP};
@@ -4540,7 +4512,7 @@ function analyzeBinary(mode){
   const ev=[L.p20,L.p50,L.p100].filter(x=>x>.5).length;
   const ent=entropyNorm(S.hist.slice(-100).map(x=>cond(mode,x)?1:0),2);
   return Object.assign({mode,baseline:.5,n,k,z,pval:pOne,padj,evidence:ev,evidenceP:Math.round(100*(1-padj)),entropy:ent,
-    stabilityScore:clamp(100-ent*25),score:clamp(50+15*z)},L);
+    stabilityScore:clamp(100-ent*25),score:clamp(50+12*(0.5*L.z20+0.3*L.z50+0.2*L.z100))},L);
 }
 
 /* ---------- Veredicto ---------- */
@@ -4600,6 +4572,7 @@ function ledgerAdd(rec){
   try{localStorage.setItem('v23_ledger',JSON.stringify(S.ledger));}catch(e){}
   scheduleRender();
 }
+function ledgerSave(){try{localStorage.setItem('v23_ledger',JSON.stringify(S.ledger));}catch(e){}scheduleRender();}
 function ledgerStats(){
   let n=0,w=0,pnl=0,exp=0;
   S.ledger.forEach(r=>{if(r.win==null)return;n++;if(r.win)w++;pnl+=Number(r.profit)||0;exp+=(BASE[r.mode]||.1)*(Number(r.payout)||0)-(Number(r.buy)||0);});
@@ -4616,7 +4589,7 @@ window.entryPointEngine=function(activeSecond=0){
   const timingProven=!!learned&&learned.samples>=30&&wilson(Math.round(learned.rate/100*learned.samples),learned.samples,2.45)[0]>base;
   const windows=MULTI_WINDOWS.map(w=>({w,st:multiWindows[w]?.stats||emptyMultiStats()}));
   const liveOk=liveValidTicks>=LIVE_MIN_TICKS&&!syncLocked&&tickSequenceOk;
-  const latencyOk=estimatedLatencyMs===null||estimatedLatencyMs<=1500;
+  const latencyOk=estimatedLatencyMs===null||estimatedLatencyMs<=2500;
   const sampleReady=recentDigits.length>=(S.strict?100:20);
   const qualityScore=clamp(p?Number(p.quality)||0:0);
   const rawGap=p?Number(p.difference)||0:0;
@@ -4630,7 +4603,10 @@ window.entryPointEngine=function(activeSecond=0){
   const enoughWindows=validRates.length>=2&&windowConsensus>=.5;
   const bestWin=windows.filter(x=>x.st.signals>0).sort((a,b)=>multiRate(b.st)-multiRate(a.st)||b.st.signals-a.st.signals)[0]||null;
   const statOk=S.strict?(v.signalOpen&&v.edgeProven):true;
-  const predOk=!!p&&!(p.weak&&p.weak.length);
+  if(p&&S.qHistId!==p.createdAt){S.qHistId=p.createdAt;S.qHist.push(qualityScore);if(S.qHist.length>40)S.qHist.shift();}
+  const srt=S.qHist.slice().sort((a,b)=>a-b),med=srt.length?srt[Math.floor(srt.length*0.5)]:0;
+  const rankOk=S.qHist.length<6||qualityScore>=med;          /* entra con las predicciones de fuerza igual o superior a la mediana reciente */
+  const predOk=!!p&&rankOk;
   const stable=liveOk&&latencyOk&&sampleReady&&!!p&&predOk&&statOk;
   const confirmed=stable&&onTarget;
   const state=confirmed?'ENTRADA':preparing?'PREPARAR':(stable?'VALIDAR':'ESPERAR');
@@ -4644,11 +4620,12 @@ window.entryPointEngine=function(activeSecond=0){
   else if(!latencyOk)reason='Latencia alta: el tick que compras no sería el que ves.';
   else if(!p)reason='Sin señal activa. El sistema observa.';
   else if(!sampleReady)reason='Faltan ticks para estabilizar el cálculo.';
-  else if(!predOk)reason='Predicción emitida con confianza baja ('+(p.weak||[]).join(', ')+'): se espera una mejor para ENTRAR.';
+  else if(!predOk)reason='Predicción emitida, pero es más débil que la mediana de las últimas ('+qualityScore.toFixed(0)+' < '+med.toFixed(0)+'): se espera una mejor para ENTRAR.';
   else if(S.strict&&!v.signalOpen)reason='MODO ESTRICTO: no hay sesgo estadístico detectable (p ajustado '+v.padj.toFixed(2)+'). No entrar.';
   else if(S.strict&&!v.edgeProven)reason='MODO ESTRICTO: sesgo posible, pero la ventaja no está demostrada a 1 tick (n='+v.wfOpen.n+').';
-  else if(confirmed)reason=S.strict?'Ventaja demostrada y flujo íntegro.':'MODO PRÁCTICA (demo): flujo íntegro y señal activa. Sin ventaja demostrada: el resultado esperado es negativo por el margen del pago.';
+  else if(confirmed)reason=S.strict?'Ventaja demostrada y flujo íntegro.':'MODO PRÁCTICA (demo): flujo íntegro y predicción en la mitad superior de las recientes. Sin ventaja demostrada: el resultado esperado sigue siendo negativo por el margen del pago.';
   else reason=timingProven?'Esperando el segundo aprendido S'+target+'.':'Esperando confirmación.';
+  S.diag={liveOk,latencyOk,sampleReady,hasPred:!!p,predOk,statOk,strict:S.strict,lat:estimatedLatencyMs,liveTicks:liveValidTicks,locked:!!syncLocked};
   const g={confirmed,bestSecond:target,bestWindow:bestWin?.w||null,confidence:qualityScore,historyRate:learned?.rate||null,gap:rawGap,score,state,falseRisk,
     signalId:p?p.createdAt:null,mode,strict:S.strict,reason,timingProven};
   entryGate=g;window.entryGate=g;
@@ -4681,11 +4658,11 @@ window.timingScore=function(stat){
 /* ---------- ¿La predicción acierta de verdad? (siguiente tick tras emitirla) ---------- */
 S.pred={n:0,hits:0,watch:null};
 (function(){const s=window.startMultiEngine;if(typeof s!=='function')return;
-  window.startMultiEngine=function(predicted,score,mode){S.pred.watch={cand:predicted,mode};return s.apply(this,arguments);};})();
+  window.startMultiEngine=function(predicted,score,mode){S.pred.watch={cand:predicted,mode};if(mode==='matches'){S.lastPreds.push(predicted);if(S.lastPreds.length>3)S.lastPreds.shift();S.cache=null;}return s.apply(this,arguments);};})();
 
 /* ---------- Ganchos ---------- */
 (function(){const pt=window.processTick;if(typeof pt!=='function')return;
-  window.processTick=function(d){try{onDigit(d);}catch(e){console.error('V23',e);}return pt.apply(this,arguments);};})();
+  window.processTick=function(d){try{onDigit(d,window.__tickEpochMs||undefined);}catch(e){console.error('V23',e);}return pt.apply(this,arguments);};})();
 (function(){const cd=window.connectDeriv;if(typeof cd!=='function')return;
   S.symbol=document.getElementById('assetSelector')?.value||null;
   window.connectDeriv=function(sym){
@@ -4726,14 +4703,28 @@ function render(){
     (L.n?'<b>Demo:</b> '+L.n+' ops · '+L.wins+' aciertos ('+pct(L.wins/L.n)+') · P/L '+L.pnl.toFixed(2)+' USD · esperado por azar '+L.expected.toFixed(2)+'<br>':'')+
     (S.pred.n?'<b>Predicciones emitidas:</b> '+S.pred.n+' · acierto en el siguiente tick: '+S.pred.hits+' ('+pct(S.pred.hits/S.pred.n)+') vs azar '+pct(v.base)+'<br>':'')+
     (v.n<30||S.rejected>0?'<b>Flujo:</b> '+S.accepted+' ticks aceptados · '+S.rejected+' con aviso de integridad'+(v.n<20?' · faltan '+(20-v.n)+' para poder predecir':'')+'<br>':'')+
+    '<b>Bot:</b> '+why()+'<br>'+
     '<b>PUERTA ESTADÍSTICA: '+(v.gateOpen?'ABIERTA':'CERRADA')+'</b> · modo '+(S.strict?'ESTRICTO':'PRÁCTICA')+
     '<br><small>'+(v.gateOpen?'Hay evidencia de ventaja; sigue verificándola con más muestra.':'Sin ventaja demostrable: los dígitos pasados no predicen el siguiente tick si el generador es uniforme.')+'</small>';
+}
+function why(){
+  const d=S.diag||{},t=window.__demoTrader,f=[];
+  if(!t||!t.connected)f.push('bot sin conectar a DEMO');
+  else if(!t.armed)f.push('bot conectado pero NO activo');
+  if(d.locked)f.push('flujo de ticks bloqueado');else if(d.liveOk===false)f.push('flujo de ticks sin confirmar ('+(d.liveTicks||0)+' válidos)');
+  if(d.latencyOk===false)f.push('latencia alta ('+Math.round(d.lat||0)+' ms)');
+  if(d.sampleReady===false)f.push('faltan ticks de muestra');
+  if(!d.hasPred)f.push('sin predicción activa');
+  else if(d.predOk===false)f.push('predicción más débil que la mediana reciente');
+  if(d.strict&&d.statOk===false)f.push('modo estricto sin ventaja demostrada');
+  if(t&&t.busy)f.push('operación en curso');else if(t&&t.cooldownMs>0)f.push('enfriamiento '+Math.ceil(t.cooldownMs/1000)+'s');
+  return f.length?'<span style="color:#ffb84d">NO ENTRA POR: '+f.join(' · ')+'</span>':'<span style="color:#00ffcc">LISTO PARA ENTRAR</span>';
 }
 function scheduleRender(){const now=Date.now();if(now-S.renderAt<500)return;S.renderAt=now;try{render();}catch(e){console.error(e);}}
 setInterval(()=>{try{render();}catch(e){}},1000);
 setTimeout(()=>{try{render();}catch(e){}},400);
 
-window.V23={S,period:()=>{const p=(function(){const g=S.gaps.slice().sort((a,b)=>a-b);return g.length?g[Math.floor(g.length/2)]:null;})();return p;},analyzeDigits,analyzeBinary,verdict,signalGate,onDigit,wilson,chi2sf,binomSf,lgamma,ledgerAdd,ledgerStats,
+window.V23={S,period:()=>{const p=(function(){const g=S.gaps.slice().sort((a,b)=>a-b);return g.length?g[Math.floor(g.length/2)]:null;})();return p;},analyzeDigits,analyzeBinary,verdict,signalGate,onDigit,wilson,chi2sf,binomSf,lgamma,ledgerAdd,ledgerSave,ledgerStats,
   subscribe:f=>S.subs.push(f),get strict(){return S.strict;},BASE,RTP,cond};
 })();
 
@@ -4769,7 +4760,7 @@ window.V23={S,period:()=>{const p=(function(){const g=S.gaps.slice().sort((a,b)=
    - Una sola disparada por señal (signalId); sin "puente manual" que se saltaba la puerta
    - UNDER usa barrera 5 (gana con 0-4, igual que el análisis); antes barrera 4 (gana con 0-3)
    - Compra al precio de la propuesta (ask_price) y calcula el punto de equilibrio real
-   - No se activa solo al conectar: hay que pulsar ACTIVAR BOT
+   - V24: la CONEXIÓN es automática (con credenciales guardadas); OPERAR solo si activas la casilla o pulsas ACTIVAR BOT
    - Límites de sesión: nº de operaciones, racha de pérdidas, stop-loss y take-profit
    - Ledger real (servidor; si no responde, liquidación local marcada como estimada)
    ========================================================= */
@@ -4777,18 +4768,28 @@ window.V23={S,period:()=>{const p=(function(){const g=S.gaps.slice().sort((a,b)=
 'use strict';
 const $=id=>document.getElementById(id);
 const CFG={OPS_PER_SIGNAL:1,STAKE:1,MAX_OPS:60,MAX_LOSS_STREAK:6,STOP_LOSS:10,TAKE_PROFIT:15,SETTLE_TIMEOUT_MS:6000,BUSY_FAILSAFE_MS:9000};
-let sock=null,connected=false,armed=false,busy=false,reqSeq=1,cooldownUntil=0,firedFor=null,retryMs=1500,lastMsg='OFF';
-const S={ops:0,wins:0,losses:0,pnl:0,streak:0};
-const pending=new Map(),open=new Map();
+let sock=null,connected=false,armed=false,busy=false,reqSeq=1,cooldownUntil=0,firedFor=null,retryMs=1500,lastMsg='OFF',resumeArm=false,userStop=false,retryTimer=null;
+const SESS_KEY='dt_session',today=()=>new Date().toLocaleDateString('en-CA');
+function loadSess(){try{const j=JSON.parse(localStorage.getItem(SESS_KEY)||'null');if(j&&j.day===today())return j;}catch(e){}return null;}
+const S=Object.assign({ops:0,wins:0,losses:0,pnl:0,streak:0},(()=>{const j=loadSess();return j?{ops:j.ops|0,wins:j.wins|0,losses:j.losses|0,pnl:Number(j.pnl)||0,streak:j.streak|0}:{};})());
+function saveSess(){try{localStorage.setItem(SESS_KEY,JSON.stringify({day:today(),ops:S.ops,wins:S.wins,losses:S.losses,pnl:S.pnl,streak:S.streak}));}catch(e){}}
+function limitHit(mode){
+  if(S.pnl<=-CFG.STOP_LOSS)return 'STOP-LOSS alcanzado';
+  if(S.pnl>=CFG.TAKE_PROFIT)return 'TAKE-PROFIT alcanzado';
+  if(S.ops>=CFG.MAX_OPS)return 'límite de operaciones';
+  if(mode&&mode!=='matches'&&S.streak>=CFG.MAX_LOSS_STREAK)return 'racha de '+S.streak+' pérdidas'; /* en MATCHES perder ~90% es lo normal */
+  return null;
+}
+const pending=new Map(),open=new Map(),estimated=new Map();
 
-/* Casilla: activar el bot automáticamente al conectar (por defecto SÍ; los límites de riesgo siguen vigentes) */
-function autoOn(){const c=$('dtAuto');return c?c.checked:true;}
+/* Casilla: OPERAR automáticamente al conectar (por defecto NO). La CONEXIÓN a la cuenta demo sí es automática si hay credenciales guardadas. */
+function autoOn(){const c=$('dtAuto');return c?c.checked:false;}
 (function(){
   if($('dtAuto')||!$('dtRemember'))return;
   const l=document.createElement('label');l.style.cssText='display:block;margin-top:4px';
-  l.innerHTML='<input id="dtAuto" type="checkbox" style="width:auto"> Activar bot automáticamente al conectar';
+  l.innerHTML='<input id="dtAuto" type="checkbox" style="width:auto"> Operar automáticamente al conectar (por defecto apagado)';
   $('dtRemember').parentNode.after(l);
-  let v='1';try{v=localStorage.getItem('dt_auto')||'1';}catch(e){}
+  let v='0';try{v=localStorage.getItem('dt_auto')||'0';}catch(e){}
   $('dtAuto').checked=v==='1';
   $('dtAuto').addEventListener('change',()=>{try{localStorage.setItem('dt_auto',$('dtAuto').checked?'1':'0');}catch(e){}});
 })();
@@ -4837,19 +4838,31 @@ function settle(ctx,src,serverProfit){
     if(win){S.wins++;S.streak=0;}else{S.losses++;S.streak++;}
     S.pnl+=profit;
   }
-  if(window.V23)V23.ledgerAdd({t:Date.now(),mode:ctx.mode,digit:ctx.digit,type:ctx.type,barrier:ctx.barrier,buy:ctx.buyPrice,payout:ctx.payout,be:ctx.be,win,profit,src});
+  const rec={t:Date.now(),mode:ctx.mode,digit:ctx.digit,type:ctx.type,barrier:ctx.barrier,buy:ctx.buyPrice,payout:ctx.payout,be:ctx.be,win,profit,src};
+  if(window.V23)V23.ledgerAdd(rec);
+  if(src!=='servidor')estimated.set(String(ctx.cid),{rec,win,profit}); /* se corrige cuando llegue el resultado real */
+  saveSess();
   busy=false;cooldownUntil=Date.now()+Math.max(3,Number($('dtPause')?.value||3))*1000;
   status(win==null?'operación sin resultado verificable':('resultado '+(win?'GANADA':'PERDIDA')+' '+(profit>=0?'+':'')+profit.toFixed(2)+' ('+src+')'));
-  if(S.pnl<=-CFG.STOP_LOSS)off('STOP-LOSS alcanzado');
-  else if(S.pnl>=CFG.TAKE_PROFIT)off('TAKE-PROFIT alcanzado');
-  else if(ctx.mode!=='matches'&&S.streak>=CFG.MAX_LOSS_STREAK)off('racha de '+S.streak+' pérdidas'); /* en MATCHES perder ~90% es lo normal: solo aplican SL y nº de ops */
-  else if(S.ops>=CFG.MAX_OPS)off('límite de operaciones');
+  const lim=limitHit(ctx.mode);if(lim)off(lim);
+}
+function reconcile(cid,est,profit){
+  estimated.delete(cid);
+  const win=profit>0;
+  if(est.win!=null){if(est.win)S.wins--;else S.losses--;S.pnl-=est.profit;}
+  if(win){S.wins++;if(est.win===false)S.streak=Math.max(0,S.streak-1);}
+  else{S.losses++;if(est.win!==false)S.streak++;}
+  S.pnl+=profit;
+  Object.assign(est.rec,{win,profit,src:'servidor (corregido)'});
+  saveSess();if(window.V23&&V23.ledgerSave)V23.ledgerSave();
+  status('resultado REAL del servidor: '+(win?'GANADA':'PERDIDA')+' '+(profit>=0?'+':'')+profit.toFixed(2)+' (corrige la estimación local)');
+  const lim=limitHit();if(lim&&armed)off(lim);
 }
 
 function onMessage(e){
   let m;try{m=JSON.parse(e.data);}catch(err){return;}
   const ctx=m.req_id!=null?pending.get(m.req_id):null;
-  if(m.error){if(ctx)pending.delete(m.req_id);busy=false;status('error: '+(m.error.message||m.error.code||'desconocido'));return;}
+  if(m.error){if(ctx){pending.delete(m.req_id);busy=false;}status('error: '+(m.error.message||m.error.code||'desconocido'));return;}
   if(m.msg_type==='proposal'&&m.proposal&&m.proposal.id&&ctx&&ctx.kind==='proposal'){
     pending.delete(m.req_id);
     const ask=Number(m.proposal.ask_price),payout=Number(m.proposal.payout);
@@ -4865,18 +4878,19 @@ function onMessage(e){
   }
   if(m.msg_type==='buy'&&m.buy&&ctx&&ctx.kind==='buy'){
     pending.delete(m.req_id);
-    ctx.cid=m.buy.contract_id;ctx.buyPrice=Number(m.buy.buy_price)||ctx.ask;ctx.payout=Number(m.buy.payout)||ctx.payout;ctx.boughtAt=Date.now();ctx.localDigit=null;ctx.done=false;
-    open.set(String(ctx.cid),ctx);S.ops++;status('operación DEMO abierta · $'+ctx.buyPrice.toFixed(2)+' · pago '+ctx.payout.toFixed(2));
+    ctx.cid=m.buy.contract_id;ctx.buyPrice=Number(m.buy.buy_price)||ctx.ask;ctx.payout=Number(m.buy.payout)||ctx.payout;ctx.boughtAt=Date.now();ctx.boughtAtSrv=Number(m.buy.purchase_time)>0?Number(m.buy.purchase_time)*1000:0;ctx.localDigit=null;ctx.done=false;
+    open.set(String(ctx.cid),ctx);S.ops++;saveSess();status('operación DEMO abierta · $'+ctx.buyPrice.toFixed(2)+' · pago '+ctx.payout.toFixed(2));
     try{send({proposal_open_contract:1,contract_id:ctx.cid,subscribe:1});}catch(err){}
     setTimeout(()=>settle(ctx,'local',NaN),CFG.SETTLE_TIMEOUT_MS);
     return;
   }
   if(m.msg_type==='proposal_open_contract'&&m.proposal_open_contract){
-    const c=m.proposal_open_contract,x=open.get(String(c.contract_id));
-    if(x&&(c.is_sold===1||c.is_sold===true||c.status==='won'||c.status==='lost')){
+    const c=m.proposal_open_contract,cid=String(c.contract_id),x=open.get(cid),est=estimated.get(cid);
+    if(c.is_sold===1||c.is_sold===true||c.status==='won'||c.status==='lost'){
       let profit=Number(c.profit);
       if(!Number.isFinite(profit)&&c.sell_price!=null)profit=Number(c.sell_price)-Number(c.buy_price);
-      settle(x,'servidor',profit);
+      if(x)settle(x,'servidor',profit);
+      else if(est&&Number.isFinite(profit))reconcile(cid,est,profit);
     }
   }
 }
@@ -4896,27 +4910,31 @@ async function connect(){
     const q=await fetch('https://api.derivws.com/trading/v1/options/accounts/'+encodeURIComponent(id)+'/otp',{method:'POST',headers:h});
     const z=await q.json();
     if(!q.ok||!z.data?.url||!/\/ws\/demo\?/.test(z.data.url))throw Error('no se obtuvo canal DEMO');
+    if(sock){resumeArm=resumeArm||(armed&&!userStop);try{sock.onclose=null;sock.onmessage=null;sock.onerror=null;sock.close();}catch(e){}sock=null;connected=false;armed=false;busy=false;pending.clear();}
     sock=new WebSocket(z.data.url);
-    sock.onopen=()=>{connected=true;retryMs=1500;S.streak=0;armed=autoOn();status(armed?'conectado a DEMO · BOT ACTIVO (automático) · '+CFG.OPS_PER_SIGNAL+' operación por señal':'conectado a DEMO · pulsa ACTIVAR BOT para operar');};
+    sock.onopen=()=>{connected=true;retryMs=1500;const lim=limitHit();armed=((autoOn()&&!userStop)||resumeArm)&&!lim;resumeArm=false;
+      status(lim?('conectado a DEMO · BOT OFF · '+lim):armed?'conectado a DEMO automáticamente · BOT ACTIVO · '+CFG.OPS_PER_SIGNAL+' operación por señal':'conectado a DEMO automáticamente · pulsa ACTIVAR BOT para operar');};
     sock.onmessage=onMessage;
     sock.onerror=()=>{connected=false;status('error de conexión DEMO');};
-    sock.onclose=()=>{connected=false;armed=false;status('desconectado');
-      if($('dtRemember')?.checked&&localStorage.getItem('dt_demo_token')){setTimeout(connect,retryMs);retryMs=Math.min(30000,retryMs*2);}};
+    sock.onclose=()=>{resumeArm=armed&&!userStop;connected=false;armed=false;busy=false;status('desconectado · reintentando');
+      if($('dtRemember')?.checked&&localStorage.getItem('dt_demo_token')){if(retryTimer)clearTimeout(retryTimer);retryTimer=setTimeout(()=>{retryTimer=null;connect();},retryMs);retryMs=Math.min(30000,retryMs*2);}};
   }catch(e){connected=false;status(e.message);}
 }
 function on(){
   if(!connected){status('conecta DEMO primero');return;}
-  S.streak=0;armed=true;status('BOT ACTIVO · '+CFG.OPS_PER_SIGNAL+' operación por señal');
+  const lim=limitHit();if(lim){status('no se puede activar: '+lim+' (usa RESETEAR SESIÓN)');return;}
+  userStop=false;armed=true;status('BOT ACTIVO · '+CFG.OPS_PER_SIGNAL+' operación por señal');
 }
 
 function trade(){
   if(!armed||!connected||busy||Date.now()<cooldownUntil)return;
+  const lim0=limitHit();if(lim0){off(lim0);return;}
   const g=window.entryGate||{},sid=g.signalId;
   if(!g.confirmed||!sid||sid===firedFor)return;
   const p=pendingPrediction;if(!p||p.createdAt!==sid)return;
   const mode=p.mode,type=CONTRACT[mode];if(!type)return;
   if(mode==='matches'&&!Number.isInteger(p.digit))return;
-  if(S.ops>=CFG.MAX_OPS){off('límite de operaciones');return;}
+  const lim1=limitHit(mode);if(lim1){off(lim1);return;}
   firedFor=sid;busy=true;
   const delay=Math.max(0,Number($('dtDelay')?.value||0))*1000;
   status('ENTRADA CONFIRMADA · '+(delay?'esperando '+delay/1000+'s':'enviando'));
@@ -4934,9 +4952,12 @@ function trade(){
   },delay);
 }
 
-$('dtConnect').onclick=connect;$('dtOn').onclick=on;$('dtStop').onclick=()=>off();
+$('dtConnect').onclick=connect;$('dtOn').onclick=on;$('dtStop').onclick=()=>{userStop=true;off();};
+(function(){const b=document.createElement('button');b.id='dtReset';b.type='button';b.textContent='RESETEAR SESIÓN';
+  b.onclick=()=>{off();S.ops=0;S.wins=0;S.losses=0;S.pnl=0;S.streak=0;userStop=false;estimated.clear();saveSess();status('sesión reiniciada (límites a cero)');};
+  $('dtStop').after(b);})();
 if(window.V23)V23.subscribe((d,ts)=>{
-  open.forEach(c=>{if(c.localDigit==null&&ts>=c.boughtAt)c.localDigit=d;});
+  open.forEach(c=>{if(c.localDigit!=null)return;const after=(window.__tickEpochMs&&c.boughtAtSrv)?ts>c.boughtAtSrv:Date.now()>=c.boughtAt;if(after)c.localDigit=d;});
   trade();
 });
 const savedT=localStorage.getItem('dt_demo_token'),savedA=localStorage.getItem('dt_demo_app');
@@ -4964,7 +4985,7 @@ if(savedT&&savedA){$('dtToken').value=savedT;$('dtApp').value=savedA;$('dtRememb
 
 status();
 setInterval(trade,250);
-window.__demoTrader={S,CFG,get armed(){return armed;},get connected(){return connected;}};
+window.__demoTrader={S,CFG,get armed(){return armed;},get connected(){return connected;},get busy(){return busy;},get cooldownMs(){return Math.max(0,cooldownUntil-Date.now());}};
 })();
 
 </script></body>
