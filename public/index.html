@@ -1750,7 +1750,7 @@ function registerTickSync(tick){
   return check.ok;
 }
 /* ===== V23 · PUNTO DE ENTRADA PRECISO ===== */
-const ENTRY_MIN_SECOND=4; /* el motor siempre dijo "evaluando desde S4"; el parche V22 había perdido ese mínimo y el bot podía entrar en S1-S3 (demasiado pronto) */
+const ENTRY_MIN_SECOND=2; /* segundo mínimo de entrada (S1 nunca; el parche V22 había perdido el mínimo del motor) */
 function bestHistoricalTiming(){
   let best=null;
   timingStats.forEach((stat,index)=>{
@@ -2286,7 +2286,7 @@ function renderTimingStats(activeSecond=0){
         bestEl.innerHTML=`<strong>MEJOR MOMENTO: S${best.index+1}</strong> &nbsp; | &nbsp; RENDIMIENTO: ${timingRate(st).toFixed(1)}% (${st.wins}/${st.signals}) &nbsp; | &nbsp; SCORE MOMENTO: ${best.score.toFixed(1)}`;
     }else{
         const total=timingStats.reduce((a,x)=>a+x.signals,0);
-        bestEl.innerHTML=`<strong>MEJOR MOMENTO: --</strong> &nbsp; | &nbsp; ACUMULANDO DATOS DESDE S4 (${total} muestras; mínimo ${TIMING_MIN_SAMPLES} por segundo)`;
+        bestEl.innerHTML=`<strong>MEJOR MOMENTO: --</strong> &nbsp; | &nbsp; ACUMULANDO DATOS DESDE S2 (${total} muestras; mínimo ${TIMING_MIN_SAMPLES} por segundo)`;
     }
 
     grid.innerHTML=timingStats.map((st,i)=>{
@@ -2332,11 +2332,11 @@ function renderTimingStats(activeSecond=0){
     if(!grid || !bestEl || !liveEl) return;
     const candidates=getAvailableTimingCandidates(), best=getBestTimingSecond(), secondBest=candidates[1];
     const conf=timingConfidence(best,secondBest);
-    liveEl.textContent=activeSecond>0 ? `SEGUNDO ${activeSecond}/10 · EVALUANDO DESDE S4` : (best ? 'MOMENTO APRENDIDO' : 'ESPERANDO DATOS');
+    liveEl.textContent=activeSecond>0 ? `SEGUNDO ${activeSecond}/10 · EVALUANDO DESDE S2` : (best ? 'MOMENTO APRENDIDO' : 'ESPERANDO DATOS');
     if(best){
       const st=best.stat;
       bestEl.innerHTML=`<strong>MEJOR MOMENTO: S${best.index+1}</strong> | PROBABILIDAD ESTIMADA: ${timingRate(st).toFixed(1)}% | CONFIANZA: ${conf.level.toUpperCase()} | VENTAJA: ${conf.gap.toFixed(1)} puntos`;
-    }else bestEl.innerHTML='<strong>MEJOR MOMENTO: --</strong> | ESPERANDO DATOS SUFICIENTES DESDE S4';
+    }else bestEl.innerHTML='<strong>MEJOR MOMENTO: --</strong> | ESPERANDO DATOS SUFICIENTES DESDE S2';
     grid.innerHTML=timingStats.map((st,i)=>{const rate=st.signals?timingRate(st):null;return `<div class="timing-cell ${activeSecond===i+1?'active':''} ${best&&best.index===i?'best':''}"><div class="timing-sec">S${i+1}</div><div class="timing-rate">${rate===null?'--':rate.toFixed(0)+'%'}</div><div class="timing-sample">${st.signals?st.wins+'/'+st.signals:'--'}</div></div>`}).join('');
     renderTimingHistory();
 }
@@ -2380,7 +2380,7 @@ function processTimingTick(digit){
         hablar(`Entrada estimada confirmada por los datos: ${margin}. Confianza fuerte, ${timingRate(best.stat).toFixed(1)} por ciento.`); timingSession.lastAnnouncedSecond=best.index+1;
       }
       document.getElementById('timingBest').innerHTML=`<strong>MEJOR PROBABILIDAD ACTUAL: S${best.index+1}</strong> | ${timingRate(best.stat).toFixed(1)}% | CONFIANZA ${conf.level.toUpperCase()} | ENTRADA ESTIMADA: ${margin}`;
-    } else document.getElementById('timingBest').innerHTML='<strong>EVALUANDO…</strong> | ESPERANDO DATOS SUFICIENTES DESDE S4';
+    } else document.getElementById('timingBest').innerHTML='<strong>EVALUANDO…</strong> | ESPERANDO DATOS SUFICIENTES DESDE S2';
     renderTimingStats(second); updateEntryPanel(second);
     if(second===TIMING_SECONDS){hablar(`Sesión finalizada. El resultado es una estimación estadística, no una garantía.`); resetTimingSession();}
 }
@@ -4551,7 +4551,7 @@ const store={
 
 /* ---------- Parámetros de entrada ---------- */
 const TRADES_PER_SIGNAL=2;   // igual que antes: 2 propuestas de US$1 por señal
-const FALLBACK_SECOND=4;     // si aún no hay segundo aprendido (el motor evalúa desde S4)
+const FALLBACK_SECOND=2;     // si aún no hay segundo aprendido usa el mínimo
 const PREFETCH_MS=1800;      // adelanto con que se pide la propuesta
 const MAX_LAT_MS=400;        // tope de compensación de latencia
 const LATE_LIMIT_MS=600;     // si ya pasó más que esto del punto, se omite (no entra tarde)
