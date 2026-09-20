@@ -4650,14 +4650,43 @@ const TRADES_PER_SIGNAL=2;   // igual que antes: 2 propuestas de US$1 por señal
 const FALLBACK_SECOND=null;   // nunca entrar sin segundo aprendido
 const PREFETCH_MS=1800;      // adelanto con que se pide la primera propuesta
 const SECOND_OP_DELAY_MS=2500; // segunda operación 2,5 s después de la primera
-const MAX_LAT_MS=400;        // tope de compensación de latencia
+const MAX_LAT_MS=400;        // tope de compensación "normal" (compatibilidad, ya no se usa para el tope duro)
+const LAT_HARD_CAP_MS=900;   // tope duro absoluto de compensación (media+jitter no puede superarlo)
 const LATE_LIMIT_MS=600;     // si ya pasó más que esto del punto, se omite (no entra tarde)
 const PING_EVERY_MS=15000;
+const NUDGE_AUTO_CLAMP_MS=300; // límite del ajuste automático del nudge (por seguridad)
 const CONTRACTS={matches:'DIGITMATCH',even:'DIGITEVEN',odd:'DIGITODD',over:'DIGITOVER',under:'DIGITUNDER'};
 
 let sock=null,connected=false,connecting=false,armed=false,ops=0,reqSeq=1,cooldownUntil=0,rtt=null,retryMs=1500;
 let plan=null,lastSession=null,lastInfo='',msg='OFF',dot='',rotAt=0;
 const reqs=new Map(),traded=new Set(),settledContracts=new Set(),pendingContracts=new Map();
+
+/* ---------- Latencia: muestras con jitter (no solo promedio) ---------- */
+const rttSamples=[];      // RTT de pings (referencia general de red)
+const buyLatSamples=[];   // RTT específico del camino propuesta→respuesta (el que realmente importa)
+const offHistory=[];      // historial de "ms de diferencia respecto al punto" de cada compra enviada
+function pushCapped(arr,v,cap){arr.push(v);if(arr.length>cap)arr.shift();}
+function stats(arr){
+  if(!arr.length)return{mean:0,jitter:0};
+  const mean=arr.reduce((a,b)=>a+b,0)/arr.length;
+  const variance=arr.reduce((a,b)=>a+(b-mean)*(b-mean),0)/arr.length;
+  return{mean,jitter:Math.sqrt(variance)};
+}
+/* Compensación = mitad del RTT (ida) + mitad del jitter (margen de seguridad ante picos),
+   priorizando la latencia medida en el propio flujo de compra sobre el ping genérico. */
+function getComp(){
+  const src=buyLatSamples.length>=3?buyLatSamples:rttSamples;
+  if(!src.length)return 0;
+  const st=stats(src);
+  return Math.min(LAT_HARD_CAP_MS,Math.max(0,st.mean/2+st.jitter/2));
+}
+/* Ajuste automático del nudge a partir del historial real de "off" (línea de compra vs punto exacto).
+   Si en promedio se llega tarde (off>0) se adelanta el disparo; si se llega temprano (off<0) se atrasa. */
+function autoNudgeCorrection(){
+  if(offHistory.length<5)return 0;
+  const avg=offHistory.reduce((a,b)=>a+b,0)/offHistory.length;
+  return Math.max(-NUDGE_AUTO_CLAMP_MS,Math.min(NUDGE_AUTO_CLAMP_MS,-avg));
+}
 
 /* ---------- Panel abrir / cerrar ---------- */
 const body=$('dtBody'),tgl=$('dtToggle');
@@ -4701,7 +4730,8 @@ function spec(pp){
   else if(m==='under')barrier='5';    // gana si el último dígito es < 5   (igual que la señal)
   return {m,type,barrier};
 }
-function sampleRtt(d){if(d>0&&d<3000)rtt=rtt==null?d:rtt*.7+d*.3}
+function sampleRtt(d){if(d>0&&d<3000){rtt=rtt==null?d:rtt*.7+d*.3;pushCapped(rttSamples,d,20)}}
+function sampleBuyLat(d){if(d>0&&d<3000)pushCapped(buyLatSamples,d,20)}
 function send(o){
   if(!sock||sock.readyState!==1)throw Error('conexión demo no activa');
   const id=reqSeq++;
@@ -4725,8 +4755,8 @@ function makePlan(ts,pp,now){
   p.learned=!!(adaptive&&adaptive.informed);
   if(!p.learned)return skip('sin segundo fuerte aprendido desde S3 · NO ENTRAR');
   p.target=target;
-  const nudge=Number($('dtNudge')?.value||0)+Number($('dtDelay')?.value||0)*1000;
-  const comp=Math.min(MAX_LAT_MS,Math.max(0,(rtt||0)/2));
+  const nudge=Number($('dtNudge')?.value||0)+Number($('dtDelay')?.value||0)*1000+autoNudgeCorrection();
+  const comp=getComp();
   p.boundary=ts.startMs+(target-1)*1000;   // instante en que el panel entra en el segundo objetivo
   p.fireAt=p.boundary+nudge-comp;           // se envía antes para que llegue justo en el punto
   if(now>p.fireAt+LATE_LIMIT_MS)return skip('el punto S'+target+' ya había pasado');
@@ -4825,7 +4855,7 @@ function onMessage(e){
   if(r.kind==='pre'||r.kind==='first'||r.kind==='second'){
     p.inflight--;
     if(m.error||!m.proposal?.id){p.errors++;setMsg('error en propuesta: '+(m.error?.message||'sin id'),'err');return}
-    if(r.kind==='pre'||r.kind==='first')sampleRtt(performance.now()-r.t0);
+    if(r.kind==='pre'||r.kind==='first'){const d=performance.now()-r.t0;sampleRtt(d);sampleBuyLat(d);}
     if(r.kind==='second'){sendBuy(p,m.proposal.id);return;}
     p.ids.push(m.proposal.id);
     if(p.fired)flush(p);
@@ -4849,7 +4879,9 @@ function onMessage(e){
     if(cid){pendingContracts.set(String(cid),{p,boughtAt:Date.now(),polls:0,warned:false});try{send({proposal_open_contract:1,contract_id:cid,subscribe:1})}catch(e){}}
     cooldownUntil=Math.max(cooldownUntil,r.sentAt+Math.max(3,Number($('dtPause')?.value||3))*1000);
     const off=Math.round(r.sentAt-p.boundary);
-    lastInfo='S'+p.target+' · envío '+(off>=0?'+':'')+off+' ms del punto · RTT '+(rtt?Math.round(rtt)+' ms':'—');
+    pushCapped(offHistory,off,15);
+    const avgOff=offHistory.length?Math.round(offHistory.reduce((a,b)=>a+b,0)/offHistory.length):0;
+    lastInfo='S'+p.target+' · envío '+(off>=0?'+':'')+off+' ms del punto (prom. '+(avgOff>=0?'+':'')+avgOff+' ms) · RTT '+(rtt?Math.round(rtt)+' ms':'—');
     if(p.bought>=p.need)p.done=true;
     setMsg('operación DEMO ejecutada · $1 · ('+p.bought+'/'+p.need+') · '+lastInfo,'on');
   }
@@ -4918,7 +4950,23 @@ $('dtNudge').onchange=()=>store.set('dt_nudge',$('dtNudge').value);
 $('dtRotN').onchange=()=>{store.set('dt_rot_n',$('dtRotN').value);render()};
 $('dtRotReset').onclick=()=>{window.rotationReset();setMsg('rotación reiniciada','');};
 
-setInterval(loop,15);
+/* ---------- Reloj de disparo en Web Worker ----------
+   Un setInterval en el hilo principal se throttlea fuerte cuando la pestaña pasa a
+   segundo plano (hasta 1000ms en algunos navegadores). Un Worker dedicado no sufre
+   ese mismo castigo, así que el "tick" que dispara loop() se genera ahí. Si el
+   navegador bloquea la creación del Worker, se cae de vuelta al setInterval normal. */
+(function startTickClock(){
+  const workerSrc="let iv=null;onmessage=function(e){if(e.data==='start'){if(iv)clearInterval(iv);iv=setInterval(()=>postMessage('tick'),15);}else if(e.data==='stop'){if(iv)clearInterval(iv);iv=null;}};";
+  try{
+    const blob=new Blob([workerSrc],{type:'application/javascript'});
+    const worker=new Worker(URL.createObjectURL(blob));
+    worker.onmessage=e=>{if(e.data==='tick')loop()};
+    worker.onerror=()=>{try{worker.terminate()}catch(e){}setInterval(loop,15)};
+    worker.postMessage('start');
+  }catch(e){
+    setInterval(loop,15);   // respaldo: el entorno no permite Web Workers
+  }
+})();
 setInterval(()=>{
   if(connected)ping();
   const t=performance.now();
