@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -4605,7 +4604,7 @@ const CONTRACTS={matches:'DIGITMATCH',even:'DIGITEVEN',odd:'DIGITODD',over:'DIGI
 
 let sock=null,connected=false,connecting=false,armed=false,ops=0,reqSeq=1,cooldownUntil=0,rtt=null,retryMs=1500;
 let plan=null,lastSession=null,lastInfo='',msg='OFF',dot='';
-const reqs=new Map(),traded=new Set();
+const reqs=new Map(),traded=new Set(),contractTargets=new Map(),settledContracts=new Set();
 
 /* ---------- Panel abrir / cerrar ---------- */
 const body=$('dtBody'),tgl=$('dtToggle');
@@ -4741,8 +4740,15 @@ function loop(){
 }
 
 /* ---------- Mensajes del servidor ---------- */
+function registerContractResult(c){
+  const id=c?.contract_id;if(!id||!c.is_sold||settledContracts.has(id))return;
+  settledContracts.add(id);const target=contractTargets.get(id);if(!target)return;
+  const won=Number(c.profit||0)>0; adaptiveRecord(target,won);
+  setMsg((won?'GANADA':'PERDIDA')+' · S'+target+' · '+(won?'+':'')+Number(c.profit||0).toFixed(2)+' · '+(adaptiveState.streak[target]||0)+' fallos seguidos',won?'on':'err');
+}
 function onMessage(e){
   let m;try{m=JSON.parse(e.data)}catch(_){return}
+  if(m.proposal_open_contract){registerContractResult(m.proposal_open_contract);return}
   const rid=m.req_id!==undefined?m.req_id:m.echo_req?.req_id,r=reqs.get(rid);
   if(r)reqs.delete(rid);
   if(r&&r.kind==='ping'){if(!m.error)sampleRtt(performance.now()-r.t0);return}
@@ -4765,6 +4771,8 @@ function onMessage(e){
       return;
     }
     p.bought++;ops++;
+    const cid=m.buy?.contract_id||m.contract_id;
+    if(cid){contractTargets.set(String(cid),p.target);try{send({proposal_open_contract:1,contract_id:cid,subscribe:1})}catch(e){}}
     cooldownUntil=Math.max(cooldownUntil,r.sentAt+Math.max(3,Number($('dtPause')?.value||3))*1000);
     const off=Math.round(r.sentAt-p.boundary);
     lastInfo='S'+p.target+' · envío '+(off>=0?'+':'')+off+' ms del punto · RTT '+(rtt?Math.round(rtt)+' ms':'—');
