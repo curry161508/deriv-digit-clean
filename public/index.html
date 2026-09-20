@@ -647,7 +647,7 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
       <button id="dtStop" class="stop" type="button">DETENER</button>
     </div>
     <div id="dtStatus" style="margin-top:7px;color:#8fb8d8">Estado: OFF · operaciones: 0</div>
-    <div class="dt-note">US$1 por operación, 2 operaciones por señal. El bot compra en el segundo que marca “ENTRADA MÁS FAVORABLE” (no al hacer clic). Si ya pasó ese segundo, omite la señal. Mantén esta pestaña visible mientras opera.</div>
+    <div class="dt-note">US$1 por operación, 2 operaciones por señal. El bot compra en el segundo que marca “ENTRADA MÁS FAVORABLE”. Si un segundo acumula 3 fallos, rota al siguiente más fuerte. Si ya pasó ese segundo, omite la señal. Mantén esta pestaña visible mientras opera.</div>
   </div>
 </section>
 
@@ -2351,12 +2351,55 @@ function startTimingSession(){
     hablar(`Motor de momento óptimo iniciado. Evaluando datos y comparando los segundos disponibles. No es una garantía.`);
 }
 
+
+/* MEMORIA HÍBRIDA: nube + contexto local */
+const cloudTimingLoaded={};
+async function mergeCloudTimingForAsset(asset){
+  if(!asset||cloudTimingLoaded[asset])return;
+  cloudTimingLoaded[asset]=true;
+  try{
+    const r=await fetch(`${CLOUD_LEARNING_BASE}/timing-memory?asset=${encodeURIComponent(asset)}&check=${Date.now()}`);
+    const rows=await r.json(); if(!Array.isArray(rows))return;
+    rows.forEach(row=>{const i=Number(row.observed_second)-1;if(i<0||i>=timingStats.length)return;const st=timingStats[i];st.signals+=Number(row.samples)||0;st.wins+=Number(row.hits)||0;st.losses+=Number(row.misses)||0;});
+    saveTimingStats(); renderTimingStats(); updateEntryPanel();
+    systemToast.textContent=`MEMORIA HÍBRIDA CARGADA · ${rows.length} registros de nube + contexto local`;
+  }catch(e){cloudTimingLoaded[asset]=false;console.warn('No se pudo cargar memoria cloud',e)}
+}
+
+/* ROTACIÓN ADAPTATIVA DE SEGUNDOS — nube + local + coincidencias cruzadas */
+const adaptiveState={streak:{},blocked:{},current:null};
+function adaptiveRecord(second,won){
+  const k=String(second); adaptiveState.streak[k]=won?0:(adaptiveState.streak[k]||0)+1;
+  if(won) delete adaptiveState.blocked[k];
+  else if(adaptiveState.streak[k]>=3){ adaptiveState.blocked[k]=Date.now(); if(adaptiveState.current===second) adaptiveState.current=null; }
+  try{localStorage.setItem('scanner_adaptive_seconds',JSON.stringify(adaptiveState))}catch(e){}
+}
+function adaptiveLoad(){try{const x=JSON.parse(localStorage.getItem('scanner_adaptive_seconds')||'null');if(x&&x.streak)Object.assign(adaptiveState,x)}catch(e){}}
+adaptiveLoad();
+function adaptiveScore(x){
+  const st=x.stat||x, n=Number(st.signals)||0, w=Number(st.wins)||0;
+  const rate=n?w/n:0, recency=(adaptiveState.streak[x.index+1]||0)*8;
+  const blockedAt=Number(adaptiveState.blocked[x.index+1]||0);
+  const stillBlocked=blockedAt && Date.now()-blockedAt<1800000;
+  if(blockedAt&&!stillBlocked)delete adaptiveState.blocked[x.index+1];
+  const penalty=stillBlocked?1000:0;
+  return (rate*100)+Math.log1p(n)*6-recency-penalty;
+}
+function getAdaptiveBestSecond(){
+  const min=Math.max(2,(Number(window.TIMING_MIN_SAMPLES)||4)-1);
+  const pool=timingStats.map((stat,index)=>({stat,index})).filter(x=>x.index>=1&&(Number(x.stat.signals)||0)>=min);
+  if(!pool.length)return null;
+  pool.sort((a,b)=>adaptiveScore(b)-adaptiveScore(a));
+  const best=pool[0]; adaptiveState.current=best.index+1; return best;
+}
 function processTimingTick(digit){
     if(!timingSession) return;
     const elapsed=(Date.now()-timingSession.startMs)/1000, second=Math.floor(elapsed)+1, resolveSecond=second-1;
     if(resolveSecond>=1 && resolveSecond<=TIMING_SECONDS && timingSession.pendingBySecond[resolveSecond]){
       const candidate=timingSession.pendingBySecond[resolveSecond], st=timingStats[resolveSecond-1]; st.signals++;
-      if(timingConditionMatches(timingSession.mode,digit,candidate.candidate)) st.wins++; else st.losses++;
+      const won=timingConditionMatches(timingSession.mode,digit,candidate.candidate);
+      if(won) st.wins++; else st.losses++;
+      adaptiveRecord(resolveSecond,won);
       delete timingSession.pendingBySecond[resolveSecond]; saveTimingStats();
     }
     if(second<1 || second>TIMING_SECONDS) return;
@@ -4288,6 +4331,7 @@ document.getElementById('voiceDetailSelect')?.addEventListener('change',e=>{habl
 
 initUI();
 loadTimingStats();
+mergeCloudTimingForAsset(document.getElementById("assetSelector")?.value||"R_100");
 loadMultiStats();
 renderBotState();
 
@@ -4301,6 +4345,7 @@ window.addEventListener(
 connectDeriv(
     "R_100"
 );
+setInterval(()=>mergeCloudTimingForAsset(document.getElementById("assetSelector")?.value||"R_100"),60000);
 
 
 /* Anuncio automático de botones desactivado: evita que un clic corte la cuenta o un aviso crítico. */
@@ -4621,7 +4666,7 @@ function makePlan(ts,pp,now){
   p.s=s;p.sym=$('assetSelector')?.value||'R_100';
   const g=window.entryGate||{};
   p.mode=$('dtEntry')?.value||'target';
-  let target=Number(g.bestSecond)||0;
+  const adaptive=getAdaptiveBestSecond(); let target=adaptive?(adaptive.index+1):(Number(g.bestSecond)||0);
   p.learned=target>0;
   if(!target){
     if(p.mode==='strict')return skip('aún aprendiendo el segundo óptimo (modo estricto)');
