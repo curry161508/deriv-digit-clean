@@ -603,6 +603,8 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 #demoTrader .dt-note{margin-top:6px;color:#7fa8c9;font-size:11px;line-height:1.35}
 #dtOn{display:none}
 @media(max-width:600px){#demoTrader .dt-grid{grid-template-columns:1fr}#demoTrader .dt-title{flex:1}#demoTrader .dt-mini{order:10;flex-basis:100%}}
+
+.exp-slots{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin:8px 0;color:#bcdcff;font-size:10px}.exp-slot{border:1px solid #24577d;border-radius:7px;padding:6px 3px;text-align:center;background:#071a2b;transition:.15s}.exp-slot b{display:block;font-size:14px}.exp-slot.mark{border-color:#22e6a0;color:#22e6a0;box-shadow:0 0 8px rgba(34,230,160,.4)}.exp-slot.now{background:#0b6b4e;color:#fff;box-shadow:0 0 14px #22e6a0;transform:scale(1.04)}.exp-slot.done{opacity:.7}
 </style></head>
 
 <body>
@@ -913,6 +915,7 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
     <span id="checkLive">○ LIVE</span><span id="checkSignal">○ SEÑAL</span><span id="checkTiming">○ MOMENTO</span><span id="checkWindow">○ VENTANAS</span><span id="checkStability">○ ESTABILIDAD</span>
   </div>
   <div class="smart-countdown" id="smartCountdown"></div>
+  <div class="exp-slots" id="expSlots" aria-label="Cuatro posiciones rotativas"></div>
   <div class="entry-audit" id="entryAudit">AUDITORÍA: —</div>
 </div>
 
@@ -4783,7 +4786,7 @@ function send(o){
 /* ---------- Plan de entrada por señal ---------- */
 function makePlan(ts,pp,now){
   const p={sk:String(ts.startMs),pp,skipped:false,done:false,fired:false,pre:false,need:TRADES_PER_SIGNAL,
-           ids:[],inflight:0,buysSent:0,bought:0,retries:0,errors:0,secondRequested:false,secondTimer:null,slotSent:[]};
+           ids:[],inflight:0,buysSent:0,bought:0,retries:0,errors:0,secondRequested:false,secondTimer:null,slotSent:[],experimentGroup:experimentGroup,experimentEntries:ROTATING_ENTRY_GROUPS[experimentGroup].slice()};
   const skip=t=>{p.skipped=true;setMsg('señal omitida · '+t,'wait');return p};
   if(traded.has(p.sk))return skip('ya se operó esta señal');
   const s=spec(pp);if(!s)return skip('modo sin contrato operable');
@@ -4846,7 +4849,14 @@ function fire(p,now){
 }
 
 /* ---------- Bucle principal (reloj propio, cada 15 ms) ---------- */
+function renderExperimentSlots(){
+  const box=document.getElementById('expSlots');if(!box)return;
+  const entries=(typeof experimentEntries==='function'?experimentEntries():[0,2,5,7]);
+  let active=-1;try{active=timingSession&&timingSession.startMs?Math.floor((Date.now()-timingSession.startMs)/1000): -1}catch(e){}
+  box.innerHTML=entries.map((e,i)=>{const result=e+1,done=active>e,now=active===e;return `<div class="exp-slot mark ${done?'done':''} ${now?'now':''}"><b>ENTRADA S${e}</b>→ S${result}<small>${now?'AHORA':done?'PASÓ':'ESPERA'}</small></div>`}).join('');
+}
 function loop(){
+  renderExperimentSlots();
   if(!armed||!connected)return;
   const now=Date.now(),{ts,pp}=appState();
   if(!ts||!pp||!ts.startMs){
@@ -4859,7 +4869,7 @@ function loop(){
   /* Experimento: cuatro entradas en S0, S4, S8 y S9. Cada compra captura el tick siguiente. */
   if(!plan.slotSent.length)plan.slotSent=Array(4).fill(false);
   for(let i=0;i<4;i++){
-    const entries=experimentEntries(),due=ts.startMs+entries[i]*1000;
+    const entries=plan.experimentEntries,due=ts.startMs+entries[i]*1000;
     if(!plan.slotSent[i]&&now>=due){
       plan.slotSent[i]=true;plan.target=Math.max(1,entries[i]);plan.observedSecond=entries[i]+1;
       reqProposal(plan,'slot'+i);
@@ -4890,6 +4900,7 @@ function registerContractResult(c){
   if(!Number.isFinite(profit)&&!c.status)return;                    /* sin dato para saber si ganó */
   settledContracts.add(id);pendingContracts.delete(id);
   const p=info.p,won=c.status==='won'||(c.status!=='lost'&&profit>0);
+  recordExperimentOutcome(won);
   const ev=window.rotationRecordSignal(p.target,won),net=Number.isFinite(profit)?((profit>=0?'+':'')+profit.toFixed(2)):'';
   let t='OPERACIÓN '+(won?'GANADA':'PERDIDA')+' · S'+p.target+(net?' · '+net:'')+' · ';
   if(ev.rotated)t+='⟳ ROTA: S'+ev.from+' bloqueado tras '+ev.losses+' pérdidas → '+(ev.to?'S'+ev.to+' (elegido al azar)':'sin segundos disponibles · espera');
