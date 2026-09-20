@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCANNER AZUL // MULTIWINDOW DIGIT ENGINE</title>
+<title>SCANNER AZUL // MULTIWINDOW DIGIT ENGINE · ROTACIÓN v2</title>
 
 <style>
 :root{
@@ -637,6 +637,16 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
         <option value="200">Ajuste fino: 200 ms DESPUÉS</option>
         <option value="300">Ajuste fino: 300 ms DESPUÉS</option>
       </select>
+      <select id="dtRotN" title="Pérdidas seguidas del bot en un mismo segundo antes de rotar">
+        <option value="2">Rotar tras 2 pérdidas seguidas</option>
+        <option value="3" selected>Rotar tras 3 pérdidas seguidas</option>
+        <option value="4">Rotar tras 4 pérdidas seguidas</option>
+        <option value="5">Rotar tras 5 pérdidas seguidas</option>
+      </select>
+      <select id="dtRotTol" title="Cuánta fuerza (ventaja sobre el azar) puede perder el segundo de reemplazo">
+        <option value="0.10">Reemplazo: igual fuerza (−10%)</option>
+        <option value="0.25" selected>Reemplazo: fuerza similar (−25%)</option>
+      </select>
     </div>
     <label style="display:block;margin-top:6px"><input id="dtConfirm" type="checkbox" style="width:auto"> Confirmo que es cuenta DEMO</label>
     <label style="display:block;margin-top:4px"><input id="dtRemember" type="checkbox" style="width:auto"> Recordar conexión demo en este dispositivo</label>
@@ -644,9 +654,11 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
       <button id="dtConnect" type="button">CONECTAR DEMO</button>
       <button id="dtOn" type="button">ACTIVAR BOT</button>
       <button id="dtStop" class="stop" type="button">DETENER</button>
+      <button id="dtRotReset" type="button">REINICIAR ROTACIÓN</button>
     </div>
     <div id="dtStatus" style="margin-top:7px;color:#8fb8d8">Estado: OFF · operaciones: 0</div>
-    <div class="dt-note">US$1 por operación, 2 operaciones por señal. El bot compra en el segundo que marca “ENTRADA MÁS FAVORABLE”. Si un segundo acumula 3 fallos, rota al siguiente más fuerte. Si ya pasó ese segundo, omite la señal. Mantén esta pestaña visible mientras opera.</div>
+    <div id="dtRot" style="margin-top:5px;color:#9fd3ff;font-size:11px;line-height:1.4;white-space:pre-line">ROTACIÓN · aprendiendo segundos</div>
+    <div class="dt-note">US$1 por operación, 2 operaciones por señal. El bot compra en el segundo que marca “ENTRADA MÁS FAVORABLE”. El bot se queda en un segundo mientras funciona; si acumula las pérdidas REALES seguidas elegidas (por defecto 3), lo bloquea 30 min y rota a otro segundo de fuerza similar. Si no hay ninguno de fuerza similar, espera en vez de entrar en uno débil. Si ya pasó ese segundo, omite la señal. Mantén esta pestaña visible mientras opera.</div>
   </div>
 </section>
 
@@ -2365,32 +2377,74 @@ async function mergeCloudTimingForAsset(asset){
   }catch(e){cloudTimingLoaded[asset]=false;console.warn('No se pudo cargar memoria cloud',e)}
 }
 
-/* ROTACIÓN ADAPTATIVA DE SEGUNDOS — nube + local + coincidencias cruzadas */
-const adaptiveState={streak:{},blocked:{},current:null};
-function adaptiveRecord(second,won){
-  const k=String(second); adaptiveState.streak[k]=won?0:(adaptiveState.streak[k]||0)+1;
-  if(won) delete adaptiveState.blocked[k];
-  else if(adaptiveState.streak[k]>=3){ adaptiveState.blocked[k]=Date.now(); if(adaptiveState.current===second) adaptiveState.current=null; }
-  try{localStorage.setItem('scanner_adaptive_seconds',JSON.stringify(adaptiveState))}catch(e){}
+/* ROTACIÓN ADAPTATIVA DE SEGUNDOS v2
+   - Cuenta PÉRDIDAS REALES del bot (una por señal, no una por contrato), no las hipotéticas del escáner.
+   - El bot se QUEDA en un segundo mientras funciona. Tras N pérdidas seguidas en ese segundo lo bloquea 30 min.
+   - Reemplazo = otro segundo con datos suficientes cuya "probabilidad estimada" (la del panel) conserve la
+     fuerza del abandonado: ventaja sobre el azar >= (1 − tolerancia) × la ventaja del segundo abandonado.
+     Si no hay ninguno, el bot ESPERA (no entra en un segundo más débil).
+   - Estado guardado por activo + modo (igual que timingStats). */
+const ROT_BLOCK_MS=30*60*1000, ROT_KEY='scanner_rotation_v2';
+let rotAll={};try{rotAll=JSON.parse(localStorage.getItem(ROT_KEY)||'{}')||{}}catch(e){rotAll={}}
+function rotN(){return Math.max(1,Number(document.getElementById('dtRotN')?.value)||3);}
+function rotTol(){const v=Number(document.getElementById('dtRotTol')?.value);return v>0&&v<1?v:0.25;}
+function rotKey(){return (document.getElementById('assetSelector')?.value||'R_100')+'_'+timingMode();}
+function rotState(){const k=rotKey();return rotAll[k]||(rotAll[k]={current:null,curRate:null,ref:null,streak:{},blocked:{},waiting:false,log:[]});}
+function rotSave(){try{localStorage.setItem(ROT_KEY,JSON.stringify(rotAll))}catch(e){}}
+function rotBlocked(st,sec){const u=Number(st.blocked[sec]||0);if(u&&Date.now()>=u){delete st.blocked[sec];st.streak[sec]=0;return false;}return !!u;}
+function rotPool(st){
+  const min=Math.max(2,(Number(TIMING_MIN_SAMPLES)||5)-1);
+  return timingStats.map((stat,index)=>({stat,index,sec:index+1,score:timingScore(stat),rate:timingAdjustedRate(stat)}))
+    .filter(x=>x.index>=1&&x.stat.signals>=min&&!rotBlocked(st,x.sec));
 }
-function adaptiveLoad(){try{const x=JSON.parse(localStorage.getItem('scanner_adaptive_seconds')||'null');if(x&&x.streak)Object.assign(adaptiveState,x)}catch(e){}}
-adaptiveLoad();
-function adaptiveScore(x){
-  const st=x.stat||x, n=Number(st.signals)||0, w=Number(st.wins)||0;
-  const rate=n?w/n:0, recency=(adaptiveState.streak[x.index+1]||0)*8;
-  const blockedAt=Number(adaptiveState.blocked[x.index+1]||0);
-  const stillBlocked=blockedAt && Date.now()-blockedAt<1800000;
-  if(blockedAt&&!stillBlocked)delete adaptiveState.blocked[x.index+1];
-  const penalty=stillBlocked?1000:0;
-  return (rate*100)+Math.log1p(n)*6-recency-penalty;
+function rotNeededRate(refRate){                  /* fuerza mínima que debe tener el reemplazo */
+  const base=timingBaseline(timingMode())*100,edge=refRate-base;
+  return edge>0?base+edge*(1-rotTol()):refRate;
 }
 function getAdaptiveBestSecond(){
-  const min=Math.max(2,(Number(window.TIMING_MIN_SAMPLES)||4)-1);
-  const pool=timingStats.map((stat,index)=>({stat,index})).filter(x=>x.index>=1&&(Number(x.stat.signals)||0)>=min);
-  if(!pool.length)return null;
-  pool.sort((a,b)=>adaptiveScore(b)-adaptiveScore(a));
-  const best=pool[0]; adaptiveState.current=best.index+1; return best;
+  const st=rotState(),pool=rotPool(st);
+  if(st.current){
+    const cur=pool.find(x=>x.sec===st.current);
+    if(cur){st.waiting=false;st.curRate=cur.rate;return cur;}   /* sigue en el mismo segundo mientras sea elegible */
+    st.current=null;
+  }
+  if(!pool.length){st.waiting=st.ref!=null;rotSave();return st.waiting?{wait:true}:null;}
+  pool.sort((a,b)=>b.score-a.score);
+  let pick;
+  if(st.ref==null)pick=pool[0];                                /* primera elección: el mejor */
+  else{
+    const need=rotNeededRate(st.ref),ok=pool.filter(x=>x.rate>=need);
+    if(!ok.length){st.waiting=true;rotSave();return {wait:true,need};}
+    pick=ok[0];
+  }
+  st.current=pick.sec;st.curRate=pick.rate;st.ref=null;st.waiting=false;rotSave();
+  return pick;
 }
+window.rotationRecordSignal=function(sec,won){
+  const st=rotState(),k=String(sec);
+  if(won){st.streak[k]=0;rotSave();return {rotated:false,streak:0};}
+  st.streak[k]=(st.streak[k]||0)+1;
+  if(st.streak[k]<rotN()){rotSave();return {rotated:false,streak:st.streak[k]};}
+  const losses=st.streak[k],wasCur=st.current===sec;
+  st.blocked[k]=Date.now()+ROT_BLOCK_MS;st.streak[k]=0;
+  st.ref=(wasCur&&st.curRate!=null)?st.curRate:timingAdjustedRate(timingStats[sec-1]||{signals:0,wins:0});
+  if(wasCur)st.current=null;
+  const r=getAdaptiveBestSecond(),ev={rotated:true,from:sec,losses,to:(r&&!r.wait)?r.sec:null,wait:!!(r&&r.wait)};
+  st.log.push({t:Date.now(),from:sec,to:ev.to,losses});st.log=st.log.slice(-8);rotSave();
+  return ev;
+};
+window.rotationReset=function(){delete rotAll[rotKey()];rotSave();};
+window.rotationSummary=function(){
+  const st=rotState(),n=rotN(),now=Date.now(),cur=st.current,L=[];
+  if(cur)L.push('ROTACIÓN · segundo activo S'+cur+' ('+(Number(st.curRate)||0).toFixed(1)+'%) · pérdidas seguidas '+(st.streak[cur]||0)+'/'+n);
+  else if(st.waiting)L.push('ROTACIÓN · sin segundo de fuerza similar disponible · esperando');
+  else L.push('ROTACIÓN · aprendiendo segundos (se fija el mejor al primer ciclo)');
+  const bl=Object.entries(st.blocked).filter(([k,u])=>u>now).map(([k,u])=>'S'+k+' ('+Math.ceil((u-now)/60000)+' min)');
+  if(bl.length)L.push('Bloqueados: '+bl.join(', '));
+  const last=st.log[st.log.length-1];
+  if(last)L.push('Última rotación '+new Date(last.t).toLocaleTimeString('es-CL',{hour12:false})+': S'+last.from+' → '+(last.to?'S'+last.to:'espera')+' tras '+last.losses+' pérdidas');
+  return L.join('\n');
+};
 function processTimingTick(digit){
     if(!timingSession) return;
     const elapsed=(Date.now()-timingSession.startMs)/1000, second=Math.floor(elapsed)+1, resolveSecond=second-1;
@@ -2398,7 +2452,6 @@ function processTimingTick(digit){
       const candidate=timingSession.pendingBySecond[resolveSecond], st=timingStats[resolveSecond-1]; st.signals++;
       const won=timingConditionMatches(timingSession.mode,digit,candidate.candidate);
       if(won) st.wins++; else st.losses++;
-      adaptiveRecord(resolveSecond,won);
       delete timingSession.pendingBySecond[resolveSecond]; saveTimingStats();
     }
     if(second<1 || second>TIMING_SECONDS) return;
@@ -4604,7 +4657,7 @@ const CONTRACTS={matches:'DIGITMATCH',even:'DIGITEVEN',odd:'DIGITODD',over:'DIGI
 
 let sock=null,connected=false,connecting=false,armed=false,ops=0,reqSeq=1,cooldownUntil=0,rtt=null,retryMs=1500;
 let plan=null,lastSession=null,lastInfo='',msg='OFF',dot='';
-const reqs=new Map(),traded=new Set(),contractTargets=new Map(),settledContracts=new Set();
+const reqs=new Map(),traded=new Set(),contractTargets=new Map(),settledContracts=new Set(),livePlans=new Set();
 
 /* ---------- Panel abrir / cerrar ---------- */
 const body=$('dtBody'),tgl=$('dtToggle');
@@ -4622,6 +4675,7 @@ function render(){
   const st=$('dtStatus');if(st.textContent!==full)st.textContent=full;
   const mt=msg+(ops?' · '+ops+' op.':'');
   const mi=$('dtMini');if(mi.textContent!==mt){mi.textContent=mt;mi.title=mt}
+  try{const rt=$('dtRot');if(rt){const x=window.rotationSummary();if(rt.textContent!==x)rt.textContent=x;}}catch(e){}
   const d=$('dtDot'),cls='dt-dot'+(dot?' '+dot:'');if(d.className!==cls)d.className=cls;
   $('dtOn').style.display=(connected&&!armed)?'inline-block':'none';
   $('dtStopMini').style.display=armed?'inline-block':'none';
@@ -4658,14 +4712,16 @@ function send(o){
 /* ---------- Plan de entrada por señal ---------- */
 function makePlan(ts,pp,now){
   const p={sk:String(ts.startMs),pp,skipped:false,done:false,fired:false,pre:false,need:TRADES_PER_SIGNAL,
-           ids:[],inflight:0,buysSent:0,bought:0,retries:0,errors:0};
+           ids:[],inflight:0,buysSent:0,bought:0,retries:0,errors:0,settled:0,pnl:0,finalized:false,lastBuyAt:0};
   const skip=t=>{p.skipped=true;setMsg('señal omitida · '+t,'wait');return p};
   if(traded.has(p.sk))return skip('ya se operó esta señal');
   const s=spec(pp);if(!s)return skip('modo sin contrato operable');
   p.s=s;p.sym=$('assetSelector')?.value||'R_100';
   const g=window.entryGate||{};
   p.mode=$('dtEntry')?.value||'target';
-  const adaptive=getAdaptiveBestSecond(); let target=adaptive?(adaptive.index+1):(Number(g.bestSecond)||0);
+  const adaptive=getAdaptiveBestSecond();
+  if(adaptive&&adaptive.wait)return skip('rotación: ningún segundo con fuerza similar · esperando');
+  let target=adaptive?(adaptive.index+1):(Number(g.bestSecond)||0);
   p.learned=target>0;
   if(!target){
     if(p.mode==='strict')return skip('aún aprendiendo el segundo óptimo (modo estricto)');
@@ -4740,11 +4796,23 @@ function loop(){
 }
 
 /* ---------- Mensajes del servidor ---------- */
+function tryFinalize(p){
+  if(p.finalized||!p.bought||p.settled<p.bought)return;
+  if(!p.done&&Date.now()-p.lastBuyAt<15000)return;          /* compras parciales: espera un poco */
+  p.finalized=true;livePlans.delete(p);
+  const won=p.pnl>0,ev=window.rotationRecordSignal(p.target,won),net=(p.pnl>=0?'+':'')+p.pnl.toFixed(2);
+  let t=(won?'GANADA':'PERDIDA')+' · S'+p.target+' · neto '+net+' · ';
+  if(ev.rotated)t+='⟳ ROTA: S'+ev.from+' bloqueado tras '+ev.losses+' pérdidas → '+(ev.to?'S'+ev.to+' (fuerza similar)':'espera un segundo de fuerza similar');
+  else t+=(ev.streak||0)+'/'+rotN()+' pérdidas seguidas';
+  setMsg(t,won?'on':'err');
+}
 function registerContractResult(c){
-  const id=c?.contract_id;if(!id||!c.is_sold||settledContracts.has(id))return;
-  settledContracts.add(id);const target=contractTargets.get(id);if(!target)return;
-  const won=Number(c.profit||0)>0; adaptiveRecord(target,won);
-  setMsg((won?'GANADA':'PERDIDA')+' · S'+target+' · '+(won?'+':'')+Number(c.profit||0).toFixed(2)+' · '+(adaptiveState.streak[target]||0)+' fallos seguidos',won?'on':'err');
+  const id=c&&c.contract_id!=null?String(c.contract_id):'';
+  if(!id||!c.is_sold||settledContracts.has(id))return;
+  settledContracts.add(id);
+  const info=contractTargets.get(id);if(!info)return;
+  const p=info.p;p.settled++;p.pnl+=Number(c.profit||0);
+  tryFinalize(p);
 }
 function onMessage(e){
   let m;try{m=JSON.parse(e.data)}catch(_){return}
@@ -4772,7 +4840,7 @@ function onMessage(e){
     }
     p.bought++;ops++;
     const cid=m.buy?.contract_id||m.contract_id;
-    if(cid){contractTargets.set(String(cid),p.target);try{send({proposal_open_contract:1,contract_id:cid,subscribe:1})}catch(e){}}
+    if(cid){contractTargets.set(String(cid),{p,target:p.target});p.lastBuyAt=Date.now();livePlans.add(p);try{send({proposal_open_contract:1,contract_id:cid,subscribe:1})}catch(e){}}
     cooldownUntil=Math.max(cooldownUntil,r.sentAt+Math.max(3,Number($('dtPause')?.value||3))*1000);
     const off=Math.round(r.sentAt-p.boundary);
     lastInfo='S'+p.target+' · envío '+(off>=0?'+':'')+off+' ms del punto · RTT '+(rtt?Math.round(rtt)+' ms':'—');
@@ -4841,6 +4909,9 @@ $('dtStop').onclick=off;
 $('dtStopMini').onclick=off;
 $('dtEntry').onchange=()=>store.set('dt_entry',$('dtEntry').value);
 $('dtNudge').onchange=()=>store.set('dt_nudge',$('dtNudge').value);
+$('dtRotN').onchange=()=>{store.set('dt_rot_n',$('dtRotN').value);render()};
+$('dtRotTol').onchange=()=>store.set('dt_rot_tol',$('dtRotTol').value);
+$('dtRotReset').onclick=()=>{window.rotationReset();setMsg('rotación reiniciada','');};
 
 setInterval(loop,15);
 setInterval(()=>{
@@ -4848,11 +4919,15 @@ setInterval(()=>{
   const t=performance.now();
   reqs.forEach((v,k)=>{if(t-v.t0>30000)reqs.delete(k)});
 },PING_EVERY_MS);
+setInterval(()=>{livePlans.forEach(p=>{tryFinalize(p);if(Date.now()-p.lastBuyAt>120000)livePlans.delete(p)});render()},1000);
 
 const savedT=store.get('dt_demo_token'),savedA=store.get('dt_demo_app');
 const savedEntry=store.get('dt_entry'),savedNudge=store.get('dt_nudge'),savedOpen=store.get('dt_panel_open');
 if(savedEntry&&[...$('dtEntry').options].some(o=>o.value===savedEntry))$('dtEntry').value=savedEntry;
 if(savedNudge!==null&&[...$('dtNudge').options].some(o=>o.value===savedNudge))$('dtNudge').value=savedNudge;
+const savedRotN=store.get('dt_rot_n'),savedRotTol=store.get('dt_rot_tol');
+if(savedRotN&&[...$('dtRotN').options].some(o=>o.value===savedRotN))$('dtRotN').value=savedRotN;
+if(savedRotTol&&[...$('dtRotTol').options].some(o=>o.value===savedRotTol))$('dtRotTol').value=savedRotTol;
 setOpen(savedOpen===null?!(savedT&&savedA):savedOpen==='1',false);   // primera vez abierto; luego recuerda tu elección
 if(savedT&&savedA){
   $('dtToken').value=savedT;$('dtApp').value=savedA;
