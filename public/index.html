@@ -657,7 +657,7 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
     </div>
     <div id="dtStatus" style="margin-top:7px;color:#8fb8d8">Estado: OFF · operaciones: 0</div>
     <div id="dtRot" style="margin-top:5px;color:#9fd3ff;font-size:11px;line-height:1.4;white-space:pre-line">ROTACIÓN · aprendiendo segundos</div>
-    <div class="dt-note">US$1 por operación, 2 operaciones por señal. La 1ª operación entra solo en el segundo aprendido; nunca entra en S1 ni S2 (mínimo S3). La 2ª entra 2,5 s después. El bot se queda en un segundo mientras funciona; si acumula las pérdidas REALES seguidas elegidas (por defecto 3), lo bloquea 30 min y rota a otro segundo de fuerza similar. Después de N pérdidas rota al siguiente segundo más fuerte disponible. Si ya pasó ese segundo, omite la señal. Mantén esta pestaña visible mientras opera.</div>
+    <div class="dt-note">US$1 por operación, 2 operaciones por señal. S2 fue eliminado: la entrada solo puede ser desde S3 hasta S10. La 2ª entra 2,5 s después. El bot se queda en un segundo mientras funciona; si acumula las pérdidas REALES seguidas elegidas (por defecto 3), lo bloquea 30 min y rota a otro segundo de fuerza similar. Después de N pérdidas rota al siguiente segundo más fuerte disponible. Si ya pasó ese segundo, omite la señal. Mantén esta pestaña visible mientras opera.</div>
   </div>
 </section>
 
@@ -2383,7 +2383,6 @@ async function mergeCloudTimingForAsset(asset){
      fuerza del abandonado: ventaja sobre el azar >= (1 − tolerancia) × la ventaja del segundo abandonado.
      Si no hay ninguno, el bot ESPERA (no entra en un segundo más débil).
    - Estado guardado por activo + modo (igual que timingStats). */
-const MIN_ENTRY_SECOND=3;   /* el bot NUNCA entra en S1 ni S2 (ni por aprendizaje, ni por rotación, ni por respaldo) */
 const ROT_BLOCK_MS=30*60*1000, ROT_KEY='scanner_rotation_v2';
 let rotAll={};try{rotAll=JSON.parse(localStorage.getItem(ROT_KEY)||'{}')||{}}catch(e){rotAll={}}
 function rotN(){return Math.max(1,Number(document.getElementById('dtRotN')?.value)||3);}
@@ -2395,7 +2394,7 @@ function rotBlocked(st,sec){const u=Number(st.blocked[sec]||0);if(u&&Date.now()>
 function rotPool(st){
   const min=Math.max(2,(Number(TIMING_MIN_SAMPLES)||5)-1);
   return timingStats.map((stat,index)=>({stat,index,sec:index+1,score:timingScore(stat),rate:timingAdjustedRate(stat)}))
-    .filter(x=>x.sec>=MIN_ENTRY_SECOND&&x.stat.signals>=min&&!rotBlocked(st,x.sec));
+    .filter(x=>x.index>=2&&x.stat.signals>=min&&!rotBlocked(st,x.sec));
 }
 function rotNeededRate(refRate){                  /* fuerza mínima que debe tener el reemplazo */
   const base=timingBaseline(timingMode())*100,edge=refRate-base;
@@ -4722,12 +4721,11 @@ function makePlan(ts,pp,now){
   p.mode=$('dtEntry')?.value||'target';
   const adaptive=getAdaptiveBestSecond();
   if(adaptive&&adaptive.wait)return skip('rotación: ningún segundo con fuerza similar · esperando');
-  let target=adaptive?(adaptive.index+1):(Number(g.bestSecond)||0);
+  let target=adaptive?(adaptive.index+1):((Number(g.bestSecond)>2)?Number(g.bestSecond):0);
   p.learned=target>0;
   if(!target){
-    return skip('sin segundo aprendido · no entrar todavía');
+    return skip('sin segundo válido desde S3 · NO ENTRAR');
   }
-  if(target<MIN_ENTRY_SECOND)return skip('S'+target+' no permitido · el bot nunca entra en S1/S2');
   p.target=target;
   const nudge=Number($('dtNudge')?.value||0)+Number($('dtDelay')?.value||0)*1000;
   const comp=Math.min(MAX_LAT_MS,Math.max(0,(rtt||0)/2));
