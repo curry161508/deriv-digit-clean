@@ -4682,7 +4682,9 @@ const store={
 };
 
 /* ---------- Parámetros de entrada ---------- */
-const TRADES_PER_SIGNAL=2;   // igual que antes: 2 propuestas de US$1 por señal
+const TRADES_PER_SIGNAL=4;
+const EXPERIMENT_ENTRY_SECONDS=[0,4,8,9];
+const EXPERIMENT_RESULT_SECONDS=[1,5,9,10];   // igual que antes: 2 propuestas de US$1 por señal
 const FALLBACK_SECOND=null;   // nunca entrar sin segundo aprendido
 const PREFETCH_MS=1800;      // adelanto con que se pide la primera propuesta
 const SECOND_OP_DELAY_MS=2500; // segunda operación 2,5 s después de la primera
@@ -4787,10 +4789,8 @@ function makePlan(ts,pp,now){
   p.mode=$('dtEntry')?.value||'target';
   const candidateBest=getCandidateBestSecond(pp);
   if(!candidateBest)return skip('sin historial suficiente para este candidato · NO ENTRAR');
-  p.observedSecond=candidateBest.sec;
-  let target=Math.max(3,candidateBest.sec-1); /* entrar un tick antes */
+  let target=candidateBest.sec;
   p.learned=true;p.candidateTiming=candidateBest;
-  p.entrySecond=target;
   const adaptive=getAdaptiveBestSecond();
   p.target=target;
   const nudge=Number($('dtNudge')?.value||0)+Number($('dtDelay')?.value||0)*1000+autoNudgeCorrection();
@@ -4837,7 +4837,7 @@ function fire(p,now){
     if(!g.readyIfOnTarget)return abort(p,'sin confirmación 🟢 en S'+p.target+' (score '+Math.round(g.score||0)+')');
   }
   p.fired=true;traded.add(p.sk);
-  setMsg('ENTRANDO en S'+p.target+' · coincidencia prevista S'+p.observedSecond+' · candidato '+(pp.digit??pp.mode),'on');
+  setMsg('ENTRANDO en S'+p.target+' · candidato '+(pp.digit??pp.mode)+' · enviando compra…','on');
   flush(p);
 }
 
@@ -4851,7 +4851,19 @@ function loop(){
   }
   const sk=String(ts.startMs);
   if(sk!==lastSession){lastSession=sk;plan=makePlan(ts,pp,now)}
-  if(!plan||plan.skipped||plan.done||plan.fired)return;
+  if(!plan||plan.skipped||plan.done)return;
+  /* Experimento: cuatro entradas en S0, S4, S8 y S9. Cada compra captura el tick siguiente. */
+  if(!plan.slotSent.length)plan.slotSent=Array(4).fill(false);
+  for(let i=0;i<4;i++){
+    const due=ts.startMs+EXPERIMENT_ENTRY_SECONDS[i]*1000;
+    if(!plan.slotSent[i]&&now>=due){
+      plan.slotSent[i]=true;plan.target=Math.max(1,EXPERIMENT_ENTRY_SECONDS[i]);plan.observedSecond=EXPERIMENT_RESULT_SECONDS[i];
+      reqProposal(plan,'slot'+i);
+      setMsg('ENTRADA '+i+'/4 · S'+EXPERIMENT_ENTRY_SECONDS[i]+' → resultado S'+EXPERIMENT_RESULT_SECONDS[i],'wait');
+    }
+  }
+  if(plan.slotSent.every(Boolean)&&plan.bought>=plan.need)plan.done=true;
+  return;
   if(!plan.pre&&now>=plan.fireAt-PREFETCH_MS){plan.pre=true;reqProposal(plan,'pre')}
   if(now<plan.fireAt){
     setMsg('ARMADO · entra en S'+plan.target+' → '+((plan.fireAt-now)/1000).toFixed(1)+'s'+
@@ -4890,11 +4902,11 @@ function onMessage(e){
   if(r&&r.kind==='poc')return;
   if(!r){if(m.error)setMsg('error: '+m.error.message,'err');return}
   const p=r.p;
-  if(r.kind==='pre'||r.kind==='first'||r.kind==='second'){
+  if(r.kind==='pre'||r.kind==='first'||r.kind==='second'||String(r.kind).startsWith('slot')){
     p.inflight--;
     if(m.error||!m.proposal?.id){p.errors++;setMsg('error en propuesta: '+(m.error?.message||'sin id'),'err');return}
     if(r.kind==='pre'||r.kind==='first'){const d=performance.now()-r.t0;sampleRtt(d);sampleBuyLat(d);}
-    if(r.kind==='second'){sendBuy(p,m.proposal.id);return;}
+    if(r.kind==='second'||String(r.kind).startsWith('slot')){sendBuy(p,m.proposal.id);return;}
     p.ids.push(m.proposal.id);
     if(p.fired)flush(p);
     return;
@@ -4908,11 +4920,6 @@ function onMessage(e){
       return;
     }
     p.bought++;ops++;
-    if(p.bought===1 && p.need>1 && !p.secondRequested){
-      p.secondRequested=true;
-      p.secondTimer=setTimeout(()=>{if(connected&&armed&&!p.skipped&&!p.done)reqProposal(p,'second')},SECOND_OP_DELAY_MS);
-      setMsg('1ª operación ejecutada · esperando '+(SECOND_OP_DELAY_MS/1000)+' s para la 2ª','wait');
-    }
     const cid=m.buy?.contract_id||m.contract_id||m.data?.contract_id;
     if(cid){pendingContracts.set(String(cid),{p,boughtAt:Date.now(),polls:0,warned:false});try{send({proposal_open_contract:1,contract_id:cid,subscribe:1})}catch(e){}}
     cooldownUntil=Math.max(cooldownUntil,r.sentAt+Math.max(3,Number($('dtPause')?.value||3))*1000);
