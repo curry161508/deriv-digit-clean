@@ -1756,7 +1756,7 @@ function registerTickSync(tick){
   return check.ok;
 }
 /* ===== V23 · PUNTO DE ENTRADA PRECISO ===== */
-const ENTRY_MIN_SECOND=2; /* segundo mínimo de entrada (S1 nunca; el parche V22 había perdido el mínimo del motor) */
+const ENTRY_MIN_SECOND=3; /* S1 y S2 eliminados: entrada solo desde S3 */
 function bestHistoricalTiming(){
   /* Con rotación, el objetivo del panel es el segundo que el bot está usando */
   try{
@@ -2378,10 +2378,10 @@ async function mergeCloudTimingForAsset(asset){
   }catch(e){cloudTimingLoaded[asset]=false;console.warn('No se pudo cargar memoria cloud',e)}
 }
 
-/* ROTACIÓN ALEATORIA DE SEGUNDOS v4
+/* ROTACIÓN ADAPTATIVA REAL DE SEGUNDOS v5
    - Al empezar, el bot entra en el segundo más fuerte con datos (si aún no hay datos, en uno al azar) y SE QUEDA en él.
    - Cuenta cada OPERACIÓN perdida con resultado REAL de Deriv (no las hipotéticas del escáner). Una ganada reinicia la racha de ese segundo.
-   - Con N pérdidas seguidas (por defecto 3): bloquea ese segundo 30 min y rota a UN SEGUNDO AL AZAR entre los no bloqueados (S2..S10),
+   - Con N pérdidas seguidas (por defecto 3): bloquea ese segundo 30 min y rota al siguiente segundo más fuerte entre los no bloqueados (S3..S10),
      igual que salen los dígitos: todos con la misma probabilidad, sin importar su fuerza.
    - Estado guardado por activo + modo (igual que timingStats). */
 const ROT_BLOCK_MS=30*60*1000, ROT_KEY='scanner_rotation_v4';
@@ -2396,19 +2396,19 @@ function rotElegibles(st){   /* S2..S10 sin bloqueo; sin datos suficientes = fue
   return timingStats.map((stat,index)=>{
     const informed=!!stat&&stat.signals>=min;
     return {stat,index,sec:index+1,informed,score:informed?timingScore(stat):0,rate:informed?timingAdjustedRate(stat):0};
-  }).filter(x=>x.index>=1&&!rotBlocked(st,x.sec));
+  }).filter(x=>x.index>=2&&!rotBlocked(st,x.sec));
 }
 function rotStrength(sec){const s=timingStats[sec-1];return (s&&s.signals>=(Number(TIMING_MIN_SAMPLES)||5))?timingScore(s):0;}   /* fuerza = score del panel */
 function rotSort(a,b){return b.score-a.score||b.stat.signals-a.stat.signals||a.sec-b.sec;}
 /* El bot se queda en su segundo mientras no esté bloqueado. Primera elección: el más fuerte con datos (o al azar si aún no hay datos). */
 function getAdaptiveBestSecond(){
-  const st=rotState(),pool=rotElegibles(st),w=!pool.length;
-  if(st.waiting!==w){st.waiting=w;rotSave();}
-  if(w){st.current=null;return {wait:true};}
+  const st=rotState();
+  const pool=rotElegibles(st).filter(x=>x.informed).sort(rotSort);
+  if(!pool.length){st.current=null;st.waiting=true;rotSave();return {wait:true};}
+  st.waiting=false;
   if(st.current){const cur=pool.find(x=>x.sec===st.current);if(cur)return cur;st.current=null;}
-  const informed=pool.filter(x=>x.informed).sort(rotSort);
-  const pick=informed.length?informed[0]:pool[Math.floor(Math.random()*pool.length)];
-  st.current=pick.sec;st.how=informed.length?'mejor':'azar';rotSave();
+  const pick=pool[0];
+  st.current=pick.sec;st.how='fuerza';rotSave();
   return pick;
 }
 window.rotationRecordSignal=function(sec,won){      /* se llama con el resultado real de CADA operación */
@@ -2421,10 +2421,9 @@ window.rotationRecordSignal=function(sec,won){      /* se llama con el resultado
   st.blocked[k]=Date.now()+ROT_BLOCK_MS;st.streak[k]=0;
   const pool=rotElegibles(st);                       /* ya sin el segundo bloqueado */
   let r=null;
-  if(st.current===sec||st.current==null){
-    if(pool.length){r=pool[Math.floor(Math.random()*pool.length)];st.current=r.sec;st.how='azar';}   /* AL AZAR */
-    else st.current=null;
-  }else r=pool.find(x=>x.sec===st.current)||null;
+  const strongPool=pool.filter(x=>x.informed).sort(rotSort);
+  if(strongPool.length){r=strongPool[0];st.current=r.sec;st.how='fuerza';}
+  else st.current=null;
   const ok=!!r;
   const ev={rotated:true,from:sec,losses,fromScore,to:ok?r.sec:null,toScore:ok?r.score:null,toInformed:ok?r.informed:false,wait:!ok};
   st.log.push({t:Date.now(),from:sec,to:ev.to,losses});st.log=st.log.slice(-8);rotSave();
@@ -4648,7 +4647,7 @@ const store={
 
 /* ---------- Parámetros de entrada ---------- */
 const TRADES_PER_SIGNAL=2;   // igual que antes: 2 propuestas de US$1 por señal
-const FALLBACK_SECOND=2;     // si aún no hay segundo aprendido usa el mínimo
+const FALLBACK_SECOND=null;   // nunca entrar sin segundo aprendido
 const PREFETCH_MS=1800;      // adelanto con que se pide la primera propuesta
 const SECOND_OP_DELAY_MS=2500; // segunda operación 2,5 s después de la primera
 const MAX_LAT_MS=400;        // tope de compensación de latencia
@@ -4722,9 +4721,9 @@ function makePlan(ts,pp,now){
   p.mode=$('dtEntry')?.value||'target';
   const adaptive=getAdaptiveBestSecond();
   if(adaptive&&adaptive.wait)return skip('rotación: todos los segundos están bloqueados · esperando');
-  let target=adaptive&&!adaptive.wait?adaptive.sec:FALLBACK_SECOND;
+  let target=adaptive&&!adaptive.wait?adaptive.sec:0;
   p.learned=!!(adaptive&&adaptive.informed);
-  if(!p.learned&&p.mode==='strict')return skip('aún aprendiendo el segundo óptimo (modo estricto)');
+  if(!p.learned)return skip('sin segundo fuerte aprendido desde S3 · NO ENTRAR');
   p.target=target;
   const nudge=Number($('dtNudge')?.value||0)+Number($('dtDelay')?.value||0)*1000;
   const comp=Math.min(MAX_LAT_MS,Math.max(0,(rtt||0)/2));
