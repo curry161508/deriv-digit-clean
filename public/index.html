@@ -2378,20 +2378,55 @@ async function mergeCloudTimingForAsset(asset){
   }catch(e){cloudTimingLoaded[asset]=false;console.warn('No se pudo cargar memoria cloud',e)}
 }
 
+
+/* APRENDIZAJE CONDICIONADO: candidato -> segundo más frecuente */
+const CANDIDATE_TIMING_KEY='candidate_timing_v1';
+let candidateTiming={};try{candidateTiming=JSON.parse(localStorage.getItem(CANDIDATE_TIMING_KEY)||'{}')||{}}catch(e){candidateTiming={}}
+function candidateTimingKey(mode,candidate){return [document.getElementById('assetSelector')?.value||'R_100',mode,String(candidate)].join('|')}
+function candidateTimingStats(mode,candidate){const k=candidateTimingKey(mode,candidate);if(!candidateTiming[k])candidateTiming[k]=Array.from({length:10},()=>({attempts:0,hits:0}));return candidateTiming[k]}
+function recordCandidateTiming(mode,candidate,second,hit){
+  if(second<3||second>10||candidate==null)return;
+  const a=candidateTimingStats(mode,candidate)[second-1];a.attempts++;if(hit)a.hits++;
+  try{localStorage.setItem(CANDIDATE_TIMING_KEY,JSON.stringify(candidateTiming))}catch(e){}
+  try{sendTimingLearning({asset:document.getElementById('assetSelector')?.value||'R_100',mode,candidate:String(candidate),digit:String(candidate),observed_second:second,second,hits:hit?1:0,misses:hit?0:1,samples:1,won:!!hit,source:'candidate_timing'})}catch(e){}
+}
+function getCandidateBestSecond(pp){
+  if(!pp)return null;const mode=pp.mode||timingMode(),candidate=mode==='matches'?pp.digit:mode;
+  const a=candidateTimingStats(mode,candidate), pool=a.map((x,i)=>({sec:i+1,attempts:x.attempts,hits:x.hits,rate:x.attempts?x.hits/x.attempts:0}))
+    .filter(x=>x.sec>=3&&x.attempts>=2).sort((x,y)=>y.hits-x.hits||y.rate-x.rate||y.attempts-x.attempts);
+  return pool[0]||null;
+}
+const candidateCloudLoaded={};
+async function mergeCloudCandidateTiming(asset){
+  if(!asset||candidateCloudLoaded[asset])return; candidateCloudLoaded[asset]=true;
+  try{
+    const r=await fetch(`${CLOUD_LEARNING_BASE}/timing-memory?asset=${encodeURIComponent(asset)}&check=${Date.now()}`),rows=await r.json();
+    if(!Array.isArray(rows))return;
+    rows.forEach(row=>{
+      const cand=row.candidate??row.target_digit??row.digit??row.condition;
+      const sec=Number(row.observed_second??row.second); if(cand==null||!Number.isFinite(sec)||sec<3||sec>10)return;
+      const mode=row.mode||'matches',a=candidateTimingStats(mode,String(cand))[sec-1];
+      a.attempts+=Number(row.samples)||0; a.hits+=Number(row.hits??row.wins)||0;
+    });
+    try{localStorage.setItem(CANDIDATE_TIMING_KEY,JSON.stringify(candidateTiming))}catch(e){}
+  }catch(e){candidateCloudLoaded[asset]=false;console.warn('No se pudo cargar historial por candidato',e)}
+}
+function candidateTimingSummary(pp){const b=getCandidateBestSecond(pp);return b?`CANDIDATO ${pp.mode==='matches'?pp.digit:pp.mode} · S${b.sec} · ${b.hits} coincidencias/${b.attempts} observaciones`:''}
+
 /* ROTACIÓN ADAPTATIVA REAL DE SEGUNDOS v5
-   - Al empezar, el bot entra en el segundo más fuerte con datos (si aún no hay datos, en uno al azar) y SE QUEDA en él.
+   - Al empezar, el bot entra en el segundo más fuerte con datos y se queda en él; sin datos suficientes, no entra.
    - Cuenta cada OPERACIÓN perdida con resultado REAL de Deriv (no las hipotéticas del escáner). Una ganada reinicia la racha de ese segundo.
    - Con N pérdidas seguidas (por defecto 3): bloquea ese segundo 30 min y rota al siguiente segundo más fuerte entre los no bloqueados (S3..S10),
-     igual que salen los dígitos: todos con la misma probabilidad, sin importar su fuerza.
+     sin elegir al azar.
    - Estado guardado por activo + modo (igual que timingStats). */
-const ROT_BLOCK_MS=30*60*1000, ROT_KEY='scanner_rotation_v4';
+const ROT_BLOCK_MS=30*60*1000, ROT_KEY='scanner_rotation_v5';
 let rotAll={};try{rotAll=JSON.parse(localStorage.getItem(ROT_KEY)||'{}')||{}}catch(e){rotAll={}}
 function rotN(){return Math.max(1,Number(document.getElementById('dtRotN')?.value)||3);}
 function rotKey(){return (document.getElementById('assetSelector')?.value||'R_100')+'_'+timingMode();}
 function rotState(){const k=rotKey();return rotAll[k]||(rotAll[k]={current:null,curRate:null,ref:null,streak:{},blocked:{},waiting:false,log:[]});}
 function rotSave(){try{localStorage.setItem(ROT_KEY,JSON.stringify(rotAll))}catch(e){}}
 function rotBlocked(st,sec){const u=Number(st.blocked[sec]||0);if(u&&Date.now()>=u){delete st.blocked[sec];st.streak[sec]=0;return false;}return !!u;}
-function rotElegibles(st){   /* S2..S10 sin bloqueo; sin datos suficientes = fuerza 0 (desconocida) */
+function rotElegibles(st){   /* S3..S10 sin bloqueo; sin datos suficientes = fuerza 0 (desconocida) */
   const min=Number(TIMING_MIN_SAMPLES)||5;
   return timingStats.map((stat,index)=>{
     const informed=!!stat&&stat.signals>=min;
@@ -2400,7 +2435,7 @@ function rotElegibles(st){   /* S2..S10 sin bloqueo; sin datos suficientes = fue
 }
 function rotStrength(sec){const s=timingStats[sec-1];return (s&&s.signals>=(Number(TIMING_MIN_SAMPLES)||5))?timingScore(s):0;}   /* fuerza = score del panel */
 function rotSort(a,b){return b.score-a.score||b.stat.signals-a.stat.signals||a.sec-b.sec;}
-/* El bot se queda en su segundo mientras no esté bloqueado. Primera elección: el más fuerte con datos (o al azar si aún no hay datos). */
+/* El bot se queda en su segundo mientras no esté bloqueado. Primera elección: el más fuerte con datos. */
 function getAdaptiveBestSecond(){
   const st=rotState();
   const pool=rotElegibles(st).filter(x=>x.informed).sort(rotSort);
@@ -2433,7 +2468,7 @@ window.rotationReset=function(){delete rotAll[rotKey()];rotSave();};
 window.rotationSummary=function(){
   const st=rotState(),n=rotN(),now=Date.now(),L=[],r=getAdaptiveBestSecond();
   if(r&&r.wait)L.push('ROTACIÓN · todos los segundos están bloqueados · esperando');
-  else if(r)L.push('ROTACIÓN · el bot entra en S'+r.sec+' ('+(r.informed?'fuerza '+Math.round(r.score):'sin datos suficientes aún')+' · '+(st.how==='azar'?'elegido al azar':'el más fuerte al iniciar')+') · pérdidas seguidas en S'+r.sec+': '+(st.streak[r.sec]||0)+'/'+n);
+  else if(r)L.push('ROTACIÓN · el bot entra en S'+r.sec+' ('+(r.informed?'fuerza '+Math.round(r.score):'sin datos suficientes aún')+' · '+'el más fuerte disponible'+') · pérdidas seguidas en S'+r.sec+': '+(st.streak[r.sec]||0)+'/'+n);
   const rank=rotElegibles(st).filter(x=>x.informed).sort(rotSort).slice(0,4).map(x=>'S'+x.sec+' '+Math.round(x.score));
   if(rank.length)L.push('Ranking de fuerza (solo referencia): '+rank.join(' · '));
   const w=st.wins||0,l=st.losses||0;
@@ -2451,6 +2486,7 @@ function processTimingTick(digit){
       const candidate=timingSession.pendingBySecond[resolveSecond], st=timingStats[resolveSecond-1]; st.signals++;
       const won=timingConditionMatches(timingSession.mode,digit,candidate.candidate);
       if(won) st.wins++; else st.losses++;
+      recordCandidateTiming(timingSession.mode,candidate.candidate,resolveSecond,won);
       delete timingSession.pendingBySecond[resolveSecond]; saveTimingStats();
     }
     if(second<1 || second>TIMING_SECONDS) return;
@@ -4396,7 +4432,7 @@ window.addEventListener(
 connectDeriv(
     "R_100"
 );
-setInterval(()=>mergeCloudTimingForAsset(document.getElementById("assetSelector")?.value||"R_100"),60000);
+setInterval(()=>{const a=document.getElementById("assetSelector")?.value||"R_100";mergeCloudTimingForAsset(a);mergeCloudCandidateTiming(a)},60000);
 
 
 /* Anuncio automático de botones desactivado: evita que un clic corte la cuenta o un aviso crítico. */
@@ -4749,11 +4785,11 @@ function makePlan(ts,pp,now){
   p.s=s;p.sym=$('assetSelector')?.value||'R_100';
   const g=window.entryGate||{};
   p.mode=$('dtEntry')?.value||'target';
+  const candidateBest=getCandidateBestSecond(pp);
+  if(!candidateBest)return skip('sin historial suficiente para este candidato · NO ENTRAR');
+  let target=candidateBest.sec;
+  p.learned=true;p.candidateTiming=candidateBest;
   const adaptive=getAdaptiveBestSecond();
-  if(adaptive&&adaptive.wait)return skip('rotación: todos los segundos están bloqueados · esperando');
-  let target=adaptive&&!adaptive.wait?adaptive.sec:0;
-  p.learned=!!(adaptive&&adaptive.informed);
-  if(!p.learned)return skip('sin segundo fuerte aprendido desde S3 · NO ENTRAR');
   p.target=target;
   const nudge=Number($('dtNudge')?.value||0)+Number($('dtDelay')?.value||0)*1000+autoNudgeCorrection();
   const comp=getComp();
@@ -4799,7 +4835,7 @@ function fire(p,now){
     if(!g.readyIfOnTarget)return abort(p,'sin confirmación 🟢 en S'+p.target+' (score '+Math.round(g.score||0)+')');
   }
   p.fired=true;traded.add(p.sk);
-  setMsg('ENTRANDO en S'+p.target+' · enviando compra…','on');
+  setMsg('ENTRANDO en S'+p.target+' · candidato '+(pp.digit??pp.mode)+' · enviando compra…','on');
   flush(p);
 }
 
