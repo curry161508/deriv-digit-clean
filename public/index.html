@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -658,7 +657,7 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
     </div>
     <div id="dtStatus" style="margin-top:7px;color:#8fb8d8">Estado: OFF · operaciones: 0</div>
     <div id="dtRot" style="margin-top:5px;color:#9fd3ff;font-size:11px;line-height:1.4;white-space:pre-line">ROTACIÓN · aprendiendo segundos</div>
-    <div class="dt-note">US$1 por operación, 2 operaciones por señal. El bot compra en el segundo que marca “ENTRADA MÁS FAVORABLE”. El bot se queda en un segundo mientras funciona; si acumula las pérdidas REALES seguidas elegidas (por defecto 3), lo bloquea 30 min y rota a otro segundo de fuerza similar. Si no hay ninguno de fuerza similar, espera en vez de entrar en uno débil. Si ya pasó ese segundo, omite la señal. Mantén esta pestaña visible mientras opera.</div>
+    <div class="dt-note">US$1 por operación, 2 operaciones por señal. El bot compra en el segundo que marca “ENTRADA MÁS FAVORABLE”. El bot se queda en un segundo mientras funciona; si acumula las pérdidas REALES seguidas elegidas (por defecto 3), lo bloquea 30 min y rota a otro segundo de fuerza similar. Después de N pérdidas rota al siguiente segundo más fuerte disponible. Si ya pasó ese segundo, omite la señal. Mantén esta pestaña visible mientras opera.</div>
   </div>
 </section>
 
@@ -2413,9 +2412,9 @@ function getAdaptiveBestSecond(){
   let pick;
   if(st.ref==null)pick=pool[0];                                /* primera elección: el mejor */
   else{
-    const need=rotNeededRate(st.ref),ok=pool.filter(x=>x.rate>=need);
-    if(!ok.length){st.waiting=true;rotSave();return {wait:true,need};}
-    pick=ok[0];
+    /* Tras N pérdidas se rota al siguiente más fuerte disponible.
+       No se queda congelado esperando que otro tenga una tasa parecida. */
+    pick=pool[0];
   }
   st.current=pick.sec;st.curRate=pick.rate;st.ref=null;st.waiting=false;rotSave();
   return pick;
