@@ -4780,7 +4780,7 @@ function send(o){
 /* ---------- Plan de entrada por señal ---------- */
 function makePlan(ts,pp,now){
   const p={sk:String(ts.startMs),pp,skipped:false,done:false,fired:false,pre:false,need:TRADES_PER_SIGNAL,
-           ids:[],inflight:0,buysSent:0,bought:0,retries:0,errors:0,secondRequested:false,secondTimer:null};
+           ids:[],inflight:0,buysSent:0,bought:0,retries:0,errors:0,secondRequested:false,secondTimer:null,slotSent:[]};
   const skip=t=>{p.skipped=true;setMsg('señal omitida · '+t,'wait');return p};
   if(traded.has(p.sk))return skip('ya se operó esta señal');
   const s=spec(pp);if(!s)return skip('modo sin contrato operable');
