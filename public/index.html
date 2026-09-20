@@ -657,7 +657,7 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
     </div>
     <div id="dtStatus" style="margin-top:7px;color:#8fb8d8">Estado: OFF · operaciones: 0</div>
     <div id="dtRot" style="margin-top:5px;color:#9fd3ff;font-size:11px;line-height:1.4;white-space:pre-line">ROTACIÓN · aprendiendo segundos</div>
-    <div class="dt-note">US$1 por operación, 2 operaciones por señal. La 1ª operación entra en el segundo favorable y la 2ª entra 2,5 s después. El bot se queda en un segundo mientras funciona; si acumula las pérdidas REALES seguidas elegidas (por defecto 3), lo bloquea 30 min y rota a otro segundo de fuerza similar. Después de N pérdidas rota al siguiente segundo más fuerte disponible. Si ya pasó ese segundo, omite la señal. Mantén esta pestaña visible mientras opera.</div>
+    <div class="dt-note">US$1 por operación, 2 operaciones por señal. La 1ª operación entra solo en el segundo aprendido; nunca usa S2 por defecto. La 2ª entra 2,5 s después. El bot se queda en un segundo mientras funciona; si acumula las pérdidas REALES seguidas elegidas (por defecto 3), lo bloquea 30 min y rota a otro segundo de fuerza similar. Después de N pérdidas rota al siguiente segundo más fuerte disponible. Si ya pasó ese segundo, omite la señal. Mantén esta pestaña visible mientras opera.</div>
   </div>
 </section>
 
@@ -4647,7 +4647,7 @@ const store={
 
 /* ---------- Parámetros de entrada ---------- */
 const TRADES_PER_SIGNAL=2;   // igual que antes: 2 propuestas de US$1 por señal
-const FALLBACK_SECOND=2;     // si aún no hay segundo aprendido usa el mínimo
+const FALLBACK_SECOND=null;   // nunca entrar automáticamente en S2 sin aprendizaje
 const PREFETCH_MS=1800;      // adelanto con que se pide la primera propuesta
 const SECOND_OP_DELAY_MS=2500; // segunda operación 2,5 s después de la primera
 const MAX_LAT_MS=400;        // tope de compensación de latencia
@@ -4724,8 +4724,7 @@ function makePlan(ts,pp,now){
   let target=adaptive?(adaptive.index+1):(Number(g.bestSecond)||0);
   p.learned=target>0;
   if(!target){
-    if(p.mode==='strict')return skip('aún aprendiendo el segundo óptimo (modo estricto)');
-    target=FALLBACK_SECOND;
+    return skip('sin segundo aprendido · no entrar todavía');
   }
   p.target=target;
   const nudge=Number($('dtNudge')?.value||0)+Number($('dtDelay')?.value||0)*1000;
@@ -4790,7 +4789,7 @@ function loop(){
   if(!plan.pre&&now>=plan.fireAt-PREFETCH_MS){plan.pre=true;reqProposal(plan,'pre')}
   if(now<plan.fireAt){
     setMsg('ARMADO · entra en S'+plan.target+' → '+((plan.fireAt-now)/1000).toFixed(1)+'s'+
-           (plan.learned?'':' (S'+FALLBACK_SECOND+' por defecto: aún aprendiendo)'),'wait');
+           (plan.learned?'':' · esperando aprendizaje'),'wait');
     return;
   }
   fire(plan,now);
