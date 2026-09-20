@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCANNER AZUL // MULTIWINDOW DIGIT ENGINE · ROTACIÓN v2</title>
+<title>SCANNER AZUL // MULTIWINDOW DIGIT ENGINE</title>
 
 <style>
 :root{
@@ -583,79 +583,12 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
 .full-result{margin-top:10px;padding:11px;border:1px solid rgba(25,245,165,.35);border-radius:10px;background:linear-gradient(180deg,rgba(0,90,70,.12),rgba(0,30,65,.25))}.full-result-title{font-size:12px;font-weight:1000;color:#7fffdc;letter-spacing:.8px;margin-bottom:8px}.full-result-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.full-result-grid>div{padding:7px 4px;text-align:center;border:1px solid rgba(22,140,255,.22);border-radius:7px;background:#061a2e}.full-result-grid span{display:block;font-size:8px;color:#73b9e8}.full-result-grid b{display:block;margin-top:3px;font-size:13px;color:#fff}.full-result-text{margin-top:8px;font-size:11px;line-height:1.5;color:#ccecff}.voice-mode-row{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;margin-top:7px}.voice-mode-row label{padding:7px 8px;border:1px solid rgba(22,140,255,.25);border-radius:7px;background:rgba(0,30,65,.45);font-size:9px;font-weight:900;color:#8fc9ec}.voice-mode-row select{height:30px}.voice-note{margin-top:5px;text-align:center;font-size:9px;color:#789cba}@media(max-width:700px){.full-result-grid{grid-template-columns:repeat(2,1fr)}.voice-mode-row{grid-template-columns:1fr}.voice-mode-row select{width:100%}}
 
 </style>
-<style id="demo-trader-css">
-/* Panel del bot: ya NO es flotante (antes era sticky y tapaba la pantalla) y se puede abrir/cerrar */
-#demoTrader{position:relative;z-index:5;margin:8px 0 14px;padding:0;border:1px solid rgba(22,140,255,.4);border-radius:12px;background:#061a2e;color:#dceaff;font-size:12px;overflow:hidden}
-#demoTrader .dt-head{display:flex;align-items:center;gap:8px;padding:8px 10px;flex-wrap:wrap}
-#demoTrader .dt-dot{flex:none;width:10px;height:10px;border-radius:50%;background:#4a6178}
-#demoTrader .dt-dot.on{background:#19f5a5;box-shadow:0 0 8px #19f5a5}
-#demoTrader .dt-dot.wait{background:#ffd84d;box-shadow:0 0 8px #ffd84d}
-#demoTrader .dt-dot.err{background:#ff496d;box-shadow:0 0 8px #ff496d}
-#demoTrader .dt-title{flex:none;white-space:nowrap;font-size:13px}
-#demoTrader .dt-mini{flex:1 1 0;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#8fb8d8}
-#demoTrader .dt-body{padding:10px;border-top:1px solid rgba(22,140,255,.25)}
-#demoTrader .dt-body[hidden]{display:none}
-#demoTrader .dt-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-#demoTrader input,#demoTrader select{width:100%;box-sizing:border-box;padding:7px;border-radius:6px;border:1px solid #236da8;background:#041525;color:#fff}
-#demoTrader button{padding:6px 12px!important;min-height:34px!important;margin:0!important;font-size:12px!important;border-radius:8px!important;box-shadow:none!important;white-space:nowrap}
-#demoTrader button.stop{background:#75172e!important;border-color:#ff496d!important}
-#demoTrader .dt-actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
-#demoTrader .dt-note{margin-top:6px;color:#7fa8c9;font-size:11px;line-height:1.35}
-#dtOn{display:none}
-@media(max-width:600px){#demoTrader .dt-grid{grid-template-columns:1fr}#demoTrader .dt-title{flex:1}#demoTrader .dt-mini{order:10;flex-basis:100%}}
-</style></head>
+<style id="demo-trader-css">#demoTrader{position:sticky;top:6px;z-index:50;margin:8px 0 14px;padding:11px;border:1px solid rgba(22,140,255,.4);border-radius:12px;background:#061a2e;color:#dceaff;font-size:12px}#demoTrader .dt-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px}#demoTrader input,#demoTrader select{width:100%;box-sizing:border-box;padding:7px;border-radius:6px;border:1px solid #236da8;background:#041525;color:#fff}#demoTrader button{padding:8px 10px;border-radius:7px;border:1px solid #168cff;background:#0757a8;color:#fff;font-weight:800;margin:5px 3px 0 0}#demoTrader button.stop{background:#75172e;border-color:#ff496d}#dtOn{display:none}@media(max-width:600px){#demoTrader .dt-grid{grid-template-columns:1fr}}</style></head>
 
 <body>
 <canvas id="scannerBg" class="scanner-bg"></canvas>
 
-<div class="phone-frame"><section id="demoTrader">
-  <div class="dt-head">
-    <span id="dtDot" class="dt-dot"></span>
-    <b class="dt-title">🤖 BOT DEMO</b>
-    <span id="dtMini" class="dt-mini">OFF</span>
-    <button id="dtStopMini" class="stop" type="button" style="display:none">DETENER</button>
-    <button id="dtToggle" type="button" aria-expanded="false" aria-controls="dtBody">▼ ABRIR</button>
-  </div>
-  <div id="dtBody" class="dt-body" hidden>
-    <div class="dt-grid">
-      <input id="dtToken" type="password" placeholder="Token demo (solo local)">
-      <input id="dtApp" inputmode="numeric" placeholder="App ID">
-      <select id="dtDuration"><option value="1">1 tick</option></select>
-      <select id="dtDelay"><option value="0">Sin delay</option></select>
-      <select id="dtPause"><option value="3">Pausa entre ciclos: 3s</option><option value="5">Pausa entre ciclos: 5s</option></select>
-      <select id="dtEntry">
-        <option value="target">Entrada: segundo óptimo aprendido</option>
-        <option value="strict">Entrada: solo con 🟢 confirmada</option>
-      </select>
-      <select id="dtNudge">
-        <option value="-300">Ajuste fino: 300 ms ANTES</option>
-        <option value="-200">Ajuste fino: 200 ms ANTES</option>
-        <option value="-100">Ajuste fino: 100 ms ANTES</option>
-        <option value="0" selected>Ajuste fino: exacto (0 ms)</option>
-        <option value="100">Ajuste fino: 100 ms DESPUÉS</option>
-        <option value="200">Ajuste fino: 200 ms DESPUÉS</option>
-        <option value="300">Ajuste fino: 300 ms DESPUÉS</option>
-      </select>
-      <select id="dtRotN" title="Pérdidas seguidas del bot en un mismo segundo antes de rotar">
-        <option value="2">Rotar tras 2 pérdidas seguidas</option>
-        <option value="3" selected>Rotar tras 3 pérdidas seguidas</option>
-        <option value="4">Rotar tras 4 pérdidas seguidas</option>
-        <option value="5">Rotar tras 5 pérdidas seguidas</option>
-      </select>
-    </div>
-    <label style="display:block;margin-top:6px"><input id="dtConfirm" type="checkbox" style="width:auto"> Confirmo que es cuenta DEMO</label>
-    <label style="display:block;margin-top:4px"><input id="dtRemember" type="checkbox" style="width:auto"> Recordar conexión demo en este dispositivo</label>
-    <div class="dt-actions">
-      <button id="dtConnect" type="button">CONECTAR DEMO</button>
-      <button id="dtOn" type="button">ACTIVAR BOT</button>
-      <button id="dtStop" class="stop" type="button">DETENER</button>
-      <button id="dtRotReset" type="button">REINICIAR ROTACIÓN</button>
-    </div>
-    <div id="dtStatus" style="margin-top:7px;color:#8fb8d8">Estado: OFF · operaciones: 0</div>
-    <div id="dtRot" style="margin-top:5px;color:#9fd3ff;font-size:11px;line-height:1.4;white-space:pre-line">ROTACIÓN · aprendiendo segundos</div>
-    <div class="dt-note">US$1 por operación, 2 operaciones por señal. La 1ª operación entra en el segundo favorable y la 2ª entra 2,5 s después. Al empezar entra en el segundo más fuerte y se queda ahí. Cada operación PERDIDA (resultado real de Deriv) suma a la racha de ese segundo; con N seguidas (por defecto 3) lo bloquea 30 min y ROTA A UN SEGUNDO AL AZAR (S2 a S10, todos con la misma probabilidad). Una ganada reinicia la racha. Si ya pasó ese segundo, omite la señal. Mantén esta pestaña visible mientras opera.</div>
-  </div>
-</section>
+<div class="phone-frame"><section id="demoTrader"><b>🤖 BOT DEMO · 1 OPERACIÓN DE US$1 POR SEÑAL</b><div class="dt-grid"><input id="dtToken" type="password" placeholder="Token demo (solo local)"><input id="dtApp" inputmode="numeric" placeholder="App ID"><select id="dtDuration"><option value="1">1 tick</option></select><select id="dtDelay"><option value="0">Sin delay</option></select><select id="dtPause"><option value="3">Pausa entre ciclos: 3s</option><option value="5">Pausa entre ciclos: 5s</option></select></div><label style="display:block;margin-top:6px"><input id="dtConfirm" type="checkbox" style="width:auto"> Confirmo que es cuenta DEMO</label><label style="display:block;margin-top:4px"><input id="dtRemember" type="checkbox" style="width:auto"> Recordar conexión demo en este dispositivo</label><button id="dtConnect">CONECTAR DEMO</button><button id="dtOn">ACTIVAR BOT</button><button id="dtStop" class="stop">DETENER</button><div id="dtStatus" style="margin-top:7px;color:#8fb8d8">Estado: OFF · 0 operaciones</div></section>
 
 <div class="top-hud">
 
@@ -1755,48 +1688,11 @@ function registerTickSync(tick){
   updateSyncUI(); updateEntryPanel();
   return check.ok;
 }
-/* ===== V23 · PUNTO DE ENTRADA PRECISO ===== */
-const ENTRY_MIN_SECOND=3; /* S1 y S2 eliminados: entrada solo desde S3 */
-function bestHistoricalTiming(){
-  /* Con rotación, el objetivo del panel es el segundo que el bot está usando */
-  try{
-    const r=getAdaptiveBestSecond();
-    if(!r||r.wait||!r.informed)return null;
-    return {second:r.sec,rate:timingRate(r.stat),score:r.score,samples:r.stat.signals};
-  }catch(e){}
-  let best=null;
-  timingStats.forEach((stat,index)=>{
-    if(index+1<ENTRY_MIN_SECOND||!stat||stat.signals<TIMING_MIN_SAMPLES)return;
-    const score=timingScore(stat);
-    if(!best||score>best.score||(score===best.score&&stat.signals>best.stat.signals))best={stat,index,score};
-  });
-  return best?{second:best.index+1,rate:timingRate(best.stat),score:best.score,samples:best.stat.signals}:null;
-}
-/* Segundo activo según el RELOJ de la sesión (no según cuándo llegó el último tick).
-   Antes, con ticks cada 2 s, el segundo objetivo podía no "existir" y el panel se quedaba desactualizado hasta 2 s. */
-function entryClockSecond(fallback=0){
-  try{
-    if(timingSession && timingSession.startMs){
-      const s=Math.floor((Date.now()-timingSession.startMs)/1000)+1;
-      return (s>=1 && s<=TIMING_SECONDS)?s:0;
-    }
-  }catch(e){}
-  return fallback;
-}
+function bestHistoricalTiming(){const b=getBestTimingSecond();return b?{second:b.index+1,rate:timingRate(b.stat),score:b.score,samples:b.stat.signals}:null;}
 function bestWindowCandidate(){const arr=MULTI_WINDOWS.map(w=>({w,st:multiWindows[w]?.stats})).filter(x=>x.st&&x.st.signals>0);arr.sort((a,b)=>multiRate(b.st)-multiRate(a.st));return arr[0]||null;}
 function entryPointEngine(activeSecond=0){
-  activeSecond=entryClockSecond(activeSecond);
   const p=pendingPrediction;
-  let learned=bestHistoricalTiming();
-  /* El segundo objetivo se BLOQUEA al iniciar la sesión: no cambia a mitad del ciclo (si cambiaba hacia atrás, la entrada se perdía). */
-  const sess=(typeof timingSession!=='undefined')?timingSession:null;
-  if(sess){
-    if(!sess.entryTarget && learned) sess.entryTarget=learned.second;
-    if(sess.entryTarget && (!learned || learned.second!==sess.entryTarget)){
-      const st=timingStats[sess.entryTarget-1];
-      if(st && st.signals>0) learned={second:sess.entryTarget,rate:timingRate(st),score:timingScore(st),samples:st.signals};
-    }
-  }
+  const learned=bestHistoricalTiming();
   const windows=MULTI_WINDOWS.map(w=>({w,st:multiWindows[w]?.stats||emptyMultiStats()}));
   const liveOk=liveValidTicks>=LIVE_MIN_TICKS && !syncLocked && tickSequenceOk;
   const latencyOk=estimatedLatencyMs===null || estimatedLatencyMs<=1500;
@@ -1826,14 +1722,11 @@ function entryPointEngine(activeSecond=0){
   const enoughWindows=validRates.length>=2 && windowConsensus>=.5;
   const stable=liveOk&&latencyOk&&sampleReady&&gapOk&&timingReady&&qualityScore>=55&&evidenceScore>=45&&enoughWindows&&falseRisk<48;
   const confirmed=stable&&onTarget&&score>=68;
-  /* ¿estaría confirmada al entrar en el segundo objetivo? (el bot lo evalúa un instante antes de disparar) */
-  const readyIfOnTarget=stable&&(onTarget?score:Math.min(100,score+10))>=68;
   const state=confirmed?'ENTRADA':preparing?'PREPARAR':(stable?'VALIDAR':'ESPERAR');
-  entryGate={confirmed,bestSecond:target,bestWindow:bestWin?.w||null,confidence:qualityScore,historyRate:learned?.rate||null,gap:rawGap,score,state,falseRisk,stable,onTarget,readyIfOnTarget,sessionStart:sess?.startMs||null}; window.entryGate=entryGate;
-  return {p,learned,windows,bestWin,liveOk,latencyOk,sampleReady,qualityScore,rawGap,gapOk,timingReady,target,onTarget,readyIfOnTarget,preparing,validRates,windowConsensus,qualityScore,historyScore,windowScore,stabilityScore,evidenceScore,timingScore22,score,falseRisk,enoughWindows,stable,confirmed,state};
+  entryGate={confirmed,bestSecond:target,bestWindow:bestWin?.w||null,confidence:qualityScore,historyRate:learned?.rate||null,gap:rawGap,score,state,falseRisk}; window.entryGate=entryGate;
+  return {p,learned,windows,bestWin,liveOk,latencyOk,sampleReady,qualityScore,rawGap,gapOk,timingReady,target,onTarget,preparing,validRates,windowConsensus,qualityScore,historyScore,windowScore,stabilityScore,evidenceScore,timingScore22,score,falseRisk,enoughWindows,stable,confirmed,state};
 }
 function updateEntryPanel(activeSecond=0){
-  activeSecond=entryClockSecond(activeSecond);
   const els={second:document.getElementById('entrySecond'),conf:document.getElementById('entryConfidence'),hist:document.getElementById('entryHistory'),status:document.getElementById('entryStatus'),motor:document.getElementById('entryMotor'),win:document.getElementById('entryWindow'),gap:document.getElementById('entryGap'),score:document.getElementById('entryScore'),stability:document.getElementById('entryStability'),evidence:document.getElementById('entryEvidence'),risk:document.getElementById('entryFalseRisk'),reason:document.getElementById('entryReason'),audit:document.getElementById('entryAudit'),panel:document.getElementById('entryPanel')};
   if(!els.second||!els.status)return;
   const e=entryPointEngine(activeSecond), target=e.target;
@@ -1878,18 +1771,6 @@ function updateEntryPanel(activeSecond=0){
 function renderSmartCountdown(active,target){const box=document.getElementById('smartCountdown');if(!box)return;box.innerHTML='';for(let i=1;i<=10;i++){const d=document.createElement('div');let label='ESPERAR';if(target){if(i===target)label='ENTRAR';else if(i===target-1)label='PREPARAR';else if(i>target)label='EJECUTAR';}d.className=(i===active?'active ':'')+(target&&i===target?'target ':'')+(active&&i<active?'past':'');d.innerHTML=`<b>${i}</b>${label}`;box.appendChild(d);}}
 
 
-
-/* Reloj propio del punto de entrada: refresca el panel en cuanto cambia el segundo de la sesión. */
-(function(){
-  let last=-1;
-  setInterval(function(){
-    try{
-      const s=entryClockSecond(-1);
-      if(s===-1){last=-1;return;}
-      if(s!==last){last=s;updateEntryPanel(s);}
-    }catch(e){}
-  },100);
-})();
 
 function vozDetalle(){return document.getElementById('voiceDetailSelect')?.value||'full';}
 function hablarTick(digit,count){if(vozDetalle()!=='full')return; if(count<=20 || count%10===0) hablar(`Tick ${count}. Último dígito ${digit}.`);}
@@ -2298,7 +2179,7 @@ function renderTimingStats(activeSecond=0){
         bestEl.innerHTML=`<strong>MEJOR MOMENTO: S${best.index+1}</strong> &nbsp; | &nbsp; RENDIMIENTO: ${timingRate(st).toFixed(1)}% (${st.wins}/${st.signals}) &nbsp; | &nbsp; SCORE MOMENTO: ${best.score.toFixed(1)}`;
     }else{
         const total=timingStats.reduce((a,x)=>a+x.signals,0);
-        bestEl.innerHTML=`<strong>MEJOR MOMENTO: --</strong> &nbsp; | &nbsp; ACUMULANDO DATOS DESDE S2 (${total} muestras; mínimo ${TIMING_MIN_SAMPLES} por segundo)`;
+        bestEl.innerHTML=`<strong>MEJOR MOMENTO: --</strong> &nbsp; | &nbsp; ACUMULANDO DATOS DESDE S4 (${total} muestras; mínimo ${TIMING_MIN_SAMPLES} por segundo)`;
     }
 
     grid.innerHTML=timingStats.map((st,i)=>{
@@ -2344,11 +2225,11 @@ function renderTimingStats(activeSecond=0){
     if(!grid || !bestEl || !liveEl) return;
     const candidates=getAvailableTimingCandidates(), best=getBestTimingSecond(), secondBest=candidates[1];
     const conf=timingConfidence(best,secondBest);
-    liveEl.textContent=activeSecond>0 ? `SEGUNDO ${activeSecond}/10 · EVALUANDO DESDE S2` : (best ? 'MOMENTO APRENDIDO' : 'ESPERANDO DATOS');
+    liveEl.textContent=activeSecond>0 ? `SEGUNDO ${activeSecond}/10 · EVALUANDO DESDE S4` : (best ? 'MOMENTO APRENDIDO' : 'ESPERANDO DATOS');
     if(best){
       const st=best.stat;
       bestEl.innerHTML=`<strong>MEJOR MOMENTO: S${best.index+1}</strong> | PROBABILIDAD ESTIMADA: ${timingRate(st).toFixed(1)}% | CONFIANZA: ${conf.level.toUpperCase()} | VENTAJA: ${conf.gap.toFixed(1)} puntos`;
-    }else bestEl.innerHTML='<strong>MEJOR MOMENTO: --</strong> | ESPERANDO DATOS SUFICIENTES DESDE S2';
+    }else bestEl.innerHTML='<strong>MEJOR MOMENTO: --</strong> | ESPERANDO DATOS SUFICIENTES DESDE S4';
     grid.innerHTML=timingStats.map((st,i)=>{const rate=st.signals?timingRate(st):null;return `<div class="timing-cell ${activeSecond===i+1?'active':''} ${best&&best.index===i?'best':''}"><div class="timing-sec">S${i+1}</div><div class="timing-rate">${rate===null?'--':rate.toFixed(0)+'%'}</div><div class="timing-sample">${st.signals?st.wins+'/'+st.signals:'--'}</div></div>`}).join('');
     renderTimingHistory();
 }
@@ -2363,130 +2244,12 @@ function startTimingSession(){
     hablar(`Motor de momento óptimo iniciado. Evaluando datos y comparando los segundos disponibles. No es una garantía.`);
 }
 
-
-/* MEMORIA HÍBRIDA: nube + contexto local */
-const cloudTimingLoaded={};
-async function mergeCloudTimingForAsset(asset){
-  if(!asset||cloudTimingLoaded[asset])return;
-  cloudTimingLoaded[asset]=true;
-  try{
-    const r=await fetch(`${CLOUD_LEARNING_BASE}/timing-memory?asset=${encodeURIComponent(asset)}&check=${Date.now()}`);
-    const rows=await r.json(); if(!Array.isArray(rows))return;
-    rows.forEach(row=>{const i=Number(row.observed_second)-1;if(i<0||i>=timingStats.length)return;const st=timingStats[i];st.signals+=Number(row.samples)||0;st.wins+=Number(row.hits)||0;st.losses+=Number(row.misses)||0;});
-    saveTimingStats(); renderTimingStats(); updateEntryPanel();
-    systemToast.textContent=`MEMORIA HÍBRIDA CARGADA · ${rows.length} registros de nube + contexto local`;
-  }catch(e){cloudTimingLoaded[asset]=false;console.warn('No se pudo cargar memoria cloud',e)}
-}
-
-
-/* APRENDIZAJE CONDICIONADO: candidato -> segundo más frecuente */
-const CANDIDATE_TIMING_KEY='candidate_timing_v1';
-let candidateTiming={};try{candidateTiming=JSON.parse(localStorage.getItem(CANDIDATE_TIMING_KEY)||'{}')||{}}catch(e){candidateTiming={}}
-function candidateTimingKey(mode,candidate){return [document.getElementById('assetSelector')?.value||'R_100',mode,String(candidate)].join('|')}
-function candidateTimingStats(mode,candidate){const k=candidateTimingKey(mode,candidate);if(!candidateTiming[k])candidateTiming[k]=Array.from({length:10},()=>({attempts:0,hits:0}));return candidateTiming[k]}
-function recordCandidateTiming(mode,candidate,second,hit){
-  if(second<3||second>10||candidate==null)return;
-  const a=candidateTimingStats(mode,candidate)[second-1];a.attempts++;if(hit)a.hits++;
-  try{localStorage.setItem(CANDIDATE_TIMING_KEY,JSON.stringify(candidateTiming))}catch(e){}
-  try{sendTimingLearning({asset:document.getElementById('assetSelector')?.value||'R_100',mode,candidate:String(candidate),digit:String(candidate),observed_second:second,second,hits:hit?1:0,misses:hit?0:1,samples:1,won:!!hit,source:'candidate_timing'})}catch(e){}
-}
-function getCandidateBestSecond(pp){
-  if(!pp)return null;const mode=pp.mode||timingMode(),candidate=mode==='matches'?pp.digit:mode;
-  const a=candidateTimingStats(mode,candidate), pool=a.map((x,i)=>({sec:i+1,attempts:x.attempts,hits:x.hits,rate:x.attempts?x.hits/x.attempts:0}))
-    .filter(x=>x.sec>=3&&x.attempts>=2).sort((x,y)=>y.hits-x.hits||y.rate-x.rate||y.attempts-x.attempts);
-  return pool[0]||null;
-}
-const candidateCloudLoaded={};
-async function mergeCloudCandidateTiming(asset){
-  if(!asset||candidateCloudLoaded[asset])return; candidateCloudLoaded[asset]=true;
-  try{
-    const r=await fetch(`${CLOUD_LEARNING_BASE}/timing-memory?asset=${encodeURIComponent(asset)}&check=${Date.now()}`),rows=await r.json();
-    if(!Array.isArray(rows))return;
-    rows.forEach(row=>{
-      const cand=row.candidate??row.target_digit??row.digit??row.condition;
-      const sec=Number(row.observed_second??row.second); if(cand==null||!Number.isFinite(sec)||sec<3||sec>10)return;
-      const mode=row.mode||'matches',a=candidateTimingStats(mode,String(cand))[sec-1];
-      a.attempts+=Number(row.samples)||0; a.hits+=Number(row.hits??row.wins)||0;
-    });
-    try{localStorage.setItem(CANDIDATE_TIMING_KEY,JSON.stringify(candidateTiming))}catch(e){}
-  }catch(e){candidateCloudLoaded[asset]=false;console.warn('No se pudo cargar historial por candidato',e)}
-}
-function candidateTimingSummary(pp){const b=getCandidateBestSecond(pp);return b?`CANDIDATO ${pp.mode==='matches'?pp.digit:pp.mode} · S${b.sec} · ${b.hits} coincidencias/${b.attempts} observaciones`:''}
-
-/* ROTACIÓN ADAPTATIVA REAL DE SEGUNDOS v5
-   - Al empezar, el bot entra en el segundo más fuerte con datos y se queda en él; sin datos suficientes, no entra.
-   - Cuenta cada OPERACIÓN perdida con resultado REAL de Deriv (no las hipotéticas del escáner). Una ganada reinicia la racha de ese segundo.
-   - Con N pérdidas seguidas (por defecto 3): bloquea ese segundo 30 min y rota al siguiente segundo más fuerte entre los no bloqueados (S3..S10),
-     sin elegir al azar.
-   - Estado guardado por activo + modo (igual que timingStats). */
-const ROT_BLOCK_MS=30*60*1000, ROT_KEY='scanner_rotation_v5';
-let rotAll={};try{rotAll=JSON.parse(localStorage.getItem(ROT_KEY)||'{}')||{}}catch(e){rotAll={}}
-function rotN(){return Math.max(1,Number(document.getElementById('dtRotN')?.value)||3);}
-function rotKey(){return (document.getElementById('assetSelector')?.value||'R_100')+'_'+timingMode();}
-function rotState(){const k=rotKey();return rotAll[k]||(rotAll[k]={current:null,curRate:null,ref:null,streak:{},blocked:{},waiting:false,log:[]});}
-function rotSave(){try{localStorage.setItem(ROT_KEY,JSON.stringify(rotAll))}catch(e){}}
-function rotBlocked(st,sec){const u=Number(st.blocked[sec]||0);if(u&&Date.now()>=u){delete st.blocked[sec];st.streak[sec]=0;return false;}return !!u;}
-function rotElegibles(st){   /* S3..S10 sin bloqueo; sin datos suficientes = fuerza 0 (desconocida) */
-  const min=Number(TIMING_MIN_SAMPLES)||5;
-  return timingStats.map((stat,index)=>{
-    const informed=!!stat&&stat.signals>=min;
-    return {stat,index,sec:index+1,informed,score:informed?timingScore(stat):0,rate:informed?timingAdjustedRate(stat):0};
-  }).filter(x=>x.index>=2&&!rotBlocked(st,x.sec));
-}
-function rotStrength(sec){const s=timingStats[sec-1];return (s&&s.signals>=(Number(TIMING_MIN_SAMPLES)||5))?timingScore(s):0;}   /* fuerza = score del panel */
-function rotSort(a,b){return b.score-a.score||b.stat.signals-a.stat.signals||a.sec-b.sec;}
-/* El bot se queda en su segundo mientras no esté bloqueado. Primera elección: el más fuerte con datos. */
-function getAdaptiveBestSecond(){
-  const st=rotState();
-  const pool=rotElegibles(st).filter(x=>x.informed).sort(rotSort);
-  if(!pool.length){st.current=null;st.waiting=true;rotSave();return {wait:true};}
-  st.waiting=false;
-  if(st.current){const cur=pool.find(x=>x.sec===st.current);if(cur)return cur;st.current=null;}
-  const pick=pool[0];
-  st.current=pick.sec;st.how='fuerza';rotSave();
-  return pick;
-}
-window.rotationRecordSignal=function(sec,won){      /* se llama con el resultado real de CADA operación */
-  const st=rotState(),k=String(sec);
-  if(rotBlocked(st,sec))return {rotated:false,streak:0,ignored:true};   /* resultado de un segundo que ya se bloqueó */
-  if(won){st.wins=(st.wins||0)+1;st.streak[k]=0;rotSave();return {rotated:false,streak:0};}
-  st.losses=(st.losses||0)+1;st.streak[k]=(st.streak[k]||0)+1;
-  if(st.streak[k]<rotN()){rotSave();return {rotated:false,streak:st.streak[k]};}
-  const losses=st.streak[k],fromScore=rotStrength(sec);
-  st.blocked[k]=Date.now()+ROT_BLOCK_MS;st.streak[k]=0;
-  const pool=rotElegibles(st);                       /* ya sin el segundo bloqueado */
-  let r=null;
-  const strongPool=pool.filter(x=>x.informed).sort(rotSort);
-  if(strongPool.length){r=strongPool[0];st.current=r.sec;st.how='fuerza';}
-  else st.current=null;
-  const ok=!!r;
-  const ev={rotated:true,from:sec,losses,fromScore,to:ok?r.sec:null,toScore:ok?r.score:null,toInformed:ok?r.informed:false,wait:!ok};
-  st.log.push({t:Date.now(),from:sec,to:ev.to,losses});st.log=st.log.slice(-8);rotSave();
-  return ev;
-};
-window.rotationReset=function(){delete rotAll[rotKey()];rotSave();};
-window.rotationSummary=function(){
-  const st=rotState(),n=rotN(),now=Date.now(),L=[],r=getAdaptiveBestSecond();
-  if(r&&r.wait)L.push('ROTACIÓN · todos los segundos están bloqueados · esperando');
-  else if(r)L.push('ROTACIÓN · el bot entra en S'+r.sec+' ('+(r.informed?'fuerza '+Math.round(r.score):'sin datos suficientes aún')+' · '+'el más fuerte disponible'+') · pérdidas seguidas en S'+r.sec+': '+(st.streak[r.sec]||0)+'/'+n);
-  const rank=rotElegibles(st).filter(x=>x.informed).sort(rotSort).slice(0,4).map(x=>'S'+x.sec+' '+Math.round(x.score));
-  if(rank.length)L.push('Ranking de fuerza (solo referencia): '+rank.join(' · '));
-  const w=st.wins||0,l=st.losses||0;
-  L.push('Resultados reales contados: '+(w+l)+' ('+w+' ganadas · '+l+' perdidas)');
-  const bl=Object.entries(st.blocked).filter(([k,u])=>u>now).map(([k,u])=>'S'+k+' ('+Math.ceil((u-now)/60000)+' min)');
-  if(bl.length)L.push('Bloqueados: '+bl.join(', '));
-  const last=st.log[st.log.length-1];
-  if(last)L.push('Última rotación '+new Date(last.t).toLocaleTimeString('es-CL',{hour12:false})+': S'+last.from+' → '+(last.to?'S'+last.to:'espera')+' tras '+last.losses+' pérdidas');
-  return L.join('\n');
-};
 function processTimingTick(digit){
     if(!timingSession) return;
     const elapsed=(Date.now()-timingSession.startMs)/1000, second=Math.floor(elapsed)+1, resolveSecond=second-1;
     if(resolveSecond>=1 && resolveSecond<=TIMING_SECONDS && timingSession.pendingBySecond[resolveSecond]){
       const candidate=timingSession.pendingBySecond[resolveSecond], st=timingStats[resolveSecond-1]; st.signals++;
-      const won=timingConditionMatches(timingSession.mode,digit,candidate.candidate);
-      if(won) st.wins++; else st.losses++;
-      recordCandidateTiming(timingSession.mode,candidate.candidate,resolveSecond,won);
+      if(timingConditionMatches(timingSession.mode,digit,candidate.candidate)) st.wins++; else st.losses++;
       delete timingSession.pendingBySecond[resolveSecond]; saveTimingStats();
     }
     if(second<1 || second>TIMING_SECONDS) return;
@@ -2510,7 +2273,7 @@ function processTimingTick(digit){
         hablar(`Entrada estimada confirmada por los datos: ${margin}. Confianza fuerte, ${timingRate(best.stat).toFixed(1)} por ciento.`); timingSession.lastAnnouncedSecond=best.index+1;
       }
       document.getElementById('timingBest').innerHTML=`<strong>MEJOR PROBABILIDAD ACTUAL: S${best.index+1}</strong> | ${timingRate(best.stat).toFixed(1)}% | CONFIANZA ${conf.level.toUpperCase()} | ENTRADA ESTIMADA: ${margin}`;
-    } else document.getElementById('timingBest').innerHTML='<strong>EVALUANDO…</strong> | ESPERANDO DATOS SUFICIENTES DESDE S2';
+    } else document.getElementById('timingBest').innerHTML='<strong>EVALUANDO…</strong> | ESPERANDO DATOS SUFICIENTES DESDE S4';
     renderTimingStats(second); updateEntryPanel(second);
     if(second===TIMING_SECONDS){hablar(`Sesión finalizada. El resultado es una estimación estadística, no una garantía.`); resetTimingSession();}
 }
@@ -4418,7 +4181,6 @@ document.getElementById('voiceDetailSelect')?.addEventListener('change',e=>{habl
 
 initUI();
 loadTimingStats();
-mergeCloudTimingForAsset(document.getElementById("assetSelector")?.value||"R_100");
 loadMultiStats();
 renderBotState();
 
@@ -4432,7 +4194,6 @@ window.addEventListener(
 connectDeriv(
     "R_100"
 );
-setInterval(()=>{const a=document.getElementById("assetSelector")?.value||"R_100";mergeCloudTimingForAsset(a);mergeCloudCandidateTiming(a)},60000);
 
 
 /* Anuncio automático de botones desactivado: evita que un clic corte la cuenta o un aviso crítico. */
@@ -4665,375 +4426,6 @@ setInterval(()=>{const a=document.getElementById("assetSelector")?.value||"R_100
 </script>
 
 <script id="demo-trader-js">
-/* V23 · EJECUTOR SINCRONIZADO (solo DEMO)
-   Qué cambia frente a la versión anterior:
-   - Ya no entra al hacer clic en "INICIAR PREDICCIÓN" ni depende de que llegue un tick: compra en el
-     segundo exacto que marca el panel "ENTRADA MÁS FAVORABLE" (reloj propio, no reloj de ticks).
-   - La propuesta se pide con adelanto (PREFETCH_MS); en el segundo objetivo solo se envía la compra.
-   - Compensa la latencia (medida con ping y propuestas) y tiene ajuste fino en ms.
-   - Si el punto de entrada ya pasó, la señal se OMITE en vez de entrar tarde.
-   - Solo opera con una señal real (pendingPrediction) y con el flujo de ticks íntegro. */
-(()=>{
-'use strict';
-const $=id=>document.getElementById(id);
-const store={
-  get:k=>{try{return localStorage.getItem(k)}catch(e){return null}},
-  set:(k,v)=>{try{localStorage.setItem(k,v)}catch(e){}}
-};
-
-/* ---------- Parámetros de entrada ---------- */
-const TRADES_PER_SIGNAL=2;   // igual que antes: 2 propuestas de US$1 por señal
-const FALLBACK_SECOND=null;   // nunca entrar sin segundo aprendido
-const PREFETCH_MS=1800;      // adelanto con que se pide la primera propuesta
-const SECOND_OP_DELAY_MS=2500; // segunda operación 2,5 s después de la primera
-const MAX_LAT_MS=400;        // tope de compensación "normal" (compatibilidad, ya no se usa para el tope duro)
-const LAT_HARD_CAP_MS=900;   // tope duro absoluto de compensación (media+jitter no puede superarlo)
-const LATE_LIMIT_MS=600;     // si ya pasó más que esto del punto, se omite (no entra tarde)
-const PING_EVERY_MS=15000;
-const NUDGE_AUTO_CLAMP_MS=300; // límite del ajuste automático del nudge (por seguridad)
-const CONTRACTS={matches:'DIGITMATCH',even:'DIGITEVEN',odd:'DIGITODD',over:'DIGITOVER',under:'DIGITUNDER'};
-
-let sock=null,connected=false,connecting=false,armed=false,ops=0,reqSeq=1,cooldownUntil=0,rtt=null,retryMs=1500;
-let plan=null,lastSession=null,lastInfo='',msg='OFF',dot='',rotAt=0;
-const reqs=new Map(),traded=new Set(),settledContracts=new Set(),pendingContracts=new Map();
-
-/* ---------- Latencia: muestras con jitter (no solo promedio) ---------- */
-const rttSamples=[];      // RTT de pings (referencia general de red)
-const buyLatSamples=[];   // RTT específico del camino propuesta→respuesta (el que realmente importa)
-const offHistory=[];      // historial de "ms de diferencia respecto al punto" de cada compra enviada
-function pushCapped(arr,v,cap){arr.push(v);if(arr.length>cap)arr.shift();}
-function stats(arr){
-  if(!arr.length)return{mean:0,jitter:0};
-  const mean=arr.reduce((a,b)=>a+b,0)/arr.length;
-  const variance=arr.reduce((a,b)=>a+(b-mean)*(b-mean),0)/arr.length;
-  return{mean,jitter:Math.sqrt(variance)};
-}
-/* Compensación = mitad del RTT (ida) + mitad del jitter (margen de seguridad ante picos),
-   priorizando la latencia medida en el propio flujo de compra sobre el ping genérico. */
-function getComp(){
-  const src=buyLatSamples.length>=3?buyLatSamples:rttSamples;
-  if(!src.length)return 0;
-  const st=stats(src);
-  return Math.min(LAT_HARD_CAP_MS,Math.max(0,st.mean/2+st.jitter/2));
-}
-/* Ajuste automático del nudge a partir del historial real de "off" (línea de compra vs punto exacto).
-   Si en promedio se llega tarde (off>0) se adelanta el disparo; si se llega temprano (off<0) se atrasa. */
-function autoNudgeCorrection(){
-  if(offHistory.length<5)return 0;
-  const avg=offHistory.reduce((a,b)=>a+b,0)/offHistory.length;
-  return Math.max(-NUDGE_AUTO_CLAMP_MS,Math.min(NUDGE_AUTO_CLAMP_MS,-avg));
-}
-
-/* ---------- Panel abrir / cerrar ---------- */
-const body=$('dtBody'),tgl=$('dtToggle');
-function setOpen(open,persist){
-  body.hidden=!open;
-  tgl.textContent=open?'▲ CERRAR':'▼ ABRIR';
-  tgl.setAttribute('aria-expanded',String(open));
-  if(persist!==false)store.set('dt_panel_open',open?'1':'0');
-}
-tgl.onclick=()=>setOpen(body.hidden);
-
-/* ---------- Estado visible (barra cerrada + panel abierto) ---------- */
-function render(){
-  const full='Estado: '+msg+' · operaciones: '+ops;
-  const st=$('dtStatus');if(st.textContent!==full)st.textContent=full;
-  const mt=msg+(ops?' · '+ops+' op.':'');
-  const mi=$('dtMini');if(mi.textContent!==mt){mi.textContent=mt;mi.title=mt}
-  try{const rt=$('dtRot');if(rt&&Date.now()-rotAt>400){rotAt=Date.now();const x=window.rotationSummary();if(rt.textContent!==x)rt.textContent=x;}}catch(e){}
-  const d=$('dtDot'),cls='dt-dot'+(dot?' '+dot:'');if(d.className!==cls)d.className=cls;
-  $('dtOn').style.display=(connected&&!armed)?'inline-block':'none';
-  $('dtStopMini').style.display=armed?'inline-block':'none';
-}
-function setMsg(t,d){msg=t;dot=d||'';render()}
-
-/* ---------- Utilidades ---------- */
-function appState(){
-  let ts=null,pp=null;
-  try{ts=timingSession}catch(e){}      // variables globales de la app principal
-  try{pp=pendingPrediction}catch(e){}
-  return {ts,pp};
-}
-function spec(pp){
-  const m=pp.mode||'matches',type=CONTRACTS[m];
-  if(!type)return null;
-  let barrier;
-  if(m==='matches'){
-    const d=Number(pp.digit);
-    if(!Number.isInteger(d)||d<0||d>9)return null;
-    barrier=String(d);
-  }else if(m==='over')barrier='4';    // gana si el último dígito es > 4  (igual que la señal)
-  else if(m==='under')barrier='5';    // gana si el último dígito es < 5   (igual que la señal)
-  return {m,type,barrier};
-}
-function sampleRtt(d){if(d>0&&d<3000){rtt=rtt==null?d:rtt*.7+d*.3;pushCapped(rttSamples,d,20)}}
-function sampleBuyLat(d){if(d>0&&d<3000)pushCapped(buyLatSamples,d,20)}
-function send(o){
-  if(!sock||sock.readyState!==1)throw Error('conexión demo no activa');
-  const id=reqSeq++;
-  sock.send(JSON.stringify({...o,req_id:id}));
-  return id;
-}
-
-/* ---------- Plan de entrada por señal ---------- */
-function makePlan(ts,pp,now){
-  const p={sk:String(ts.startMs),pp,skipped:false,done:false,fired:false,pre:false,need:TRADES_PER_SIGNAL,
-           ids:[],inflight:0,buysSent:0,bought:0,retries:0,errors:0,secondRequested:false,secondTimer:null};
-  const skip=t=>{p.skipped=true;setMsg('señal omitida · '+t,'wait');return p};
-  if(traded.has(p.sk))return skip('ya se operó esta señal');
-  const s=spec(pp);if(!s)return skip('modo sin contrato operable');
-  p.s=s;p.sym=$('assetSelector')?.value||'R_100';
-  const g=window.entryGate||{};
-  p.mode=$('dtEntry')?.value||'target';
-  const candidateBest=getCandidateBestSecond(pp);
-  if(!candidateBest)return skip('sin historial suficiente para este candidato · NO ENTRAR');
-  let target=candidateBest.sec;
-  p.learned=true;p.candidateTiming=candidateBest;
-  const adaptive=getAdaptiveBestSecond();
-  p.target=target;
-  const nudge=Number($('dtNudge')?.value||0)+Number($('dtDelay')?.value||0)*1000+autoNudgeCorrection();
-  const comp=getComp();
-  p.boundary=ts.startMs+(target-1)*1000;   // instante en que el panel entra en el segundo objetivo
-  p.fireAt=p.boundary+nudge-comp;           // se envía antes para que llegue justo en el punto
-  if(now>p.fireAt+LATE_LIMIT_MS)return skip('el punto S'+target+' ya había pasado');
-  if(p.fireAt<cooldownUntil)return skip('pausa entre ciclos activa');
-  return p;
-}
-function reqProposal(p,kind){
-  const o={proposal:1,amount:1,basis:'stake',contract_type:p.s.type,currency:'USD',
-           duration:Number($('dtDuration')?.value||1)||1,duration_unit:'t',underlying_symbol:p.sym};
-  if(p.s.barrier!==undefined)o.barrier=p.s.barrier;
-  try{
-    const id=send(o);
-    reqs.set(id,{kind,p,t0:performance.now()});
-    p.inflight++;
-  }catch(e){p.errors++;setMsg('error al enviar propuesta: '+e.message,'err')}
-}
-function sendBuy(p,proposalId){
-  try{
-    const id=send({buy:proposalId,price:1});
-    reqs.set(id,{kind:'buy',p,t0:performance.now(),sentAt:Date.now()});
-    p.buysSent++;
-  }catch(e){p.errors++;setMsg('error al enviar compra: '+e.message,'err')}
-}
-function flush(p){
-  /* La primera entra al punto elegido. La segunda se solicita y compra
-     únicamente después del intervalo configurado. */
-  if(p.buysSent===0 && p.ids.length)sendBuy(p,p.ids.shift());
-  else if(p.buysSent===0 && !p.inflight)reqProposal(p,'first');
-}
-function abort(p,t){p.skipped=true;setMsg('señal omitida · '+t,'wait')}
-function fire(p,now){
-  const {ts,pp}=appState();
-  if(!ts||pp!==p.pp||String(ts.startMs)!==p.sk)return abort(p,'la señal se cerró antes del punto de entrada');
-  if(now>p.fireAt+LATE_LIMIT_MS)return abort(p,'demasiado tarde para S'+p.target+' (¿pestaña en segundo plano?)');
-  let locked=false;try{locked=!!syncLocked}catch(e){}
-  if(locked)return abort(p,'flujo de ticks no íntegro (bloqueado)');
-  if(p.mode==='strict'){
-    try{updateEntryPanel()}catch(e){}
-    const g=window.entryGate||{};
-    if(!g.readyIfOnTarget)return abort(p,'sin confirmación 🟢 en S'+p.target+' (score '+Math.round(g.score||0)+')');
-  }
-  p.fired=true;traded.add(p.sk);
-  setMsg('ENTRANDO en S'+p.target+' · candidato '+(pp.digit??pp.mode)+' · enviando compra…','on');
-  flush(p);
-}
-
-/* ---------- Bucle principal (reloj propio, cada 15 ms) ---------- */
-function loop(){
-  if(!armed||!connected)return;
-  const now=Date.now(),{ts,pp}=appState();
-  if(!ts||!pp||!ts.startMs){
-    if(!plan||plan.skipped||plan.done)setMsg('DEMO conectado · ARMADO · esperando señal'+(lastInfo?' · última: '+lastInfo:''),'on');
-    return;
-  }
-  const sk=String(ts.startMs);
-  if(sk!==lastSession){lastSession=sk;plan=makePlan(ts,pp,now)}
-  if(!plan||plan.skipped||plan.done||plan.fired)return;
-  if(!plan.pre&&now>=plan.fireAt-PREFETCH_MS){plan.pre=true;reqProposal(plan,'pre')}
-  if(now<plan.fireAt){
-    setMsg('ARMADO · entra en S'+plan.target+' → '+((plan.fireAt-now)/1000).toFixed(1)+'s'+
-           (plan.learned?'':' (sin datos suficientes aún: aprendiendo)'),'wait');
-    return;
-  }
-  fire(plan,now);
-}
-
-/* ---------- Mensajes del servidor ---------- */
-/* Resultado real de CADA operación: pérdida → suma a la racha del segundo en que entró; ganada → la reinicia */
-function registerContractResult(c){
-  const id=c&&c.contract_id!=null?String(c.contract_id):'';
-  if(!id||settledContracts.has(id))return;
-  const sold=c.is_sold===1||c.is_sold===true||c.is_sold==='1'||c.status==='won'||c.status==='lost';
-  if(!sold)return;
-  const info=pendingContracts.get(id);if(!info)return;
-  let profit=Number(c.profit);
-  if(!Number.isFinite(profit))profit=Number(c.sell_price)-Number(c.buy_price);
-  if(!Number.isFinite(profit)&&!c.status)return;                    /* sin dato para saber si ganó */
-  settledContracts.add(id);pendingContracts.delete(id);
-  const p=info.p,won=c.status==='won'||(c.status!=='lost'&&profit>0);
-  const ev=window.rotationRecordSignal(p.target,won),net=Number.isFinite(profit)?((profit>=0?'+':'')+profit.toFixed(2)):'';
-  let t='OPERACIÓN '+(won?'GANADA':'PERDIDA')+' · S'+p.target+(net?' · '+net:'')+' · ';
-  if(ev.rotated)t+='⟳ ROTA: S'+ev.from+' bloqueado tras '+ev.losses+' pérdidas → '+(ev.to?'S'+ev.to+' (elegido al azar)':'sin segundos disponibles · espera');
-  else if(ev.ignored)t+='(segundo ya bloqueado)';
-  else t+=(ev.streak||0)+'/'+rotN()+' pérdidas seguidas en S'+p.target;
-  lastInfo=t;setMsg(t,won?'on':'err');
-}
-function onMessage(e){
-  let m;try{m=JSON.parse(e.data)}catch(_){return}
-  if(m.proposal_open_contract){registerContractResult(m.proposal_open_contract);return}
-  const rid=m.req_id!==undefined?m.req_id:m.echo_req?.req_id,r=reqs.get(rid);
-  if(r)reqs.delete(rid);
-  if(r&&r.kind==='ping'){if(!m.error)sampleRtt(performance.now()-r.t0);return}
-  if(r&&r.kind==='poc')return;
-  if(!r){if(m.error)setMsg('error: '+m.error.message,'err');return}
-  const p=r.p;
-  if(r.kind==='pre'||r.kind==='first'||r.kind==='second'){
-    p.inflight--;
-    if(m.error||!m.proposal?.id){p.errors++;setMsg('error en propuesta: '+(m.error?.message||'sin id'),'err');return}
-    if(r.kind==='pre'||r.kind==='first'){const d=performance.now()-r.t0;sampleRtt(d);sampleBuyLat(d);}
-    if(r.kind==='second'){sendBuy(p,m.proposal.id);return;}
-    p.ids.push(m.proposal.id);
-    if(p.fired)flush(p);
-    return;
-  }
-  if(r.kind==='buy'){
-    if(m.error){
-      p.buysSent--;p.retries++;
-      const retry=p.retries<=p.need;
-      setMsg('error en compra: '+m.error.message+(retry?' · reintentando con propuesta nueva':''),'err');
-      if(retry)flush(p);
-      return;
-    }
-    p.bought++;ops++;
-    if(p.bought===1 && p.need>1 && !p.secondRequested){
-      p.secondRequested=true;
-      p.secondTimer=setTimeout(()=>{if(connected&&armed&&!p.skipped&&!p.done)reqProposal(p,'second')},SECOND_OP_DELAY_MS);
-      setMsg('1ª operación ejecutada · esperando '+(SECOND_OP_DELAY_MS/1000)+' s para la 2ª','wait');
-    }
-    const cid=m.buy?.contract_id||m.contract_id||m.data?.contract_id;
-    if(cid){pendingContracts.set(String(cid),{p,boughtAt:Date.now(),polls:0,warned:false});try{send({proposal_open_contract:1,contract_id:cid,subscribe:1})}catch(e){}}
-    cooldownUntil=Math.max(cooldownUntil,r.sentAt+Math.max(3,Number($('dtPause')?.value||3))*1000);
-    const off=Math.round(r.sentAt-p.boundary);
-    pushCapped(offHistory,off,15);
-    const avgOff=offHistory.length?Math.round(offHistory.reduce((a,b)=>a+b,0)/offHistory.length):0;
-    lastInfo='S'+p.target+' · envío '+(off>=0?'+':'')+off+' ms del punto (prom. '+(avgOff>=0?'+':'')+avgOff+' ms) · RTT '+(rtt?Math.round(rtt)+' ms':'—');
-    if(p.bought>=p.need)p.done=true;
-    setMsg('operación DEMO ejecutada · $1 · ('+p.bought+'/'+p.need+') · '+lastInfo,'on');
-  }
-}
-
-/* ---------- Conexión ---------- */
-function ping(){
-  try{const id=send({ping:1});reqs.set(id,{kind:'ping',t0:performance.now()})}catch(e){}
-}
-async function connect(){
-  if(connecting)return;
-  if(!$('dtConfirm').checked){setMsg('bloqueado: confirma que es cuenta DEMO','err');return}
-  const token=$('dtToken').value.trim(),app=$('dtApp').value.trim();
-  if(!token||!app){setMsg('faltan token demo o App ID','err');return}
-  if($('dtRemember').checked){store.set('dt_demo_token',token);store.set('dt_demo_app',app)}
-  connecting=true;
-  try{
-    const h={'Authorization':'Bearer '+token,'Deriv-App-ID':app};
-    const r=await fetch('https://api.derivws.com/trading/v1/options/accounts',{headers:h});
-    const j=await r.json();
-    if(!r.ok)throw Error('no se pudo verificar la cuenta demo');
-    const a=(j.data?.accounts||j.data||[]).find(x=>String(x.account_type||x.type||'').toLowerCase()==='demo');
-    if(!a)throw Error('no se encontró cuenta DEMO');
-    const id=a.account_id||a.id;
-    const q=await fetch('https://api.derivws.com/trading/v1/options/accounts/'+encodeURIComponent(id)+'/otp',{method:'POST',headers:h});
-    const z=await q.json();
-    if(!q.ok||!z.data?.url||!/\/ws\/demo\?/.test(z.data.url))throw Error('no se obtuvo canal DEMO');
-    if(sock){const old=sock;sock=null;try{old.close()}catch(e){}}
-    const my=new WebSocket(z.data.url);sock=my;
-    my.onopen=()=>{
-      if(sock!==my)return;
-      connected=true;armed=true;retryMs=1500;
-      plan=null;lastSession=null;
-      setMsg('conectado a DEMO · BOT ACTIVO','on');
-      setOpen(false);            // al conectar se cierra el panel para dejar la pantalla libre
-      ping();
-    };
-    my.onmessage=e=>{if(sock===my)onMessage(e)};
-    my.onerror=()=>{if(sock!==my)return;connected=false;setMsg('error de conexión DEMO','err')};
-    my.onclose=()=>{
-      if(sock!==my)return;
-      connected=false;armed=false;plan=null;
-      setMsg('desconectado','');
-      if($('dtRemember')?.checked&&store.get('dt_demo_token')){setTimeout(connect,retryMs);retryMs=Math.min(30000,retryMs*2)}
-    };
-  }catch(e){connected=false;setMsg(e.message,'err')}
-  finally{connecting=false}
-}
-function on(){
-  if(!connected){setMsg('conecta DEMO primero','err');return}
-  armed=true;plan=null;lastSession=null;
-  setMsg('BOT ACTIVO · esperando señal','on');
-}
-function off(){
-  armed=false;plan=null;lastSession=null;
-  setMsg(connected?'conectado DEMO · BOT OFF':'OFF','');
-}
-
-/* ---------- Eventos y arranque ---------- */
-$('dtConnect').onclick=connect;
-$('dtOn').onclick=on;
-$('dtStop').onclick=off;
-$('dtStopMini').onclick=off;
-$('dtEntry').onchange=()=>store.set('dt_entry',$('dtEntry').value);
-$('dtNudge').onchange=()=>store.set('dt_nudge',$('dtNudge').value);
-$('dtRotN').onchange=()=>{store.set('dt_rot_n',$('dtRotN').value);render()};
-$('dtRotReset').onclick=()=>{window.rotationReset();setMsg('rotación reiniciada','');};
-
-/* ---------- Reloj de disparo en Web Worker ----------
-   Un setInterval en el hilo principal se throttlea fuerte cuando la pestaña pasa a
-   segundo plano (hasta 1000ms en algunos navegadores). Un Worker dedicado no sufre
-   ese mismo castigo, así que el "tick" que dispara loop() se genera ahí. Si el
-   navegador bloquea la creación del Worker, se cae de vuelta al setInterval normal. */
-(function startTickClock(){
-  const workerSrc="let iv=null;onmessage=function(e){if(e.data==='start'){if(iv)clearInterval(iv);iv=setInterval(()=>postMessage('tick'),15);}else if(e.data==='stop'){if(iv)clearInterval(iv);iv=null;}};";
-  try{
-    const blob=new Blob([workerSrc],{type:'application/javascript'});
-    const worker=new Worker(URL.createObjectURL(blob));
-    worker.onmessage=e=>{if(e.data==='tick')loop()};
-    worker.onerror=()=>{try{worker.terminate()}catch(e){}setInterval(loop,15)};
-    worker.postMessage('start');
-  }catch(e){
-    setInterval(loop,15);   // respaldo: el entorno no permite Web Workers
-  }
-})();
-setInterval(()=>{
-  if(connected)ping();
-  const t=performance.now();
-  reqs.forEach((v,k)=>{if(t-v.t0>30000)reqs.delete(k)});
-},PING_EVERY_MS);
-setInterval(()=>{
-  /* Si el resultado de una operación no llega, se lo vuelve a pedir; si sigue sin llegar, se avisa (esa pérdida no se puede contar) */
-  const now=Date.now();
-  pendingContracts.forEach((v,id)=>{
-    const age=now-v.boughtAt;
-    if(age>6000*(v.polls+1)&&v.polls<3){v.polls++;try{const rid=send({proposal_open_contract:1,contract_id:Number(id)});reqs.set(rid,{kind:'poc',t0:performance.now()})}catch(e){}}
-    if(age>25000&&!v.warned){v.warned=true;setMsg('⚠ no llegó el resultado de una operación (Deriv no respondió) · esa pérdida no se cuenta','err')}
-    if(age>120000)pendingContracts.delete(id);
-  });
-  render();
-},1000);
-
-const savedT=store.get('dt_demo_token'),savedA=store.get('dt_demo_app');
-const savedEntry=store.get('dt_entry'),savedNudge=store.get('dt_nudge'),savedOpen=store.get('dt_panel_open');
-if(savedEntry&&[...$('dtEntry').options].some(o=>o.value===savedEntry))$('dtEntry').value=savedEntry;
-if(savedNudge!==null&&[...$('dtNudge').options].some(o=>o.value===savedNudge))$('dtNudge').value=savedNudge;
-const savedRotN=store.get('dt_rot_n');
-if(savedRotN&&[...$('dtRotN').options].some(o=>o.value===savedRotN))$('dtRotN').value=savedRotN;
-setOpen(savedOpen===null?!(savedT&&savedA):savedOpen==='1',false);   // primera vez abierto; luego recuerda tu elección
-if(savedT&&savedA){
-  $('dtToken').value=savedT;$('dtApp').value=savedA;
-  $('dtRemember').checked=true;$('dtConfirm').checked=true;
-  setTimeout(connect,500);
-}
-render();
-})();
-
+(()=>{const $=id=>document.getElementById(id);let sock=null,connected=false,armed=false,busy=false,ops=0,lastKey='',cooldownUntil=0,predictionArmedAt=0,reqSeq=1;const status=t=>{$('dtStatus').textContent='Estado: '+t+' · operaciones: '+ops};const send=o=>{if(!sock||sock.readyState!==1)throw Error('conexión demo no activa');sock.send(JSON.stringify({...o,req_id:reqSeq++}))};function mode(){return $('modeSelector')?.value||'matches'}function contract(m){return {matches:'DIGITMATCH',even:'DIGITEVEN',odd:'DIGITODD',over:'DIGITOVER',under:'DIGITUNDER'}[m]||null}function digit(){const x=($('predDigit')?.textContent||'').match(/[0-9]/);return x?Number(x[0]):null}async function connect(){if(!$('dtConfirm').checked){status('bloqueado: confirma DEMO');return}const token=$('dtToken').value.trim(),app=$('dtApp').value.trim();if(!token||!app){status('faltan token demo o App ID');return}if($('dtRemember').checked){localStorage.setItem('dt_demo_token',token);localStorage.setItem('dt_demo_app',app)}try{const h={'Authorization':'Bearer '+token,'Deriv-App-ID':app};const r=await fetch('https://api.derivws.com/trading/v1/options/accounts',{headers:h});const j=await r.json();if(!r.ok)throw Error('no se pudo verificar la cuenta demo');const a=(j.data?.accounts||j.data||[]).find(x=>String(x.account_type||x.type||'').toLowerCase()==='demo');if(!a)throw Error('no se encontró cuenta DEMO');const id=a.account_id||a.id;const q=await fetch('https://api.derivws.com/trading/v1/options/accounts/'+encodeURIComponent(id)+'/otp',{method:'POST',headers:h});const z=await q.json();if(!q.ok||!z.data?.url||!/\/ws\/demo\?/.test(z.data.url))throw Error('no se obtuvo canal DEMO');sock=new WebSocket(z.data.url);sock.onopen=()=>{connected=true;armed=true;status('conectado a DEMO · BOT ACTIVO · DELAY '+($('dtDelay')?.value||4)+'s')};sock.onmessage=e=>{try{const m=JSON.parse(e.data);if(m.error){busy=false;status('error: '+m.error.message);return}if(m.msg_type==='proposal'&&m.proposal?.id){const p=m.req_id;send({buy:m.proposal.id,price:1,req_id:p})}if(m.msg_type==='buy'){busy=false;ops++;cooldownUntil=Date.now()+Math.max(3,Number($('dtPause')?.value||3))*1000;status('operación DEMO ejecutada · $1 · pausa activa')}}catch(err){busy=false}};sock.onerror=()=>{connected=false;status('error de conexión DEMO')};sock.onclose=()=>{connected=false;armed=false;status('desconectado');if($('dtRemember')?.checked&&localStorage.getItem('dt_demo_token'))setTimeout(connect,1500)}}catch(e){connected=false;status(e.message)}}function on(){if(!connected){status('conecta DEMO primero');return}armed=true;status('BOT ACTIVO · 1 operación por señal')}function off(){armed=false;busy=false;status(connected?'conectado DEMO · BOT OFF':'OFF')}function trade(){if(!armed||!connected||busy||Date.now()<cooldownUntil)return;const m=mode(),type=contract(m),d=digit(),gate=window.entryGate||{};const manualReady=predictionArmedAt>0&&(Date.now()-predictionArmedAt)<30000;if(!type||(!gate?.confirmed&&!manualReady))return;if(m==='matches'&&!Number.isInteger(d))return;const key=String(predictionArmedAt);if(key===lastKey)return;lastKey=key;busy=true;const delay=Math.max(0,Number($('dtDelay')?.value||4))*1000;status('SEÑAL CONFIRMADA · esperando '+delay/1000+'s');setTimeout(()=>{const nowGate=window.entryGate;const stillManual=predictionArmedAt>0&&(Date.now()-predictionArmedAt)<30000;if(!connected||!armed||(!nowGate?.confirmed&&!stillManual)){busy=false;status('entrada cancelada · señal vencida');return}const payload={proposal:1,amount:1,basis:'stake',contract_type:type,currency:'USD',duration:1,duration_unit:'t',underlying_symbol:$('assetSelector')?.value||'R_100'};if(m==='matches'||m==='over'||m==='under')payload.barrier=String(d??4);try{send(payload);send(payload);status('enviando exactamente 2 propuestas DEMO · $1 cada una')}catch(e){busy=false;status('error al enviar')}},delay)}$('dtConnect').onclick=connect;$('dtOn').onclick=on;$('dtStop').onclick=off;$('predictButton')?.addEventListener('click',()=>{predictionArmedAt=Date.now();lastKey='';status('PREDICCIÓN RECIBIDA · preparando 2 entradas DEMO')});const savedT=localStorage.getItem('dt_demo_token'),savedA=localStorage.getItem('dt_demo_app');if(savedT&&savedA){$('dtToken').value=savedT;$('dtApp').value=savedA;$('dtRemember').checked=true;$('dtConfirm').checked=true;setTimeout(connect,500)}setInterval(trade,250)})();
 </script></body>
 </html>
