@@ -4683,8 +4683,11 @@ const store={
 
 /* ---------- Parámetros de entrada ---------- */
 const TRADES_PER_SIGNAL=4;
-const EXPERIMENT_ENTRY_SECONDS=[0,4,8,9];
-const EXPERIMENT_RESULT_SECONDS=[1,5,9,10];   // igual que antes: 2 propuestas de US$1 por señal
+const ROTATING_ENTRY_GROUPS=[[0,2,5,7],[0,4,8,9]];
+let experimentGroup=Number(localStorage.getItem('experiment_entry_group')||0)%ROTATING_ENTRY_GROUPS.length;
+let experimentLosses=Number(localStorage.getItem('experiment_entry_losses')||0);
+function experimentEntries(){return ROTATING_ENTRY_GROUPS[experimentGroup];}
+function recordExperimentOutcome(won){if(won){experimentLosses=0;localStorage.setItem('experiment_entry_losses','0');return;} experimentLosses++;if(experimentLosses>=3){experimentLosses=0;experimentGroup=(experimentGroup+1)%ROTATING_ENTRY_GROUPS.length;localStorage.setItem('experiment_entry_group',String(experimentGroup));}localStorage.setItem('experiment_entry_losses',String(experimentLosses));}   // igual que antes: 2 propuestas de US$1 por señal
 const FALLBACK_SECOND=null;   // nunca entrar sin segundo aprendido
 const PREFETCH_MS=1800;      // adelanto con que se pide la primera propuesta
 const SECOND_OP_DELAY_MS=2500; // segunda operación 2,5 s después de la primera
@@ -4856,11 +4859,11 @@ function loop(){
   /* Experimento: cuatro entradas en S0, S4, S8 y S9. Cada compra captura el tick siguiente. */
   if(!plan.slotSent.length)plan.slotSent=Array(4).fill(false);
   for(let i=0;i<4;i++){
-    const due=ts.startMs+EXPERIMENT_ENTRY_SECONDS[i]*1000;
+    const entries=experimentEntries(),due=ts.startMs+entries[i]*1000;
     if(!plan.slotSent[i]&&now>=due){
-      plan.slotSent[i]=true;plan.target=Math.max(1,EXPERIMENT_ENTRY_SECONDS[i]);plan.observedSecond=EXPERIMENT_RESULT_SECONDS[i];
+      plan.slotSent[i]=true;plan.target=Math.max(1,entries[i]);plan.observedSecond=entries[i]+1;
       reqProposal(plan,'slot'+i);
-      setMsg('ENTRADA '+i+'/4 · S'+EXPERIMENT_ENTRY_SECONDS[i]+' → resultado S'+EXPERIMENT_RESULT_SECONDS[i],'wait');
+      setMsg('GRUPO '+(experimentGroup+1)+' · ENTRADA '+i+'/4 · S'+entries[i]+' → resultado S'+(entries[i]+1),'wait');
     }
   }
   if(plan.slotSent.every(Boolean)&&plan.bought>=plan.need)plan.done=true;
