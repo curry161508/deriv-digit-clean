@@ -4788,9 +4788,10 @@ function makePlan(ts,pp,now){
   const g=window.entryGate||{};
   p.mode=$('dtEntry')?.value||'target';
   const candidateBest=getCandidateBestSecond(pp);
-  if(!candidateBest)return skip('sin historial suficiente para este candidato · NO ENTRAR');
-  let target=candidateBest.sec;
-  p.learned=true;p.candidateTiming=candidateBest;
+  /* En este experimento las cuatro entradas se ejecutan aunque el candidato
+     todavía no tenga historial: el objetivo es medir S0/S4/S8/S9. */
+  let target=candidateBest?candidateBest.sec:1;
+  p.learned=!!candidateBest;p.candidateTiming=candidateBest||null;
   const adaptive=getAdaptiveBestSecond();
   p.target=target;
   const nudge=Number($('dtNudge')?.value||0)+Number($('dtDelay')?.value||0)*1000+autoNudgeCorrection();
