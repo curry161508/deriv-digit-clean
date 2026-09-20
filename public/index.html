@@ -657,7 +657,7 @@ button{border-radius:11px!important;border:1px solid #168cff!important;backgroun
     </div>
     <div id="dtStatus" style="margin-top:7px;color:#8fb8d8">Estado: OFF · operaciones: 0</div>
     <div id="dtRot" style="margin-top:5px;color:#9fd3ff;font-size:11px;line-height:1.4;white-space:pre-line">ROTACIÓN · aprendiendo segundos</div>
-    <div class="dt-note">US$1 por operación, 2 operaciones por señal. El bot compra en el segundo que marca “ENTRADA MÁS FAVORABLE”. El bot se queda en un segundo mientras funciona; si acumula las pérdidas REALES seguidas elegidas (por defecto 3), lo bloquea 30 min y rota a otro segundo de fuerza similar. Después de N pérdidas rota al siguiente segundo más fuerte disponible. Si ya pasó ese segundo, omite la señal. Mantén esta pestaña visible mientras opera.</div>
+    <div class="dt-note">US$1 por operación, 2 operaciones por señal. La 1ª operación entra en el segundo favorable y la 2ª entra 2,5 s después. El bot se queda en un segundo mientras funciona; si acumula las pérdidas REALES seguidas elegidas (por defecto 3), lo bloquea 30 min y rota a otro segundo de fuerza similar. Después de N pérdidas rota al siguiente segundo más fuerte disponible. Si ya pasó ese segundo, omite la señal. Mantén esta pestaña visible mientras opera.</div>
   </div>
 </section>
 
@@ -4648,7 +4648,8 @@ const store={
 /* ---------- Parámetros de entrada ---------- */
 const TRADES_PER_SIGNAL=2;   // igual que antes: 2 propuestas de US$1 por señal
 const FALLBACK_SECOND=2;     // si aún no hay segundo aprendido usa el mínimo
-const PREFETCH_MS=1800;      // adelanto con que se pide la propuesta
+const PREFETCH_MS=1800;      // adelanto con que se pide la primera propuesta
+const SECOND_OP_DELAY_MS=2500; // segunda operación 2,5 s después de la primera
 const MAX_LAT_MS=400;        // tope de compensación de latencia
 const LATE_LIMIT_MS=600;     // si ya pasó más que esto del punto, se omite (no entra tarde)
 const PING_EVERY_MS=15000;
@@ -4711,7 +4712,7 @@ function send(o){
 /* ---------- Plan de entrada por señal ---------- */
 function makePlan(ts,pp,now){
   const p={sk:String(ts.startMs),pp,skipped:false,done:false,fired:false,pre:false,need:TRADES_PER_SIGNAL,
-           ids:[],inflight:0,buysSent:0,bought:0,retries:0,errors:0,settled:0,pnl:0,finalized:false,lastBuyAt:0};
+           ids:[],inflight:0,buysSent:0,bought:0,retries:0,errors:0,settled:0,pnl:0,finalized:false,lastBuyAt:0,secondRequested:false,secondTimer:null};
   const skip=t=>{p.skipped=true;setMsg('señal omitida · '+t,'wait');return p};
   if(traded.has(p.sk))return skip('ya se operó esta señal');
   const s=spec(pp);if(!s)return skip('modo sin contrato operable');
@@ -4753,9 +4754,10 @@ function sendBuy(p,proposalId){
   }catch(e){p.errors++;setMsg('error al enviar compra: '+e.message,'err')}
 }
 function flush(p){
-  while(p.ids.length&&p.buysSent<p.need)sendBuy(p,p.ids.shift());
-  const missing=p.need-p.buysSent-p.ids.length-p.inflight;   // propuestas que faltan (respaldo)
-  for(let i=0;i<missing;i++)reqProposal(p,'fb');
+  /* La primera entra al punto elegido. La segunda se solicita y compra
+     únicamente después del intervalo configurado. */
+  if(p.buysSent===0 && p.ids.length)sendBuy(p,p.ids.shift());
+  else if(p.buysSent===0 && !p.inflight)reqProposal(p,'first');
 }
 function abort(p,t){p.skipped=true;setMsg('señal omitida · '+t,'wait')}
 function fire(p,now){
@@ -4785,7 +4787,7 @@ function loop(){
   const sk=String(ts.startMs);
   if(sk!==lastSession){lastSession=sk;plan=makePlan(ts,pp,now)}
   if(!plan||plan.skipped||plan.done||plan.fired)return;
-  if(!plan.pre&&now>=plan.fireAt-PREFETCH_MS){plan.pre=true;for(let i=0;i<plan.need;i++)reqProposal(plan,'pre')}
+  if(!plan.pre&&now>=plan.fireAt-PREFETCH_MS){plan.pre=true;reqProposal(plan,'pre')}
   if(now<plan.fireAt){
     setMsg('ARMADO · entra en S'+plan.target+' → '+((plan.fireAt-now)/1000).toFixed(1)+'s'+
            (plan.learned?'':' (S'+FALLBACK_SECOND+' por defecto: aún aprendiendo)'),'wait');
@@ -4821,10 +4823,11 @@ function onMessage(e){
   if(r&&r.kind==='ping'){if(!m.error)sampleRtt(performance.now()-r.t0);return}
   if(!r){if(m.error)setMsg('error: '+m.error.message,'err');return}
   const p=r.p;
-  if(r.kind==='pre'||r.kind==='fb'){
+  if(r.kind==='pre'||r.kind==='first'||r.kind==='second'){
     p.inflight--;
     if(m.error||!m.proposal?.id){p.errors++;setMsg('error en propuesta: '+(m.error?.message||'sin id'),'err');return}
-    if(r.kind==='pre')sampleRtt(performance.now()-r.t0);
+    if(r.kind==='pre'||r.kind==='first')sampleRtt(performance.now()-r.t0);
+    if(r.kind==='second'){sendBuy(p,m.proposal.id);return;}
     p.ids.push(m.proposal.id);
     if(p.fired)flush(p);
     return;
@@ -4838,6 +4841,11 @@ function onMessage(e){
       return;
     }
     p.bought++;ops++;
+    if(p.bought===1 && p.need>1 && !p.secondRequested){
+      p.secondRequested=true;
+      p.secondTimer=setTimeout(()=>{if(connected&&armed&&!p.skipped&&!p.done)reqProposal(p,'second')},SECOND_OP_DELAY_MS);
+      setMsg('1ª operación ejecutada · esperando '+(SECOND_OP_DELAY_MS/1000)+' s para la 2ª','wait');
+    }
     const cid=m.buy?.contract_id||m.contract_id;
     if(cid){contractTargets.set(String(cid),{p,target:p.target});p.lastBuyAt=Date.now();livePlans.add(p);try{send({proposal_open_contract:1,contract_id:cid,subscribe:1})}catch(e){}}
     cooldownUntil=Math.max(cooldownUntil,r.sentAt+Math.max(3,Number($('dtPause')?.value||3))*1000);
