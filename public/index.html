@@ -3,213 +3,285 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SCANNER AZUL v3 · MultiWindow Digit Engine</title>
+<title>SCANNER AZUL v4 · MultiWindow Digit Engine · Rotación</title>
 <style>
   :root {
-    --bg-0: #0a0e1a;
-    --bg-1: #111827;
-    --bg-2: #1f2937;
-    --bg-3: #273549;
-    --text-0: #f3f4f6;
-    --text-1: #9ca3af;
-    --text-2: #6b7280;
-    --accent: #3b82f6;
-    --accent-2: #60a5fa;
-    --green: #10b981;
-    --yellow: #f59e0b;
-    --red: #ef4444;
-    --border: #374151;
-    --shadow: 0 4px 12px rgba(0,0,0,.4);
+    --bg-0: #0a0e1a; --bg-1: #111827; --bg-2: #1f2937; --bg-3: #273549;
+    --text-0: #f3f4f6; --text-1: #9ca3af; --text-2: #6b7280;
+    --accent: #3b82f6; --accent-2: #60a5fa; --accent-3: #2563eb;
+    --green: #10b981; --yellow: #f59e0b; --red: #ef4444; --orange: #f97316;
+    --border: #374151; --shadow: 0 4px 12px rgba(0,0,0,.4);
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     font-family: 'Segoe UI', system-ui, sans-serif;
-    background: var(--bg-0);
-    color: var(--text-0);
-    min-height: 100vh;
-    padding: 12px;
+    background: var(--bg-0); color: var(--text-0);
+    min-height: 100vh; padding: 12px; font-size: 14px;
   }
-  h1, h2, h3 { font-weight: 600; }
-  .container { max-width: 1400px; margin: 0 auto; }
+  .container { max-width: 1500px; margin: 0 auto; }
 
   /* HEADER */
   .header {
     display: flex; justify-content: space-between; align-items: center;
     background: linear-gradient(135deg, var(--bg-1), var(--bg-2));
-    padding: 16px 20px; border-radius: 12px; margin-bottom: 12px;
+    padding: 14px 20px; border-radius: 12px; margin-bottom: 12px;
     border: 1px solid var(--border); box-shadow: var(--shadow);
+    flex-wrap: wrap; gap: 10px;
   }
-  .header h1 { font-size: 1.3rem; color: var(--accent-2); }
-  .header h1 span { color: var(--text-1); font-weight: 400; font-size: .85rem; }
-
-  /* SEMÁFORO DE ESTADO */
+  .header h1 { font-size: 1.2rem; color: var(--accent-2); letter-spacing: 1px; }
+  .header h1 span { color: var(--text-1); font-weight: 400; font-size: .75rem; }
   .status-beacon {
     display: flex; align-items: center; gap: 10px;
     padding: 8px 16px; border-radius: 999px;
-    background: var(--bg-3); font-weight: 600;
+    background: var(--bg-3); font-weight: 600; font-size: .85rem;
   }
   .beacon-dot {
-    width: 14px; height: 14px; border-radius: 50%;
-    background: var(--text-2); box-shadow: 0 0 0 0 rgba(107,114,128,.7);
+    width: 12px; height: 12px; border-radius: 50%;
+    background: var(--text-2);
   }
   .status-beacon[data-status="off"] .beacon-dot { background: var(--text-2); }
   .status-beacon[data-status="learning"] .beacon-dot { background: var(--yellow); animation: pulse 1.5s infinite; }
   .status-beacon[data-status="ready"] .beacon-dot { background: var(--green); animation: pulse 1.5s infinite; }
   .status-beacon[data-status="trading"] .beacon-dot { background: var(--accent-2); animation: pulse 1s infinite; }
-  .status-beacon[data-status="error"] .beacon-dot { background: var(--red); animation: pulse .5s infinite; }
-  .status-beacon[data-status="blocked"] .beacon-dot { background: var(--red); }
-  @keyframes pulse {
-    0% { box-shadow: 0 0 0 0 currentColor; }
-    70% { box-shadow: 0 0 0 10px transparent; }
-    100% { box-shadow: 0 0 0 0 transparent; }
-  }
+  .status-beacon[data-status="error"] .beacon-dot { background: var(--red); }
+  .status-beacon[data-status="blocked"] .beacon-dot { background: var(--red); animation: pulse .5s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .3; } }
 
-  /* GRID PRINCIPAL */
+  /* GRID */
   .grid {
     display: grid;
-    grid-template-columns: 1fr 380px;
+    grid-template-columns: 1fr 420px;
     gap: 12px;
   }
-  @media (max-width: 1000px) { .grid { grid-template-columns: 1fr; } }
+  @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
 
   .card {
-    background: var(--bg-1);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
+    background: var(--bg-1); border: 1px solid var(--border);
+    border-radius: 12px; padding: 14px; margin-bottom: 12px;
     box-shadow: var(--shadow);
   }
   .card h2 {
-    font-size: .95rem; color: var(--accent-2);
-    margin-bottom: 12px; padding-bottom: 8px;
-    border-bottom: 1px solid var(--border);
+    font-size: .85rem; color: var(--accent-2); letter-spacing: 1px;
+    margin-bottom: 10px; padding-bottom: 8px;
+    border-bottom: 1px solid var(--border); text-transform: uppercase;
+  }
+  .card h3 {
+    font-size: .75rem; color: var(--text-1);
+    margin: 10px 0 6px; letter-spacing: .5px;
   }
 
   /* PESTAÑAS */
-  .tabs {
-    display: flex; gap: 4px; margin-bottom: 12px;
-    border-bottom: 1px solid var(--border);
-  }
+  .tabs { display: flex; gap: 4px; margin-bottom: 12px; border-bottom: 1px solid var(--border); flex-wrap: wrap; }
   .tab-btn {
-    background: transparent; color: var(--text-1);
-    border: none; padding: 8px 14px; cursor: pointer;
-    font-size: .85rem; font-weight: 500;
-    border-bottom: 2px solid transparent;
-    transition: all .2s;
+    background: transparent; color: var(--text-1); border: none;
+    padding: 8px 12px; cursor: pointer; font-size: .8rem;
+    border-bottom: 2px solid transparent; font-weight: 500;
   }
   .tab-btn:hover { color: var(--text-0); }
   .tab-btn.active { color: var(--accent-2); border-bottom-color: var(--accent-2); }
   .tab-content { display: none; }
   .tab-content.active { display: block; }
 
-  /* FORMULARIOS */
-  .form-row {
-    display: flex; flex-direction: column; gap: 6px;
-    margin-bottom: 12px;
-  }
-  .form-row label {
-    font-size: .8rem; color: var(--text-1); font-weight: 500;
-  }
-  .form-row select, .form-row input {
+  /* FORMS */
+  .form-row { display: flex; flex-direction: column; gap: 6px; margin-bottom: 10px; }
+  .form-row label { font-size: .75rem; color: var(--text-1); font-weight: 500; }
+  .form-row select, .form-row input[type="text"], .form-row input[type="number"], .form-row input[type="password"] {
     background: var(--bg-2); color: var(--text-0);
     border: 1px solid var(--border); border-radius: 6px;
-    padding: 8px 10px; font-size: .9rem;
+    padding: 8px 10px; font-size: .85rem;
   }
-  .form-row select:focus, .form-row input:focus {
-    outline: none; border-color: var(--accent);
-  }
-  .radio-group {
-    display: flex; flex-wrap: wrap; gap: 6px;
-  }
+  .form-row select:focus, .form-row input:focus { outline: none; border-color: var(--accent); }
+  .radio-group { display: flex; flex-wrap: wrap; gap: 5px; }
   .radio-group label {
-    background: var(--bg-2); padding: 6px 10px;
-    border-radius: 6px; cursor: pointer; font-size: .8rem;
-    border: 1px solid var(--border);
+    background: var(--bg-2); padding: 6px 10px; border-radius: 6px;
+    cursor: pointer; font-size: .75rem; border: 1px solid var(--border);
+    transition: all .15s;
   }
   .radio-group input { display: none; }
-  .radio-group input:checked + span {
-    color: var(--accent-2); font-weight: 600;
-  }
   .radio-group label:has(input:checked) {
-    border-color: var(--accent); background: rgba(59,130,246,.1);
+    border-color: var(--accent); background: rgba(59,130,246,.15);
+    color: var(--accent-2); font-weight: 600;
   }
 
   /* BOTONES */
   .btn {
-    padding: 10px 16px; border: none; border-radius: 8px;
-    font-weight: 600; cursor: pointer; font-size: .9rem;
-    transition: all .2s;
+    padding: 9px 14px; border: none; border-radius: 8px;
+    font-weight: 600; cursor: pointer; font-size: .85rem;
+    transition: all .15s;
   }
   .btn-primary { background: var(--accent); color: white; }
-  .btn-primary:hover { background: var(--accent-2); }
+  .btn-primary:hover { background: var(--accent-3); }
   .btn-success { background: var(--green); color: white; }
   .btn-danger { background: var(--red); color: white; }
   .btn-warning { background: var(--yellow); color: #111; }
   .btn-ghost { background: var(--bg-2); color: var(--text-0); border: 1px solid var(--border); }
-  .btn:disabled { opacity: .5; cursor: not-allowed; }
-  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  .btn:disabled { opacity: .4; cursor: not-allowed; }
+  .btn-row { display: flex; gap: 6px; flex-wrap: wrap; }
 
   /* TICKER */
-  .ticker {
-    display: grid; grid-template-columns: repeat(4, 1fr);
-    gap: 8px; margin-bottom: 12px;
-  }
+  .ticker { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 10px; }
   .ticker-item {
-    background: var(--bg-2); padding: 10px;
-    border-radius: 8px; text-align: center;
-    border: 1px solid var(--border);
+    background: var(--bg-2); padding: 8px; border-radius: 8px;
+    text-align: center; border: 1px solid var(--border);
   }
-  .ticker-item .label { font-size: .7rem; color: var(--text-2); text-transform: uppercase; }
-  .ticker-item .value { font-size: 1.1rem; font-weight: 600; margin-top: 4px; }
+  .ticker-item .label { font-size: .65rem; color: var(--text-2); text-transform: uppercase; letter-spacing: .5px; }
+  .ticker-item .value { font-size: 1rem; font-weight: 700; margin-top: 3px; font-family: 'Consolas', monospace; }
 
   /* GRÁFICO */
   .chart-container {
-    background: var(--bg-0); border-radius: 8px;
-    padding: 8px; height: 220px; position: relative;
-    border: 1px solid var(--border);
+    background: var(--bg-0); border-radius: 8px; padding: 8px;
+    height: 200px; position: relative; border: 1px solid var(--border);
   }
   #chart { width: 100%; height: 100%; display: block; }
+  .chart-info {
+    display: flex; justify-content: space-between; font-size: .7rem;
+    color: var(--text-1); margin-top: 6px; font-family: monospace;
+  }
 
   /* RANKING */
-  .ranking-table {
-    width: 100%; border-collapse: collapse; font-size: .8rem;
-  }
+  .ranking-table { width: 100%; border-collapse: collapse; font-size: .78rem; }
   .ranking-table th, .ranking-table td {
-    padding: 6px 8px; text-align: center;
+    padding: 5px 6px; text-align: center;
     border-bottom: 1px solid var(--border);
   }
-  .ranking-table th { color: var(--text-1); font-weight: 500; font-size: .7rem; }
+  .ranking-table th { color: var(--text-2); font-weight: 500; font-size: .7rem; }
   .score-cell { font-weight: 700; border-radius: 4px; }
 
+  /* MAPA MATEMÁTICO */
+  .math-map {
+    display: grid; grid-template-columns: repeat(10, 1fr);
+    gap: 4px; margin: 10px 0;
+  }
+  .math-cell {
+    background: var(--bg-2); padding: 8px 4px; border-radius: 6px;
+    text-align: center; border: 1px solid var(--border);
+    font-family: monospace;
+  }
+  .math-cell .digit { font-size: 1.1rem; font-weight: 700; color: var(--accent-2); }
+  .math-cell .freq { font-size: .65rem; color: var(--text-1); margin-top: 2px; }
+  .math-cell.hot { background: rgba(16,185,129,.2); border-color: var(--green); }
+  .math-cell.cold { background: rgba(239,68,68,.15); border-color: var(--red); }
+
   /* VENTANAS */
-  .windows-grid {
-    display: grid; grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
+  .windows-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; }
   .window-card {
-    background: var(--bg-2); padding: 10px;
-    border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg-2); padding: 10px; border-radius: 8px;
+    border: 1px solid var(--border); position: relative;
   }
-  .window-card h4 { font-size: .8rem; color: var(--text-1); margin-bottom: 6px; }
-  .window-card .big { font-size: 1.4rem; font-weight: 700; }
-  .window-card .sub { font-size: .75rem; color: var(--text-2); margin-top: 4px; }
+  .window-card.best { border-color: var(--green); background: rgba(16,185,129,.08); }
+  .window-card h4 { font-size: .75rem; color: var(--text-1); margin-bottom: 4px; }
+  .window-card .big { font-size: 1.3rem; font-weight: 700; }
+  .window-card .sub { font-size: .7rem; color: var(--text-2); margin-top: 3px; }
+  .window-card .candidate { font-size: .7rem; color: var(--accent-2); margin-top: 2px; }
+
+  /* SEGUNDOS ÓPTIMOS */
+  .seconds-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 5px; margin: 10px 0; }
+  .second-item {
+    background: var(--bg-2); padding: 8px 4px; border-radius: 6px;
+    text-align: center; border: 1px solid var(--border);
+  }
+  .second-item.best { border-color: var(--green); background: rgba(16,185,129,.15); }
+  .second-item.blocked { opacity: .4; border-color: var(--red); }
+  .second-item .s-num { font-size: 1rem; font-weight: 700; color: var(--accent-2); }
+  .second-item .s-rate { font-size: .7rem; color: var(--text-1); }
+  .second-item .s-ops { font-size: .6rem; color: var(--text-2); }
 
   /* ALERTAS */
   .alert {
-    padding: 10px 14px; border-radius: 8px;
-    margin-bottom: 10px; font-size: .85rem;
-    border-left: 4px solid;
+    padding: 8px 12px; border-radius: 6px;
+    margin-bottom: 8px; font-size: .8rem;
+    border-left: 3px solid;
   }
   .alert-info { background: rgba(59,130,246,.1); border-color: var(--accent); color: var(--accent-2); }
   .alert-warn { background: rgba(245,158,11,.1); border-color: var(--yellow); color: var(--yellow); }
   .alert-danger { background: rgba(239,68,68,.1); border-color: var(--red); color: var(--red); }
   .alert-success { background: rgba(16,185,129,.1); border-color: var(--green); color: var(--green); }
 
-  .hidden { display: none !important; }
+  /* CANDIDATO PRINCIPAL */
+  .candidate-box {
+    text-align: center; padding: 16px;
+    background: var(--bg-2); border-radius: 10px;
+    margin-bottom: 10px; border: 1px solid var(--border);
+  }
+  .candidate-digit { font-size: 3.5rem; font-weight: 800; color: var(--accent-2); line-height: 1; }
+  .candidate-info { font-size: .8rem; color: var(--text-1); margin-top: 6px; }
+  .candidate-stats {
+    display: grid; grid-template-columns: repeat(3, 1fr);
+    gap: 6px; margin-top: 10px;
+  }
+  .candidate-stat {
+    background: var(--bg-3); padding: 6px; border-radius: 6px;
+    text-align: center;
+  }
+  .candidate-stat .lbl { font-size: .65rem; color: var(--text-2); text-transform: uppercase; }
+  .candidate-stat .val { font-size: .95rem; font-weight: 700; color: var(--text-0); margin-top: 2px; }
+
+  /* LOG */
+  .log-box {
+    max-height: 180px; overflow-y: auto;
+    font-size: .75rem; font-family: monospace;
+    color: var(--text-1); background: var(--bg-0);
+    padding: 8px; border-radius: 6px; border: 1px solid var(--border);
+  }
+
+  /* AUDITORÍA */
+  .audit-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 5px; }
+  .audit-item {
+    background: var(--bg-2); padding: 6px 8px; border-radius: 6px;
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: .75rem; border: 1px solid var(--border);
+  }
+  .audit-item .k { color: var(--text-2); }
+  .audit-item .v { font-family: monospace; font-weight: 600; }
+
+  /* SEÑAL PRINCIPAL */
+  .signal-box {
+    background: linear-gradient(135deg, var(--bg-2), var(--bg-3));
+    padding: 14px; border-radius: 10px; text-align: center;
+    border: 1px solid var(--border); margin-bottom: 10px;
+  }
+  .signal-status {
+    font-size: 1.1rem; font-weight: 700;
+    padding: 8px; border-radius: 8px; margin-bottom: 8px;
+  }
+  .signal-status.go { background: rgba(16,185,129,.2); color: var(--green); }
+  .signal-status.wait { background: rgba(245,158,11,.15); color: var(--yellow); }
+  .signal-status.no { background: rgba(239,68,68,.15); color: var(--red); }
+
   .mono { font-family: 'Consolas', monospace; }
   .text-green { color: var(--green); }
   .text-red { color: var(--red); }
   .text-yellow { color: var(--yellow); }
+  .text-accent { color: var(--accent-2); }
+  .hidden { display: none !important; }
+
+  /* BACKTEST */
+  .backtest-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+  .backtest-item {
+    background: var(--bg-2); padding: 10px; border-radius: 8px;
+    text-align: center; border: 1px solid var(--border);
+  }
+  .backtest-item .big { font-size: 1.5rem; font-weight: 700; }
+  .backtest-item .lbl { font-size: .7rem; color: var(--text-2); margin-top: 4px; }
+
+  /* CHECKBOX */
+  .check-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 0; font-size: .8rem;
+  }
+  .check-row input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); }
+
+  /* RESULTADO CICLO */
+  .cycle-result {
+    background: var(--bg-2); padding: 10px; border-radius: 8px;
+    border: 1px solid var(--border); margin-top: 8px;
+    font-size: .78rem;
+  }
+  .cycle-row {
+    display: flex; justify-content: space-between;
+    padding: 3px 0; border-bottom: 1px dashed var(--border);
+  }
+  .cycle-row:last-child { border-bottom: none; }
 </style>
 </head>
 <body>
@@ -217,7 +289,7 @@
 
   <!-- HEADER -->
   <div class="header">
-    <h1>SCANNER AZUL <span>v3 · MultiWindow Digit Engine</span></h1>
+    <h1>SCANNER AZUL <span>v4 · MultiWindow Digit Engine · Rotación</span></h1>
     <div class="status-beacon" id="statusBeacon" data-status="off">
       <div class="beacon-dot"></div>
       <span id="statusText">OFF</span>
@@ -225,29 +297,36 @@
   </div>
 
   <div class="grid">
-    <!-- COLUMNA IZQUIERDA -->
+    <!-- ============ COLUMNA IZQUIERDA ============ -->
     <div>
+
       <!-- TICKER -->
       <div class="ticker">
-        <div class="ticker-item"><div class="label">Precio</div><div class="value mono" id="tkPrice">--</div></div>
-        <div class="ticker-item"><div class="label">Último Dígito</div><div class="value mono" id="tkDigit">--</div></div>
-        <div class="ticker-item"><div class="label">Latencia</div><div class="value mono" id="tkLatency">--</div></div>
-        <div class="ticker-item"><div class="label">Integridad</div><div class="value mono" id="tkIntegrity">0%</div></div>
+        <div class="ticker-item"><div class="label">Precio</div><div class="value" id="tkPrice">--</div></div>
+        <div class="ticker-item"><div class="label">Dígito</div><div class="value" id="tkDigit">--</div></div>
+        <div class="ticker-item"><div class="label">Latencia</div><div class="value" id="tkLatency">--</div></div>
+        <div class="ticker-item"><div class="label">Integridad</div><div class="value" id="tkIntegrity">0%</div></div>
       </div>
 
       <!-- GRÁFICO -->
-      <div class="card" style="margin-bottom:12px">
-        <h2>GRÁFICO OHLC · 1 SEGUNDO</h2>
+      <div class="card">
+        <h2>📊 Gráfico OHLC · 1 Segundo</h2>
         <div class="chart-container"><canvas id="chart"></canvas></div>
+        <div class="chart-info">
+          <span>● LIVE <span id="liveDot" class="text-red">○</span></span>
+          <span>PRECIO: <span id="chartPrice">--</span></span>
+          <span>VELAS: <span id="chartCandles">0</span></span>
+          <span>O:<span id="chartO">--</span> H:<span id="chartH">--</span> L:<span id="chartL">--</span> C:<span id="chartC">--</span></span>
+        </div>
       </div>
 
-      <!-- PESTAÑAS -->
+      <!-- PESTAÑAS PRINCIPALES -->
       <div class="card">
         <div class="tabs">
-          <button class="tab-btn active" data-tab="tab-oper">Operación</button>
-          <button class="tab-btn" data-tab="tab-adv">Avanzado</button>
-          <button class="tab-btn" data-tab="tab-risk">Riesgo</button>
-          <button class="tab-btn" data-tab="tab-voice">Voz</button>
+          <button class="tab-btn active" data-tab="tab-oper">⚙️ Operación</button>
+          <button class="tab-btn" data-tab="tab-adv">🔧 Avanzado</button>
+          <button class="tab-btn" data-tab="tab-risk">🛡️ Riesgo</button>
+          <button class="tab-btn" data-tab="tab-voice">🔊 Voz</button>
         </div>
 
         <!-- TAB OPERACIÓN -->
@@ -262,27 +341,60 @@
               <option value="R_100" selected>Volatility 100 (1s)</option>
             </select>
           </div>
+
+          <div class="form-row">
+            <label>Multiplicador</label>
+            <div class="radio-group">
+              <label><input type="radio" name="mult" value="10"><span>10×</span></label>
+              <label><input type="radio" name="mult" value="20"><span>20×</span></label>
+              <label><input type="radio" name="mult" value="50"><span>50×</span></label>
+              <label><input type="radio" name="mult" value="100" checked><span>100×</span></label>
+              <label><input type="radio" name="mult" value="200"><span>200×</span></label>
+              <label><input type="radio" name="mult" value="500"><span>500×</span></label>
+              <label><input type="radio" name="mult" value="1000"><span>1000×</span></label>
+            </div>
+          </div>
+
           <div class="form-row">
             <label>Tipo de contrato</label>
             <div class="radio-group">
-              <label><input type="radio" name="ctype" value="DIGITMATCH" checked><span>MATCHES</span></label>
-              <label><input type="radio" name="ctype" value="DIGITEVEN"><span>EVEN</span></label>
-              <label><input type="radio" name="ctype" value="DIGITODD"><span>ODD</span></label>
-              <label><input type="radio" name="ctype" value="DIGITOVER"><span>OVER</span></label>
-              <label><input type="radio" name="ctype" value="DIGITUNDER"><span>UNDER</span></label>
+              <label><input type="radio" name="ctype" value="DIGITMATCH" checked><span>MATCHES — último dígito</span></label>
+              <label><input type="radio" name="ctype" value="DIGITEVEN"><span>EVEN — cualquier par</span></label>
+              <label><input type="radio" name="ctype" value="DIGITODD"><span>ODD — cualquier impar</span></label>
+              <label><input type="radio" name="ctype" value="DIGITOVER"><span>OVER — mayor que 4</span></label>
+              <label><input type="radio" name="ctype" value="DIGITUNDER"><span>UNDER — menor o igual que 4</span></label>
             </div>
           </div>
+
           <div class="form-row">
             <label>Stake (US$)</label>
             <input type="number" id="inpStake" value="1" min="0.35" step="0.01">
           </div>
+
           <div class="form-row">
-            <label>Token API de Deriv</label>
+            <label>Operaciones por señal</label>
+            <input type="number" id="inpOpsPerSignal" value="2" min="1" max="5">
+          </div>
+
+          <div class="form-row">
+            <label>Token API (no necesario en prueba)</label>
             <input type="password" id="inpToken" placeholder="Pega tu token aquí">
           </div>
-          <div class="btn-row">
-            <button class="btn btn-primary" id="btnConnect">CONECTAR</button>
-            <button class="btn btn-success" id="btnStart" disabled>ACTIVAR BOT</button>
+
+          <div class="check-row">
+            <input type="checkbox" id="chkDemo">
+            <label for="chkDemo">Confirmo que es cuenta DEMO</label>
+          </div>
+          <div class="check-row">
+            <input type="checkbox" id="chkRemember">
+            <label for="chkRemember">Recordar conexión demo en este dispositivo</label>
+          </div>
+
+          <div class="btn-row" style="margin-top:10px;">
+            <button class="btn btn-primary" id="btnConnect">CONECTAR DATOS</button>
+            <button class="btn btn-primary" id="btnAnalyze" disabled>HACER ANÁLISIS</button>
+            <button class="btn btn-success" id="btnPredict" disabled>PREDECIR ANÁLISIS</button>
+            <button class="btn btn-success" id="btnStart" disabled>BOT DESACTIVADO</button>
             <button class="btn btn-danger" id="btnStop" disabled>DETENER</button>
             <button class="btn btn-ghost" id="btnReset">REINICIAR</button>
           </div>
@@ -293,17 +405,18 @@
           <div class="form-row">
             <label>Ajuste fino de latencia</label>
             <div class="radio-group">
-              <label><input type="radio" name="latency" value="-300"><span>-300ms</span></label>
-              <label><input type="radio" name="latency" value="-200"><span>-200ms</span></label>
-              <label><input type="radio" name="latency" value="-100"><span>-100ms</span></label>
-              <label><input type="radio" name="latency" value="0" checked><span>Exacto</span></label>
-              <label><input type="radio" name="latency" value="100"><span>+100ms</span></label>
-              <label><input type="radio" name="latency" value="200"><span>+200ms</span></label>
-              <label><input type="radio" name="latency" value="300"><span>+300ms</span></label>
+              <label><input type="radio" name="latency" value="-300"><span>-300ms ANTES</span></label>
+              <label><input type="radio" name="latency" value="-200"><span>-200ms ANTES</span></label>
+              <label><input type="radio" name="latency" value="-100"><span>-100ms ANTES</span></label>
+              <label><input type="radio" name="latency" value="0" checked><span>Exacto (0ms)</span></label>
+              <label><input type="radio" name="latency" value="100"><span>+100ms DESPUÉS</span></label>
+              <label><input type="radio" name="latency" value="200"><span>+200ms DESPUÉS</span></label>
+              <label><input type="radio" name="latency" value="300"><span>+300ms DESPUÉS</span></label>
             </div>
           </div>
+
           <div class="form-row">
-            <label>Rotar tras N pérdidas seguidas</label>
+            <label>Rotar tras N pérdidas seguidas (bloquea 30 min)</label>
             <div class="radio-group">
               <label><input type="radio" name="rotate" value="2"><span>2</span></label>
               <label><input type="radio" name="rotate" value="3" checked><span>3</span></label>
@@ -311,6 +424,7 @@
               <label><input type="radio" name="rotate" value="5"><span>5</span></label>
             </div>
           </div>
+
           <div class="form-row">
             <label>Pausa entre ciclos</label>
             <div class="radio-group">
@@ -318,19 +432,27 @@
               <label><input type="radio" name="pause" value="1" checked><span>1s</span></label>
               <label><input type="radio" name="pause" value="3"><span>3s</span></label>
               <label><input type="radio" name="pause" value="5"><span>5s</span></label>
+              <label><input type="radio" name="pause" value="10"><span>10s</span></label>
             </div>
           </div>
+
           <div class="form-row">
-            <label>Operaciones por señal</label>
-            <input type="number" id="inpOpsPerSignal" value="2" min="1" max="5">
+            <label>Umbral mínimo de acierto (%)</label>
+            <input type="number" id="inpMinRate" value="55" min="50" max="90">
+          </div>
+
+          <div class="form-row">
+            <label>Latencia máxima permitida (ms)</label>
+            <input type="number" id="inpMaxLat" value="200" min="50" max="1000">
+          </div>
+
+          <div class="alert alert-info">
+            💡 US$1 por operación, 2 operaciones por señal. La 1ª entra en el segundo favorable y la 2ª entra 2.5s después. Al empezar entra en el segundo más fuerte. Cada pérdida suma a la racha; con N seguidas se bloquea 30 min y rota a un segundo al azar (S2-S10).
           </div>
         </div>
 
         <!-- TAB RIESGO -->
         <div class="tab-content" id="tab-risk">
-          <div class="alert alert-info">
-            💡 El bot guardará automáticamente tu progreso diario. Si alcanzas un límite, se detendrá hasta el siguiente día.
-          </div>
           <div class="form-row">
             <label>Stop Loss Diario (US$)</label>
             <input type="number" id="inpSL" value="20" min="1">
@@ -340,16 +462,13 @@
             <input type="number" id="inpTP" value="50" min="1">
           </div>
           <div class="form-row">
-            <label>Circuit Breaker: detener tras N ciclos perdedores seguidos</label>
+            <label>Circuit Breaker: detener tras N ciclos perdedores</label>
             <input type="number" id="inpCB" value="5" min="2" max="20">
           </div>
-          <div class="form-row">
-            <label>Latencia máxima permitida (ms) — si se supera, pausa automática</label>
-            <input type="number" id="inpMaxLat" value="200" min="50" max="1000">
+          <div class="alert alert-info">
+            P&L hoy: <strong id="pnlToday" class="text-green">$0.00</strong> · Operaciones: <strong id="opsToday">0</strong> · Rachas perd: <strong id="streakToday">0</strong>
           </div>
-          <div id="riskStats" class="alert alert-info">
-            P&L hoy: <strong id="pnlToday">$0.00</strong> · Operaciones: <strong id="opsToday">0</strong>
-          </div>
+          <button class="btn btn-ghost" id="btnResetDaily">🔄 Reiniciar estadísticas diarias</button>
         </div>
 
         <!-- TAB VOZ -->
@@ -357,74 +476,178 @@
           <div class="form-row">
             <label>Nivel de detalle</label>
             <div class="radio-group">
-              <label><input type="radio" name="voiceLvl" value="0"><span>Silencio</span></label>
-              <label><input type="radio" name="voiceLvl" value="1" checked><span>Resumen</span></label>
+              <label><input type="radio" name="voiceLvl" value="0"><span>Solo al pulsar</span></label>
+              <label><input type="radio" name="voiceLvl" value="1" checked><span>Resumen (menos habla)</span></label>
               <label><input type="radio" name="voiceLvl" value="2"><span>Completo</span></label>
             </div>
           </div>
           <div class="form-row">
             <label>Volumen</label>
-            <input type="range" id="voiceVol" min="0" max="1" step="0.1" value="0.8">
+            <input type="range" id="voiceVol" min="0" max="1" step="0.1" value="0.8" style="width:100%;">
+          </div>
+          <div class="check-row">
+            <input type="checkbox" id="chkVoiceClock" checked>
+            <label for="chkVoiceClock">🔊 Voz del reloj: ON</label>
           </div>
           <div class="btn-row">
-            <button class="btn btn-ghost" id="btnTestVoice">🔊 Probar voz</button>
+            <button class="btn btn-ghost" id="btnTestVoice">▶ Probar voz</button>
+            <button class="btn btn-ghost" id="btnResetWindows">↻ Reiniciar estadísticas de ventanas</button>
+          </div>
+          <div class="alert alert-info" style="margin-top:10px;">
+            La voz importante tiene prioridad sobre la cuenta regresiva.
           </div>
         </div>
       </div>
     </div>
 
-    <!-- COLUMNA DERECHA -->
+    <!-- ============ COLUMNA DERECHA ============ -->
     <div>
-      <!-- MOTOR ESTADÍSTICO -->
-      <div class="card" style="margin-bottom:12px">
-        <h2>HOT RANKING · MOTOR ESTADÍSTICO</h2>
-        <div id="candidateMain" style="text-align:center; margin-bottom:12px;">
-          <div style="font-size:.75rem; color:var(--text-2);">CANDIDATO PRINCIPAL</div>
-          <div id="mainDigit" style="font-size:3rem; font-weight:800; color:var(--accent-2);">-</div>
-          <div style="font-size:.8rem; color:var(--text-1);">Score: <span id="mainScore">0.0</span> · Z: <span id="mainZ">0.00</span></div>
+
+      <!-- SEÑAL PRINCIPAL -->
+      <div class="card">
+        <h2>🎯 Entrada Más Favorable</h2>
+        <div class="signal-box">
+          <div class="signal-status wait" id="signalStatus">⏳ ESPERANDO DATOS</div>
+          <div style="font-size:.8rem; color:var(--text-1);">
+            SEGUNDO: <strong id="signalSecond" class="text-accent">--</strong> ·
+            CONFIRMACIÓN: <strong id="signalConf">--</strong>
+          </div>
+          <div style="font-size:.75rem; color:var(--text-2); margin-top:4px;">
+            RENDIMIENTO: <span id="signalPerf">--</span> ·
+            RIESGO FALSA: <span id="signalRisk">--</span>
+          </div>
+          <div style="font-size:1rem; margin-top:8px; color:var(--accent-2);">
+            CUENTA: <strong id="signalCountdown">--</strong>
+          </div>
+          <div style="font-size:.7rem; color:var(--yellow); margin-top:5px;">
+            MODO PRUEBA: señal informativa, sin operaciones automáticas
+          </div>
         </div>
+
+        <h3>Motor Principal</h3>
+        <div class="audit-grid">
+          <div class="audit-item"><span class="k">Mejor ventana</span><span class="v" id="mainBestWin">--</span></div>
+          <div class="audit-item"><span class="k">Diferencia</span><span class="v" id="mainDiff">--</span></div>
+          <div class="audit-item"><span class="k">Puntaje</span><span class="v text-accent" id="mainScore">0/100</span></div>
+          <div class="audit-item"><span class="k">Estabilidad</span><span class="v" id="mainStab">--</span></div>
+          <div class="audit-item"><span class="k">Evidencia</span><span class="v" id="mainEvid">--</span></div>
+          <div class="audit-item"><span class="k">Acuerdo</span><span class="v" id="mainAgree">--</span></div>
+        </div>
+      </div>
+
+      <!-- AUDITORÍA -->
+      <div class="card">
+        <h2>🔍 Auditoría de Ticks</h2>
+        <div class="audit-grid">
+          <div class="audit-item"><span class="k">LIVE</span><span class="v" id="audLive">⏳</span></div>
+          <div class="audit-item"><span class="k">Ticks válidos</span><span class="v" id="audValid">0/5</span></div>
+          <div class="audit-item"><span class="k">Latencia</span><span class="v" id="audLat">--</span></div>
+          <div class="audit-item"><span class="k">Flujo</span><span class="v" id="audFlow">ESPERANDO</span></div>
+          <div class="audit-item"><span class="k">Último precio</span><span class="v" id="audPrice">--</span></div>
+          <div class="audit-item"><span class="k">Último dígito</span><span class="v" id="audDigit">--</span></div>
+          <div class="audit-item"><span class="k">Precisión</span><span class="v" id="audPrec">--</span></div>
+          <div class="audit-item"><span class="k">Secuencia</span><span class="v" id="audSeq">--</span></div>
+          <div class="audit-item"><span class="k">Edad tick</span><span class="v" id="audAge">--</span></div>
+          <div class="audit-item"><span class="k">Integridad</span><span class="v" id="audInt">0%</span></div>
+        </div>
+        <div class="alert alert-warn" style="margin-top:8px; font-size:.7rem;">
+          🔴 LIVE confirmado solo después de 5 ticks válidos consecutivos. Entrada bloqueada ante salto, duplicado, tick atrasado, precisión inválida o interrupción.
+        </div>
+      </div>
+
+      <!-- CANDIDATO PRINCIPAL -->
+      <div class="card">
+        <h2>🏆 Candidato Estadístico Principal</h2>
+        <div class="candidate-box">
+          <div class="candidate-digit" id="mainDigit">-</div>
+          <div class="candidate-info">
+            Precio en vivo: <span id="candPrice">—</span> ·
+            Último dígito: <span id="candLastDigit">—</span>
+          </div>
+          <div class="candidate-stats">
+            <div class="candidate-stat"><div class="lbl">Score</div><div class="val" id="candScore">0.0</div></div>
+            <div class="candidate-stat"><div class="lbl">Calidad</div><div class="val" id="candQual">0.0</div></div>
+            <div class="candidate-stat"><div class="lbl">Ventaja vs S</div><div class="val" id="candAdv">0.0</div></div>
+          </div>
+        </div>
+
+        <h3>Mapa Matemático 0-9</h3>
+        <div class="math-map" id="mathMap"></div>
+
+        <h3>Ranking Completo</h3>
         <table class="ranking-table">
-          <thead>
-            <tr><th>#</th><th>D</th><th>SCORE</th><th>20T</th><th>50T</th><th>100T</th><th>Z</th></tr>
-          </thead>
+          <thead><tr><th>#</th><th>D</th><th>SCORE</th><th>20T</th><th>50T</th><th>100T</th><th>Z</th><th>CAL</th></tr></thead>
           <tbody id="rankingBody"></tbody>
         </table>
       </div>
 
-      <!-- MULTIVENTANA -->
-      <div class="card" style="margin-bottom:12px">
-        <h2>PREDICCIÓN MULTIVENTANA</h2>
-        <div class="windows-grid">
-          <div class="window-card">
-            <h4>4 SEGUNDOS</h4>
-            <div class="big text-green" id="w4Hit">0</div>
-            <div class="sub">Tasa: <span id="w4Rate">--%</span></div>
-          </div>
-          <div class="window-card">
-            <h4>5 SEGUNDOS</h4>
-            <div class="big text-green" id="w5Hit">0</div>
-            <div class="sub">Tasa: <span id="w5Rate">--%</span></div>
-          </div>
-          <div class="window-card">
-            <h4>7 SEGUNDOS</h4>
-            <div class="big text-green" id="w7Hit">0</div>
-            <div class="sub">Tasa: <span id="w7Rate">--%</span></div>
-          </div>
-          <div class="window-card">
-            <h4>10 SEGUNDOS</h4>
-            <div class="big text-green" id="w10Hit">0</div>
-            <div class="sub">Tasa: <span id="w10Rate">--%</span></div>
-          </div>
+      <!-- MOTOR DE MOMENTOS ÓPTIMOS -->
+      <div class="card">
+        <h2>⏱️ Motor de Momento Óptimo (S1-S10)</h2>
+        <div class="alert alert-info" style="font-size:.7rem;">
+          Cada segundo se evalúa contra el siguiente tick. El resultado es estadístico.
         </div>
-        <div class="alert alert-info" style="margin-top:10px">
-          Mejor ventana: <strong id="bestWindow">--</strong> · Estabilidad: <strong id="stability">--</strong>
+        <div class="seconds-grid" id="secondsGrid"></div>
+        <div class="audit-grid">
+          <div class="audit-item"><span class="k">Mejor momento</span><span class="v text-accent" id="bestMoment">--</span></div>
+          <div class="audit-item"><span class="k">Rendimiento</span><span class="v" id="bestMomentRate">--</span></div>
+        </div>
+      </div>
+
+      <!-- MULTIVENTANA -->
+      <div class="card">
+        <h2>🎲 Predicción Multiventana · 4S / 5S / 7S / 10S</h2>
+        <div class="windows-grid" id="windowsGrid">
+          <div class="window-card" data-w="4"><h4>VENTANA 4 SEGUNDOS</h4><div class="candidate" id="w4Cand">Candidato: —</div><div class="big text-green" id="w4Hit">0</div><div class="sub">Fallo: <span id="w4Fail">0</span> · Tasa: <span id="w4Rate">--%</span></div></div>
+          <div class="window-card" data-w="5"><h4>VENTANA 5 SEGUNDOS</h4><div class="candidate" id="w5Cand">Candidato: —</div><div class="big text-green" id="w5Hit">0</div><div class="sub">Fallo: <span id="w5Fail">0</span> · Tasa: <span id="w5Rate">--%</span></div></div>
+          <div class="window-card" data-w="7"><h4>VENTANA 7 SEGUNDOS</h4><div class="candidate" id="w7Cand">Candidato: —</div><div class="big text-green" id="w7Hit">0</div><div class="sub">Fallo: <span id="w7Fail">0</span> · Tasa: <span id="w7Rate">--%</span></div></div>
+          <div class="window-card" data-w="10"><h4>VENTANA 10 SEGUNDOS</h4><div class="candidate" id="w10Cand">Candidato: —</div><div class="big text-green" id="w10Hit">0</div><div class="sub">Fallo: <span id="w10Fail">0</span> · Tasa: <span id="w10Rate">--%</span></div></div>
+        </div>
+        <div class="audit-grid" style="margin-top:8px;">
+          <div class="audit-item"><span class="k">Mejor ventana</span><span class="v text-accent" id="bestWin">--</span></div>
+          <div class="audit-item"><span class="k">Rendimiento</span><span class="v" id="bestWinRate">0 ciclos</span></div>
+          <div class="audit-item"><span class="k">Estabilidad</span><span class="v" id="bestWinStab">--</span></div>
+          <div class="audit-item"><span class="k">Diagnóstico</span><span class="v" id="bestWinDiag">esperando muestras…</span></div>
+        </div>
+
+        <h3>Resultado Completo del Ciclo</h3>
+        <div class="cycle-result" id="cycleResult">
+          <div class="cycle-row"><span>Señal</span><span id="cycSignal">—</span></div>
+          <div class="cycle-row"><span>4S</span><span id="cyc4s">—</span></div>
+          <div class="cycle-row"><span>5S</span><span id="cyc5s">—</span></div>
+          <div class="cycle-row"><span>7S</span><span id="cyc7s">—</span></div>
+          <div class="cycle-row"><span>10S</span><span id="cyc10s">—</span></div>
+          <div class="cycle-row"><span>Positivas</span><span id="cycPos">0</span></div>
+          <div class="cycle-row"><span>Mejor ventana</span><span id="cycBest">—</span></div>
+          <div class="cycle-row"><span>Acuerdo</span><span id="cycAgree">—</span></div>
+        </div>
+      </div>
+
+      <!-- BACKTEST -->
+      <div class="card">
+        <h2>📈 Backtest en Tiempo Real</h2>
+        <div class="backtest-grid">
+          <div class="backtest-item"><div class="big text-accent" id="btSignals">0</div><div class="lbl">SEÑALES</div></div>
+          <div class="backtest-item"><div class="big text-green" id="btHits">0</div><div class="lbl">ACIERTO</div></div>
+          <div class="backtest-item"><div class="big text-red" id="btFails">0</div><div class="lbl">FALLO</div></div>
+        </div>
+        <div class="alert alert-info" style="margin-top:8px;">
+          Tasa observada: <strong id="btRate">--</strong>
+        </div>
+
+        <h3>Memoria Histórica por Dígito</h3>
+        <div class="math-map" id="memoryMap"></div>
+
+        <h3>Últimas Señales</h3>
+        <div id="lastSignals" style="font-size:.75rem; color:var(--text-1); max-height:120px; overflow-y:auto;">
+          Todavía no hay señales.
         </div>
       </div>
 
       <!-- LOG -->
       <div class="card">
-        <h2>REGISTRO DE EVENTOS</h2>
-        <div id="logBox" style="max-height:200px; overflow-y:auto; font-size:.78rem; font-family:monospace; color:var(--text-1);"></div>
+        <h2>📋 Registro de Eventos</h2>
+        <div class="log-box" id="logBox"></div>
       </div>
     </div>
   </div>
@@ -432,27 +655,33 @@
 
 <script>
 /* =========================================================
-   SCANNER AZUL v3 — Motor completo
+   SCANNER AZUL v4 — Motor completo con todas las mejoras
    ========================================================= */
 
-/* ---------- WEB WORKER INLINE (cálculos pesados) ---------- */
+/* ---------- WEB WORKER: cálculos pesados ---------- */
 const workerCode = `
-  // Estado
   let ticks = [];
-  let digitCounts = new Array(10).fill(0);
-  let windows20 = [], windows50 = [], windows100 = [];
+  let digitCounts = {
+    total: new Array(10).fill(0),
+    w20: new Array(10).fill(0),
+    w50: new Array(10).fill(0),
+    w100: new Array(10).fill(0)
+  };
+  let memoryByDigit = new Array(10).fill(0); // aciertos históricos por dígito
 
   function pushTick(digit) {
     ticks.push(digit);
-    digitCounts[digit]++;
+    digitCounts.total[digit]++;
+    if (ticks.length > 20) digitCounts.w20[ticks[ticks.length-21]]--;
+    digitCounts.w20[digit]++;
+    if (ticks.length > 50) digitCounts.w50[ticks[ticks.length-51]]--;
+    digitCounts.w50[digit]++;
+    if (ticks.length > 100) digitCounts.w100[ticks[ticks.length-101]]--;
+    digitCounts.w100[digit]++;
     if (ticks.length > 500) {
       const old = ticks.shift();
-      digitCounts[old]--;
+      digitCounts.total[old]--;
     }
-    // ventanas deslizantes
-    if (ticks.length >= 20) windows20.push([...ticks.slice(-20)]);
-    if (ticks.length >= 50) windows50.push([...ticks.slice(-50)]);
-    if (ticks.length >= 100) windows100.push([...ticks.slice(-100)]);
   }
 
   function computeStats() {
@@ -461,30 +690,39 @@ const workerCode = `
     const expected = n / 10;
     const ranking = [];
     for (let d = 0; d < 10; d++) {
-      const freq = digitCounts[d];
-      // Z-Score real: (obs - expected) / sqrt(expected)
+      const freq = digitCounts.total[d];
       const z = (freq - expected) / Math.sqrt(expected);
-      // Chi-cuadrado por dígito
       const chi = Math.pow(freq - expected, 2) / expected;
-      // Score ponderado: combina Z y frecuencia reciente
-      let score = 0;
-      if (windows100.length) score += freqInWindow(windows100[windows100.length-1], d) * 0.4;
-      if (windows50.length) score += freqInWindow(windows50[windows50.length-1], d) * 0.3;
-      if (windows20.length) score += freqInWindow(windows20[windows20.length-1], d) * 0.3;
-      score = score * 10 + Math.abs(z) * 2;
-      ranking.push({ d, freq, score: +score.toFixed(2), z: +z.toFixed(3), chi: +chi.toFixed(3) });
+      // Score ponderado: ventanas recientes valen más
+      const score =
+        (digitCounts.w100[d]/100) * 30 +
+        (digitCounts.w50[d]/50) * 30 +
+        (digitCounts.w20[d]/20) * 40 +
+        Math.abs(z) * 2;
+      // Calidad: estabilidad en ventanas
+      const w20r = digitCounts.w20[d] / 20;
+      const w50r = digitCounts.w50[d] / 50;
+      const w100r = digitCounts.w100[d] / 100;
+      const cal = 1 - (Math.abs(w20r - w100r) + Math.abs(w50r - w100r)) / 2;
+      ranking.push({
+        d, freq,
+        w20: digitCounts.w20[d],
+        w50: digitCounts.w50[d],
+        w100: digitCounts.w100[d],
+        score: +score.toFixed(2),
+        z: +z.toFixed(3),
+        chi: +chi.toFixed(3),
+        cal: +cal.toFixed(2)
+      });
     }
     ranking.sort((a,b) => b.score - a.score);
     return {
       ticks: n,
       ranking,
       chiTotal: ranking.reduce((s,r)=>s+r.chi,0),
-      best: ranking[0]
+      best: ranking[0],
+      memoryByDigit: [...memoryByDigit]
     };
-  }
-
-  function freqInWindow(arr, d) {
-    return arr.filter(x => x === d).length / arr.length;
   }
 
   self.onmessage = (e) => {
@@ -493,15 +731,22 @@ const workerCode = `
       pushTick(payload.digit);
       const stats = computeStats();
       if (stats) self.postMessage({ type: 'stats', payload: stats });
+    } else if (type === 'memory') {
+      memoryByDigit[payload.digit] += payload.delta;
     } else if (type === 'reset') {
-      ticks = []; digitCounts = new Array(10).fill(0);
-      windows20 = []; windows50 = []; windows100 = [];
+      ticks = [];
+      digitCounts = {
+        total: new Array(10).fill(0),
+        w20: new Array(10).fill(0),
+        w50: new Array(10).fill(0),
+        w100: new Array(10).fill(0)
+      };
+      memoryByDigit = new Array(10).fill(0);
     }
   };
 `;
 const workerBlob = new Blob([workerCode], { type: 'application/javascript' });
-const workerURL = URL.createObjectURL(workerBlob);
-const statsWorker = new Worker(workerURL);
+const statsWorker = new Worker(URL.createObjectURL(workerBlob));
 
 /* ---------- DERIV API con reconexión exponencial ---------- */
 class DerivAPI {
@@ -510,20 +755,17 @@ class DerivAPI {
     this.ws = null;
     this.reqId = 1;
     this.pending = new Map();
-    this.reconnectDelay = 1000;
-    this.maxDelay = 30000;
     this.handlers = {};
     this.closed = false;
+    this.reconnectDelay = 1000;
+    this.maxDelay = 30000;
   }
   connect() {
     return new Promise((resolve, reject) => {
       this.ws = new WebSocket('wss://api.derivws.com/trading/v1/options/ws/public');
       this.ws.onopen = async () => {
-        try {
-          // Conexión pública solo para recibir ticks; no autentica ni ejecuta operaciones.
-          this.reconnectDelay = 1000;
-          resolve({ loginid: 'PUBLIC-MARKET-DATA' });
-        } catch (e) { reject(e); }
+        this.reconnectDelay = 1000;
+        resolve({ loginid: 'PUBLIC-MARKET-DATA' });
       };
       this.ws.onmessage = (e) => {
         const data = JSON.parse(e.data);
@@ -535,9 +777,7 @@ class DerivAPI {
           this.handlers[data.msg_type].forEach(h => h(data));
         }
       };
-      this.ws.onclose = () => {
-        if (!this.closed) this._reconnect();
-      };
+      this.ws.onclose = () => { if (!this.closed) this._reconnect(); };
       this.ws.onerror = () => {};
     });
   }
@@ -547,7 +787,7 @@ class DerivAPI {
       this.connect().then(() => {
         log('✅ Reconectado', 'success');
         if (this.handlers['reconnect']) this.handlers['reconnect'].forEach(h => h());
-      }).catch(err => {
+      }).catch(() => {
         this.reconnectDelay = Math.min(this.reconnectDelay * 2, this.maxDelay);
         this._reconnect();
       });
@@ -565,149 +805,196 @@ class DerivAPI {
     if (!this.handlers[msgType]) this.handlers[msgType] = [];
     this.handlers[msgType].push(handler);
   }
-  close() {
-    this.closed = true;
-    if (this.ws) this.ws.close();
-  }
+  close() { this.closed = true; if (this.ws) this.ws.close(); }
 }
 
-/* ---------- AUDITORÍA DE TICKS ---------- */
+/* ---------- AUDITORÍA DE TICKS COMPLETA ---------- */
 class TickAuditor {
-  constructor() {
-    this.lastEpoch = 0;
-    this.lastPrice = null;
-    this.validCount = 0;
-    this.totalCount = 0;
-    this.errors = 0;
-  }
+  constructor() { this.reset(); }
   check(epoch, price) {
     this.totalCount++;
-    const latency = Math.abs(Date.now()/1000 - epoch);
-    const latencyMs = Math.round(latency * 1000);
+    const now = Date.now() / 1000;
+    const latencyMs = Math.round(Math.abs(now - epoch) * 1000);
+    const age = Math.round((now - epoch) * 1000);
+    const precision = price.toString().split('.')[1]?.length || 0;
+
     let ok = true;
     let reason = '';
+    let flowStatus = 'OK';
+
     if (this.lastEpoch && epoch <= this.lastEpoch) {
-      ok = false; reason = 'tick duplicado/atrasado';
+      ok = false; reason = 'duplicado/atrasado'; flowStatus = 'DUPLICADO';
+    } else if (this.lastEpoch && (epoch - this.lastEpoch) > 2) {
+      ok = false; reason = 'salto'; flowStatus = 'SALTO';
+    } else if (latencyMs > (window.maxLatency || 200)) {
+      ok = false; reason = `latencia ${latencyMs}ms`; flowStatus = 'LENTO';
+    } else if (precision < 1 || precision > 5) {
+      ok = false; reason = 'precisión inválida'; flowStatus = 'PRECISION';
     }
-    if (this.lastEpoch && (epoch - this.lastEpoch) > 2) {
-      ok = false; reason = 'salto de ticks';
-    }
-    if (latencyMs > (window.maxLatency || 200)) {
-      ok = false; reason = `latencia alta ${latencyMs}ms`;
-    }
+
     if (ok) {
       this.validCount++;
+      this.consecutiveValid++;
       this.lastEpoch = epoch;
       this.lastPrice = price;
+      this.lastDigit = this._lastDigit(price);
+      this.lastPrecision = precision;
+      this.lastAge = age;
+      this.lastLatency = latencyMs;
+      if (this.lastSeqDigit !== null) {
+        this.sequence = this.lastSeqDigit + ',' + this.lastDigit;
+      }
+      this.lastSeqDigit = this.lastDigit;
+      flowStatus = 'FLUYENDO';
     } else {
       this.errors++;
+      this.consecutiveValid = 0;
     }
-    return { ok, latencyMs, reason, integrity: (this.validCount/this.totalCount*100).toFixed(1) };
+
+    const liveConfirmed = this.consecutiveValid >= 5;
+    const integrity = this.totalCount > 0 ? (this.validCount/this.totalCount*100).toFixed(1) : '0.0';
+
+    return {
+      ok, reason, latencyMs, age, precision, flowStatus,
+      liveConfirmed,
+      integrity,
+      validCount: this.validCount,
+      consecutiveValid: this.consecutiveValid,
+      price: this.lastPrice,
+      digit: this.lastDigit,
+      sequence: this.sequence || '--'
+    };
+  }
+  _lastDigit(price) {
+    const s = price.toString();
+    return parseInt(s[s.length - 1]);
   }
   reset() {
-    this.lastEpoch = 0; this.lastPrice = null;
+    this.lastEpoch = 0; this.lastPrice = null; this.lastDigit = null;
     this.validCount = 0; this.totalCount = 0; this.errors = 0;
+    this.consecutiveValid = 0; this.lastSeqDigit = null; this.sequence = null;
+    this.lastLatency = 0; this.lastAge = 0; this.lastPrecision = 0;
   }
 }
 
-/* ---------- GESTOR DE RIESGO ---------- */
-class RiskManager {
+/* ---------- MOTOR DE SEGUNDOS ÓPTIMOS (S1-S10) ---------- */
+class SecondOptimizer {
   constructor() {
-    this.loadDaily();
-  }
-  loadDaily() {
-    const today = new Date().toDateString();
-    const saved = JSON.parse(localStorage.getItem('scanner_daily') || '{}');
-    if (saved.date !== today) {
-      this.daily = { date: today, pnl: 0, ops: 0, losingStreak: 0 };
-    } else {
-      this.daily = saved;
+    this.seconds = {};
+    for (let s = 1; s <= 10; s++) {
+      this.seconds[s] = { hits: 0, total: 0, blocked: false, blockedUntil: 0, losses: 0 };
     }
   }
-  save() {
-    localStorage.setItem('scanner_daily', JSON.stringify(this.daily));
+  recordResult(second, hit) {
+    const s = this.seconds[second];
+    if (s.blocked && Date.now() < s.blockedUntil) return;
+    if (s.blocked) { s.blocked = false; s.losses = 0; }
+    s.total++;
+    if (hit) { s.hits++; s.losses = 0; }
+    else { s.losses++; }
   }
-  recordTrade(pnl) {
-    this.daily.pnl += pnl;
-    this.daily.ops++;
-    if (pnl < 0) this.daily.losingStreak++;
-    else this.daily.losingStreak = 0;
-    this.save();
+  blockSecond(second, duration = 30*60*1000) {
+    this.seconds[second].blocked = true;
+    this.seconds[second].blockedUntil = Date.now() + duration;
   }
-  checkCircuitBreaker(limit) {
-    return this.daily.losingStreak >= limit;
+  getBestSecond() {
+    let best = null, bestRate = 0;
+    for (let s = 1; s <= 10; s++) {
+      const sec = this.seconds[s];
+      if (sec.blocked || sec.total < 3) continue;
+      const rate = sec.hits / sec.total;
+      if (rate > bestRate) { bestRate = rate; best = { second: s, rate, hits: sec.hits, total: sec.total }; }
+    }
+    return best;
   }
-  checkSL(limit) { return this.daily.pnl <= -limit; }
-  checkTP(limit) { return this.daily.pnl >= limit; }
+  getRandomAvailable() {
+    const available = [];
+    for (let s = 2; s <= 10; s++) {
+      const sec = this.seconds[s];
+      if (!sec.blocked || Date.now() >= sec.blockedUntil) available.push(s);
+    }
+    if (!available.length) return 2 + Math.floor(Math.random() * 9);
+    return available[Math.floor(Math.random() * available.length)];
+  }
+  getAllSeconds() {
+    return Object.entries(this.seconds).map(([s, data]) => ({
+      second: parseInt(s),
+      rate: data.total > 0 ? data.hits/data.total : 0,
+      total: data.total,
+      blocked: data.blocked && Date.now() < data.blockedUntil,
+      losses: data.losses
+    }));
+  }
   reset() {
-    this.daily = { date: new Date().toDateString(), pnl: 0, ops: 0, losingStreak: 0 };
-    this.save();
+    for (let s = 1; s <= 10; s++) {
+      this.seconds[s] = { hits: 0, total: 0, blocked: false, blockedUntil: 0, losses: 0 };
+    }
   }
 }
 
-/* ---------- COLA DE VOZ CON PRIORIDADES ---------- */
-class VoiceQueue {
-  constructor() {
-    this.queue = [];
-    this.speaking = false;
-    this.level = 1; // 0=silencio, 1=resumen, 2=completo
-    this.volume = 0.8;
-    this.priorities = { error: 10, trade: 5, signal: 3, info: 1 };
-  }
-  say(text, priority = 'info') {
-    if (this.level === 0) return;
-    if (this.level === 1 && priority === 'info') return;
-    this.queue.push({ text, priority: this.priorities[priority] || 1 });
-    this.queue.sort((a,b) => b.priority - a.priority);
-    if (!this.speaking) this._process();
-  }
-  _process() {
-    if (!this.queue.length) { this.speaking = false; return; }
-    this.speaking = true;
-    const item = this.queue.shift();
-    const u = new SpeechSynthesisUtterance(item.text);
-    u.lang = 'es-ES'; u.volume = this.volume; u.rate = 1.05;
-    u.onend = () => this._process();
-    u.onerror = () => this._process();
-    speechSynthesis.speak(u);
-  }
-}
-
-/* ---------- MOTOR MULTIVENTANA ---------- */
+/* ---------- MOTOR MULTIVENTANA CON PONDERACIÓN ---------- */
 class MultiWindowEngine {
   constructor() {
-    this.windows = { 4: {hits:0,fails:0}, 5: {hits:0,fails:0}, 7: {hits:0,fails:0}, 10: {hits:0,fails:0} };
-    this.active = null; // { start, digit, ctype }
+    this.windows = {
+      4: {hits:0,fails:0,candidate:null,score:0},
+      5: {hits:0,fails:0,candidate:null,score:0},
+      7: {hits:0,fails:0,candidate:null,score:0},
+      10: {hits:0,fails:0,candidate:null,score:0}
+    };
+    this.predictions = [];
+    this.lastCycle = null;
   }
-  startPrediction(digit, ctype) {
-    this.active = { start: Date.now(), digit, ctype, resolved: {4:false,5:false,7:false,10:false} };
+  startPrediction(digit, ctype, score, startEpoch) {
+    this.predictions.push({
+      startEpoch, digit, ctype, score,
+      resolved: {4:null,5:null,7:null,10:null},
+      firstHitAt: {4:null,5:null,7:null,10:null}
+    });
+    // Asignar candidato a cada ventana
+    for (const w of [4,5,7,10]) {
+      this.windows[w].candidate = digit;
+      this.windows[w].score = score;
+    }
   }
   evaluateTick(digit, epoch) {
-    if (!this.active) return;
-    const elapsed = (Date.now() - this.active.start) / 1000;
-    const match = this._matches(digit);
-    for (const w of [4,5,7,10]) {
-      if (!this.active.resolved[w] && elapsed >= w) {
-        if (match) this.windows[w].hits++;
-        else this.windows[w].fails++;
-        this.active.resolved[w] = true;
+    for (const pred of this.predictions) {
+      const elapsed = epoch - pred.startEpoch;
+      const match = this._matches(digit, pred.digit, pred.ctype);
+      for (const w of [4,5,7,10]) {
+        if (pred.resolved[w] === null && elapsed >= w) {
+          if (match) {
+            this.windows[w].hits++;
+            pred.resolved[w] = true;
+            pred.firstHitAt[w] = elapsed;
+          } else {
+            // seguir esperando, solo se resuelve al final de la ventana
+          }
+          if (elapsed >= w) {
+            if (pred.resolved[w] === null) {
+              this.windows[w].fails++;
+              pred.resolved[w] = false;
+            }
+          }
+        }
       }
     }
-    if (elapsed >= 10) this.active = null;
+    // Limpiar predicciones viejas
+    const old = this.predictions.filter(p => epoch - p.startEpoch >= 12);
+    if (old.length) {
+      this.lastCycle = old[old.length - 1];
+    }
+    this.predictions = this.predictions.filter(p => epoch - p.startEpoch < 12);
   }
-  _matches(digit) {
-    if (!this.active) return false;
-    const ctype = this.active.ctype;
-    const target = this.active.digit;
+  _matches(digit, target, ctype) {
     if (ctype === 'DIGITMATCH') return digit === target;
     if (ctype === 'DIGITEVEN') return digit % 2 === 0;
     if (ctype === 'DIGITODD') return digit % 2 === 1;
-    if (ctype === 'DIGITOVER') return digit > target;
-    if (ctype === 'DIGITUNDER') return digit <= target;
+    if (ctype === 'DIGITOVER') return digit > 4;
+    if (ctype === 'DIGITUNDER') return digit <= 4;
     return false;
   }
   getBestWindow() {
-    let best = null, bestRate = -1;
+    let best = null, bestScore = 0;
     for (const [w, s] of Object.entries(this.windows)) {
       const total = s.hits + s.fails;
       if (total < 3) continue;
@@ -715,13 +1002,32 @@ class MultiWindowEngine {
       // PONDERACIÓN: ventanas más cortas valen más
       const weight = (11 - parseInt(w)) / 10;
       const score = rate * weight;
-      if (score > bestRate) { bestRate = score; best = { w: w+'s', rate, hits: s.hits, fails: s.fails }; }
+      if (score > bestScore) { bestScore = score; best = { w: parseInt(w), rate, hits: s.hits, fails: s.fails, total }; }
     }
     return best;
   }
+  getStability() {
+    const rates = [];
+    for (const w of [4,5,7,10]) {
+      const s = this.windows[w];
+      const total = s.hits + s.fails;
+      if (total >= 3) rates.push(s.hits/total);
+    }
+    if (rates.length < 2) return '--';
+    const avg = rates.reduce((a,b)=>a+b,0) / rates.length;
+    const variance = rates.reduce((s,r)=>s+Math.pow(r-avg,2),0) / rates.length;
+    const stability = 1 - Math.sqrt(variance);
+    return (stability * 100).toFixed(0) + '%';
+  }
   reset() {
-    this.windows = { 4: {hits:0,fails:0}, 5: {hits:0,fails:0}, 7: {hits:0,fails:0}, 10: {hits:0,fails:0} };
-    this.active = null;
+    this.windows = {
+      4: {hits:0,fails:0,candidate:null,score:0},
+      5: {hits:0,fails:0,candidate:null,score:0},
+      7: {hits:0,fails:0,candidate:null,score:0},
+      10: {hits:0,fails:0,candidate:null,score:0}
+    };
+    this.predictions = [];
+    this.lastCycle = null;
   }
 }
 
@@ -779,24 +1085,101 @@ class OHLCChart {
       ctx.fillRect(x - cw*0.3, top, cw*0.6, h);
     });
   }
+  getCurrent() { return this.current; }
+  getCandleCount() { return this.candles.length; }
 }
 
-/* ---------- CONTROLADOR UI (throttled) ---------- */
+/* ---------- GESTOR DE RIESGO con localStorage ---------- */
+class RiskManager {
+  constructor() { this.loadDaily(); }
+  loadDaily() {
+    const today = new Date().toDateString();
+    const saved = JSON.parse(localStorage.getItem('scanner_v4_daily') || '{}');
+    this.daily = saved.date === today ? saved : { date: today, pnl: 0, ops: 0, losingStreak: 0 };
+  }
+  save() { localStorage.setItem('scanner_v4_daily', JSON.stringify(this.daily)); }
+  recordTrade(pnl) {
+    this.daily.pnl += pnl;
+    this.daily.ops++;
+    if (pnl < 0) this.daily.losingStreak++;
+    else this.daily.losingStreak = 0;
+    this.save();
+  }
+  reset() {
+    this.daily = { date: new Date().toDateString(), pnl: 0, ops: 0, losingStreak: 0 };
+    this.save();
+  }
+}
+
+/* ---------- COLA DE VOZ CON PRIORIDADES ---------- */
+class VoiceQueue {
+  constructor() {
+    this.queue = [];
+    this.speaking = false;
+    this.level = 1;
+    this.volume = 0.8;
+    this.clockEnabled = true;
+    this.priorities = { error: 10, trade: 5, signal: 3, info: 1 };
+  }
+  say(text, priority = 'info') {
+    if (this.level === 0) return;
+    if (this.level === 1 && priority === 'info') return;
+    this.queue.push({ text, priority: this.priorities[priority] || 1 });
+    this.queue.sort((a,b) => b.priority - a.priority);
+    if (!this.speaking) this._process();
+  }
+  _process() {
+    if (!this.queue.length) { this.speaking = false; return; }
+    this.speaking = true;
+    const item = this.queue.shift();
+    const u = new SpeechSynthesisUtterance(item.text);
+    u.lang = 'es-ES'; u.volume = this.volume; u.rate = 1.05;
+    u.onend = () => this._process();
+    u.onerror = () => this._process();
+    speechSynthesis.speak(u);
+  }
+}
+
+/* ---------- BACKTEST EN TIEMPO REAL ---------- */
+class Backtester {
+  constructor() {
+    this.signals = 0;
+    this.hits = 0;
+    this.fails = 0;
+    this.lastSignals = [];
+  }
+  recordSignal(digit, ctype, result) {
+    this.signals++;
+    if (result) this.hits++; else this.fails++;
+    this.lastSignals.unshift({
+      time: new Date().toLocaleTimeString(),
+      digit, ctype, result
+    });
+    if (this.lastSignals.length > 10) this.lastSignals.pop();
+  }
+  getRate() {
+    if (this.signals === 0) return '--';
+    return ((this.hits/this.signals)*100).toFixed(1) + '%';
+  }
+  reset() {
+    this.signals = 0; this.hits = 0; this.fails = 0; this.lastSignals = [];
+  }
+}
+
+/* ---------- UI CONTROLLER con throttling ---------- */
 class UIController {
   constructor() {
-    this.pendingUpdates = {};
+    this.pending = {};
     this.lastRender = 0;
-    this.renderInterval = 250; // 4 fps para el DOM pesado
+    this.interval = 200;
     this._loop();
   }
-  queue(key, fn) { this.pendingUpdates[key] = fn; }
+  queue(key, fn) { this.pending[key] = fn; }
   _loop() {
     const now = Date.now();
-    if (now - this.lastRender >= this.renderInterval) {
-      for (const fn of Object.values(this.pendingUpdates)) {
-        try { fn(); } catch(e) {}
-      }
-      this.pendingUpdates = {};
+    if (now - this.lastRender >= this.interval) {
+      for (const fn of Object.values(this.pending)) { try { fn(); } catch(e) {} }
+      this.pending = {};
       this.lastRender = now;
     }
     requestAnimationFrame(() => this._loop());
@@ -810,18 +1193,27 @@ class Bot {
     this.auditor = new TickAuditor();
     this.risk = new RiskManager();
     this.voice = new VoiceQueue();
+    this.seconds = new SecondOptimizer();
     this.windows = new MultiWindowEngine();
     this.chart = new OHLCChart(document.getElementById('chart'));
+    this.backtest = new Backtester();
     this.ui = new UIController();
     this.state = 'off';
-    this.currentDigit = null;
-    this.currentSecond = null;
-    this.rotation = { current: null, losses: 0, blockedUntil: 0 };
+    this.bestCandidate = null;
+    this.stats = null;
     this.settings = {};
+    this.tradeInProgress = false;
+    this.manualPrediction = null;
+    this.countdownTimer = null;
+    this.analysisReady = false;
     this._bindUI();
     this._bindWorker();
     this._loadSettings();
     this._updateRiskStats();
+    this._renderMathMap();
+    this._renderMemoryMap();
+    this._renderSecondsGrid();
+    log('🚀 Scanner Azul v4 inicializado', 'info');
   }
 
   _bindUI() {
@@ -834,11 +1226,16 @@ class Bot {
       };
     });
     document.getElementById('btnConnect').onclick = () => this.connect();
+    document.getElementById('btnAnalyze').onclick = () => this.analyze();
+    document.getElementById('btnPredict').onclick = () => this.predict();
     document.getElementById('btnStart').onclick = () => this.start();
     document.getElementById('btnStop').onclick = () => this.stop();
     document.getElementById('btnReset').onclick = () => this.reset();
+    document.getElementById('btnResetDaily').onclick = () => { this.risk.reset(); this._updateRiskStats(); log('🔄 Estadísticas diarias reiniciadas', 'info'); };
     document.getElementById('btnTestVoice').onclick = () => this.voice.say('Prueba de voz activada', 'info');
+    document.getElementById('btnResetWindows').onclick = () => { this.windows.reset(); this._renderWindows(); log('🔄 Ventanas reiniciadas', 'info'); };
     document.getElementById('voiceVol').oninput = (e) => this.voice.volume = parseFloat(e.target.value);
+    document.getElementById('chkVoiceClock').onchange = (e) => this.voice.clockEnabled = e.target.checked;
     document.querySelectorAll('input[name="voiceLvl"]').forEach(r => {
       r.onchange = () => { if (r.checked) this.voice.level = parseInt(r.value); };
     });
@@ -847,7 +1244,12 @@ class Bot {
   _bindWorker() {
     statsWorker.onmessage = (e) => {
       if (e.data.type === 'stats') {
+        this.stats = e.data.payload;
+        this.bestCandidate = e.data.payload.best;
         this.ui.queue('ranking', () => this._renderRanking(e.data.payload));
+        this.ui.queue('mathmap', () => this._renderMathMap(e.data.payload));
+        this.ui.queue('memorymap', () => this._renderMemoryMap(e.data.payload.memoryByDigit));
+        this.ui.queue('candidate', () => this._renderCandidate());
       }
     };
   }
@@ -856,11 +1258,13 @@ class Bot {
     this.settings = {
       asset: document.getElementById('selAsset').value,
       ctype: document.querySelector('input[name="ctype"]:checked').value,
+      mult: parseInt(document.querySelector('input[name="mult"]:checked').value),
       stake: parseFloat(document.getElementById('inpStake').value),
       latency: parseInt(document.querySelector('input[name="latency"]:checked').value),
       rotateAfter: parseInt(document.querySelector('input[name="rotate"]:checked').value),
       pause: parseInt(document.querySelector('input[name="pause"]:checked').value),
       opsPerSignal: parseInt(document.getElementById('inpOpsPerSignal').value),
+      minRate: parseInt(document.getElementById('inpMinRate').value) / 100,
       sl: parseFloat(document.getElementById('inpSL').value),
       tp: parseFloat(document.getElementById('inpTP').value),
       cb: parseInt(document.getElementById('inpCB').value),
@@ -869,7 +1273,6 @@ class Bot {
   }
 
   async connect() {
-    const token = document.getElementById('inpToken').value.trim();
     this._loadSettings();
     this.setStatus('learning', 'Conectando...');
     try {
@@ -877,8 +1280,9 @@ class Bot {
       const auth = await this.api.connect();
       log(`✅ Conectado como ${auth.loginid}`, 'success');
       this.setStatus('learning', 'Aprendiendo');
+      document.getElementById('btnAnalyze').disabled = false;
       document.getElementById('btnStart').disabled = true;
-      document.getElementById('btnStart').textContent = 'SOLO DATOS (BOT DESACTIVADO)';
+      document.getElementById('btnStart').textContent = 'BOT DESACTIVADO';
       this.voice.say('Conexión establecida', 'info');
       this.api.subscribe('reconnect', () => this._resubscribe());
       await this._subscribeTicks();
@@ -890,7 +1294,6 @@ class Bot {
   }
 
   async _subscribeTicks() {
-    // Registrar el manejador antes de suscribirse para no perder el primer tick.
     this.api.subscribe('tick', (data) => this._onTick(data.tick));
     await this.api.send({ ticks: this.settings.asset, subscribe: 1 });
   }
@@ -901,44 +1304,157 @@ class Bot {
 
   _onTick(tick) {
     const audit = this.auditor.check(tick.epoch, tick.quote);
-    // Throttle: actualizar ticker cada tick pero gráfico cada 1s
-    const second = Math.floor(tick.epoch);
+
+    // Ticker
     this.ui.queue('ticker', () => {
       document.getElementById('tkPrice').textContent = tick.quote.toFixed(2);
-      document.getElementById('tkDigit').textContent = this._lastDigit(tick.quote);
+      document.getElementById('tkDigit').textContent = audit.digit ?? '--';
       document.getElementById('tkLatency').textContent = audit.latencyMs + 'ms';
       document.getElementById('tkIntegrity').textContent = audit.integrity + '%';
     });
 
-    if (!audit.ok) {
-      log(`⚠️ ${audit.reason}`, 'warn');
-      return;
-    }
-    if (this.auditor.validCount >= 5 && this.state !== 'trading') {
-      this.setStatus('ready', 'LIVE · SOLO DATOS');
-    }
+    // Auditoría completa
+    this.ui.queue('audit', () => {
+      document.getElementById('audLive').textContent = audit.liveConfirmed ? '✅' : '⏳';
+      document.getElementById('audLive').className = 'v ' + (audit.liveConfirmed ? 'text-green' : 'text-yellow');
+      document.getElementById('audValid').textContent = audit.consecutiveValid + '/5';
+      document.getElementById('audLat').textContent = audit.latencyMs + 'ms';
+      document.getElementById('audFlow').textContent = audit.flowStatus;
+      document.getElementById('audPrice').textContent = audit.price?.toFixed(2) || '--';
+      document.getElementById('audDigit').textContent = audit.digit ?? '--';
+      document.getElementById('audPrec').textContent = audit.precision;
+      document.getElementById('audSeq').textContent = audit.sequence;
+      document.getElementById('audAge').textContent = audit.age + 'ms';
+      document.getElementById('audInt').textContent = audit.integrity + '%';
+    });
+
+    if (!audit.ok || !audit.liveConfirmed) return;
+
+    const digit = audit.digit;
+    this._evaluateManualPrediction(digit, tick.epoch);
+    const second = (tick.epoch % 10) + 1;
 
     // Worker stats
-    const digit = parseInt(this._lastDigit(tick.quote));
     statsWorker.postMessage({ type: 'tick', payload: { digit } });
 
-    // Gráfico OHLC
-    this.chart.update(tick.quote, second);
+    // Gráfico
+    this.chart.update(tick.quote, Math.floor(tick.epoch));
+    this.ui.queue('chart', () => {
+      const cur = this.chart.getCurrent();
+      if (cur) {
+        document.getElementById('chartPrice').textContent = tick.quote.toFixed(2);
+        document.getElementById('chartCandles').textContent = this.chart.getCandleCount();
+        document.getElementById('chartO').textContent = cur.o.toFixed(2);
+        document.getElementById('chartH').textContent = cur.h.toFixed(2);
+        document.getElementById('chartL').textContent = cur.l.toFixed(2);
+        document.getElementById('chartC').textContent = cur.c.toFixed(2);
+      }
+      document.getElementById('liveDot').textContent = '●';
+      document.getElementById('liveDot').className = 'text-green';
+    });
 
-    // Motor multiventana
+    // Multiventana
     this.windows.evaluateTick(digit, tick.epoch);
     this.ui.queue('windows', () => this._renderWindows());
+    this.ui.queue('cycle', () => this._renderCycleResult());
 
     // Bot activo
-    if (this.state === 'trading') this._botLogic(tick, digit, second);
+    if (this.state === 'trading' && !this.tradeInProgress) {
+      this._botLogic(tick, digit, second);
+    }
   }
 
-  _lastDigit(price) {
-    const s = price.toString();
-    return s[s.length - 1];
+  analyze() {
+    if (!this.stats || !this.bestCandidate) {
+      this.setSignal('⏳ REUNIENDO DATOS', 'wait');
+      log('⏳ Aún no hay suficientes ticks para analizar', 'warn');
+      return;
+    }
+    this._loadSettings();
+    this.analysisReady = true;
+    const b = this.bestCandidate;
+    document.getElementById('signalStatus').textContent = `🧠 ANÁLISIS LISTO · CANDIDATO D${b.d}`;
+    document.getElementById('signalStatus').className = 'signal-status wait';
+    document.getElementById('signalConf').textContent = 'PULSA PREDECIR';
+    document.getElementById('signalPerf').textContent = `${b.score} puntos`;
+    document.getElementById('signalRisk').textContent = 'EN EVALUACIÓN';
+    document.getElementById('signalCountdown').textContent = '--';
+    document.getElementById('btnPredict').disabled = false;
+    log(`🧠 Análisis listo: candidato D${b.d}, score ${b.score}`, 'info');
+  }
+
+  predict() {
+    if (!this.analysisReady || !this.bestCandidate) { this.analyze(); return; }
+    if (this.manualPrediction) return;
+    const b = this.bestCandidate;
+    const ctype = document.querySelector('input[name="ctype"]:checked').value;
+    const start = Math.floor(Date.now() / 1000);
+    this.manualPrediction = { digit: b.d, ctype, start, firstHit: null };
+    this.windows.startPrediction(b.d, ctype, b.score, start);
+    document.getElementById('signalStatus').textContent = `🟢 SEÑAL DE PRUEBA · DÍGITO ${b.d}`;
+    document.getElementById('signalStatus').className = 'signal-status go';
+    document.getElementById('signalSecond').textContent = 'OBSERVAR AHORA';
+    document.getElementById('signalConf').textContent = 'MANUAL';
+    document.getElementById('signalRisk').textContent = 'NO OPERAR';
+    document.getElementById('signalRisk').className = 'text-yellow';
+    this.voice.say(`Señal de prueba, dígito ${b.d}. Observa durante diez segundos`, 'signal');
+    log(`🎯 Señal manual de prueba: D${b.d} · ventana 10s`, 'success');
+    document.getElementById('btnPredict').disabled = true;
+    this.countdownTimer = setInterval(() => this._updateCountdown(), 200);
+    this._updateCountdown();
+  }
+
+  _matchesManual(digit, target, ctype) {
+    if (ctype === 'DIGITMATCH') return digit === target;
+    if (ctype === 'DIGITEVEN') return digit % 2 === 0;
+    if (ctype === 'DIGITODD') return digit % 2 === 1;
+    if (ctype === 'DIGITOVER') return digit > 4;
+    if (ctype === 'DIGITUNDER') return digit <= 4;
+    return false;
+  }
+
+  _evaluateManualPrediction(digit, epoch) {
+    const p = this.manualPrediction;
+    if (!p || p.firstHit !== null) return;
+    const elapsed = epoch - p.start;
+    if (elapsed >= 0 && elapsed <= 10 && this._matchesManual(digit, p.digit, p.ctype)) {
+      p.firstHit = elapsed;
+      document.getElementById('signalConf').textContent = `✅ COINCIDIÓ en S${Math.ceil(elapsed)}`;
+      document.getElementById('signalStatus').textContent = `✅ COINCIDENCIA · DÍGITO ${digit}`;
+      document.getElementById('signalStatus').className = 'signal-status go';
+      this.voice.say(`Coincidencia. Apareció el dígito ${digit}`, 'signal');
+      log(`✅ Primera coincidencia: D${digit} cuando quedaban ${Math.max(0, 10-Math.ceil(elapsed))}s`, 'success');
+    }
+  }
+
+  _updateCountdown() {
+    const p = this.manualPrediction;
+    if (!p) return;
+    const left = Math.max(0, 10 - (Date.now()/1000 - p.start));
+    document.getElementById('signalCountdown').textContent = left > 0 ? `${Math.ceil(left)} segundos` : 'CERRADA';
+    if (left <= 0) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = null;
+      if (p.firstHit === null) {
+        document.getElementById('signalStatus').textContent = '🔴 SIN COINCIDENCIA · ESPERAR';
+        document.getElementById('signalStatus').className = 'signal-status no';
+        document.getElementById('signalConf').textContent = 'NO COINCIDIÓ';
+        log('🔴 Ciclo cerrado sin coincidencia', 'warn');
+      }
+      this.manualPrediction = null;
+      this.analysisReady = false;
+      document.getElementById('btnPredict').disabled = true;
+    }
+  }
+
+  setSignal(text, cls) {
+    const el = document.getElementById('signalStatus');
+    el.textContent = text; el.className = 'signal-status ' + cls;
   }
 
   start() {
+    log('⛔ Bot automático desactivado en esta versión de prueba', 'warn');
+    return;
     this._loadSettings();
     this.state = 'trading';
     this.setStatus('trading', 'Operando');
@@ -960,115 +1476,179 @@ class Bot {
     this.stop();
     this.auditor.reset();
     this.risk.reset();
+    this.seconds.reset();
     this.windows.reset();
+    this.backtest.reset();
     statsWorker.postMessage({ type: 'reset' });
     this.chart.candles = []; this.chart.current = null; this.chart.draw();
+    this.bestCandidate = null; this.stats = null;
     this._updateRiskStats();
+    this._renderSecondsGrid();
+    this._renderWindows();
+    this._renderBacktest();
+    this._renderMathMap();
+    this._renderMemoryMap();
+    document.getElementById('mainDigit').textContent = '-';
+    document.getElementById('rankingBody').innerHTML = '';
     log('🔄 Sistema reiniciado', 'info');
   }
 
   async _botLogic(tick, digit, second) {
     // 1. Circuit breaker
-    if (this.risk.checkCircuitBreaker(this.settings.cb)) {
-      log(`⛔ Circuit breaker activado: ${this.risk.daily.losingStreak} pérdidas seguidas`, 'error');
+    if (this.risk.daily.losingStreak >= this.settings.cb) {
+      log(`⛔ Circuit breaker: ${this.risk.daily.losingStreak} pérdidas seguidas`, 'error');
       this.setStatus('blocked', 'Bloqueado');
-      this.voice.say('Circuit breaker activado, bot detenido', 'error');
-      this.stop();
-      return;
+      this.voice.say('Circuit breaker activado', 'error');
+      this.stop(); return;
     }
     // 2. SL / TP
-    if (this.risk.checkSL(this.settings.sl)) {
-      log(`🛑 Stop Loss alcanzado: $${this.risk.daily.pnl.toFixed(2)}`, 'error');
+    if (this.risk.daily.pnl <= -this.settings.sl) {
+      log(`🛑 Stop Loss: $${this.risk.daily.pnl.toFixed(2)}`, 'error');
       this.voice.say('Stop loss alcanzado', 'error');
       this.stop(); return;
     }
-    if (this.risk.checkTP(this.settings.tp)) {
-      log(`🎯 Take Profit alcanzado: $${this.risk.daily.pnl.toFixed(2)}`, 'success');
+    if (this.risk.daily.pnl >= this.settings.tp) {
+      log(`🎯 Take Profit: $${this.risk.daily.pnl.toFixed(2)}`, 'success');
       this.voice.say('Take profit alcanzado', 'info');
       this.stop(); return;
     }
 
-    // 3. Esperar a tener candidato estadístico
-    // (el worker nos lo notifica vía UI)
-    if (!this._bestCandidate) return;
+    // 3. Esperar candidato
+    if (!this.bestCandidate) return;
 
-    // 4. Rotación si hay racha perdedora
-    if (Date.now() < this.rotation.blockedUntil) return;
-    if (this.rotation.losses >= this.settings.rotateAfter) {
-      const newSecond = 2 + Math.floor(Math.random() * 9); // S2-S10
-      this.rotation.current = newSecond;
-      this.rotation.losses = 0;
-      this.rotation.blockedUntil = Date.now() + 30 * 60 * 1000;
-      log(`🔄 Rotación a segundo ${newSecond} (bloqueo 30min)`, 'warn');
-    }
-    if (!this.rotation.current) this.rotation.current = this._bestCandidate.second || 5;
+    // 4. Segundo óptimo
+    const bestSecond = this.seconds.getBestSecond();
+    const currentSecond = this.seconds.seconds[second];
+    if (currentSecond.blocked && Date.now() < currentSecond.blockedUntil) return;
 
-    // 5. ¿Estamos en el segundo óptimo?
-    const currentSec = new Date().getSeconds() % 10 + 1;
-    if (currentSec !== this.rotation.current) return;
+    // 5. Verificar condiciones
+    const bestWindow = this.windows.getBestWindow();
+    const candidateRate = bestSecond ? bestSecond.rate : 0;
+    const windowRate = bestWindow ? bestWindow.rate : 0;
 
-    // 6. Verificar mejor ventana
-    const best = this.windows.getBestWindow();
-    if (!best || best.rate < 0.55) return; // umbral mínimo
+    // Actualizar señal principal
+    this.ui.queue('signal', () => {
+      const statusEl = document.getElementById('signalStatus');
+      if (bestSecond && bestWindow && candidateRate >= this.settings.minRate && windowRate >= this.settings.minRate) {
+        statusEl.textContent = '🟢 ENTRADA CONFIRMADA';
+        statusEl.className = 'signal-status go';
+        document.getElementById('signalSecond').textContent = 'S' + bestSecond.second;
+        document.getElementById('signalConf').textContent = '✅';
+        document.getElementById('signalPerf').textContent = (candidateRate*100).toFixed(1) + '%';
+        document.getElementById('signalRisk').textContent = 'BAJO';
+        document.getElementById('signalRisk').className = 'v text-green';
+      } else {
+        statusEl.textContent = '🔴 NO ENTRAR';
+        statusEl.className = 'signal-status no';
+        document.getElementById('signalSecond').textContent = bestSecond ? 'S' + bestSecond.second : '--';
+        document.getElementById('signalConf').textContent = 'ESPERANDO';
+        document.getElementById('signalPerf').textContent = bestSecond ? (candidateRate*100).toFixed(1) + '%' : '--';
+        document.getElementById('signalRisk').textContent = 'ALTO';
+        document.getElementById('signalRisk').className = 'v text-red';
+      }
+      document.getElementById('mainBestWin').textContent = bestWindow ? bestWindow.w + 's' : '--';
+      document.getElementById('mainDiff').textContent = bestWindow ? ((bestWindow.rate - 0.5)*100).toFixed(1) + '%' : '--';
+      const entryScore = Math.round((candidateRate * 50 + windowRate * 50));
+      document.getElementById('mainScore').textContent = entryScore + '/100';
+      document.getElementById('mainStab').textContent = this.windows.getStability();
+      document.getElementById('mainEvid').textContent = bestSecond ? bestSecond.total + ' ops' : '--';
+      document.getElementById('mainAgree').textContent = (bestWindow && bestSecond) ? 'S' + bestSecond.second + '+' + bestWindow.w + 's' : '--';
+    });
 
-    // 7. Ejecutar operaciones
-    await this._executeTrades(this._bestCandidate.digit, best);
+    // 6. ¿Estamos en el segundo óptimo?
+    if (!bestSecond || second !== bestSecond.second) return;
+    if (!bestWindow || bestWindow.rate < this.settings.minRate) return;
+    if (candidateRate < this.settings.minRate) return;
+
+    // 7. Ejecutar
+    await this._executeTrades(this.bestCandidate.d, bestWindow.w, this.bestCandidate.score);
   }
 
-  async _executeTrades(digit, windowInfo) {
-    // Esta prueba conecta al mercado y recibe ticks, pero no ejecuta operaciones.
-    log('⛔ Operación bloqueada: modo de prueba solo lectura', 'warn');
-    return;
-    if (!this.api) return;
+  async _executeTrades(digit, duration, score) {
+    this.tradeInProgress = true;
+    if (!this.api) { this.tradeInProgress = false; return; }
     const ctype = this.settings.ctype;
     const stake = this.settings.stake;
+
     for (let i = 0; i < this.settings.opsPerSignal; i++) {
       try {
-        const proposal = await this.api.send({
+        const proposalReq = {
           proposal: 1,
           amount: stake,
           basis: 'stake',
           contract_type: ctype,
           currency: 'USD',
-          duration: parseInt(windowInfo.w),
+          duration: duration,
           duration_unit: 's',
-          symbol: this.settings.asset,
-          barrier: ctype === 'DIGITMATCH' || ctype === 'DIGITOVER' || ctype === 'DIGITUNDER' ? digit.toString() : undefined
-        });
+          symbol: this.settings.asset
+        };
+        if (ctype === 'DIGITMATCH') proposalReq.barrier = digit.toString();
+        if (ctype === 'DIGITOVER') proposalReq.barrier = '4';
+        if (ctype === 'DIGITUNDER') proposalReq.barrier = '4';
+
+        const proposal = await this.api.send(proposalReq);
         if (proposal.error) { log(`❌ ${proposal.error.message}`, 'error'); continue; }
+
         const buy = await this.api.send({ buy: proposal.proposal.id, price: stake });
         if (buy.error) { log(`❌ ${buy.error.message}`, 'error'); continue; }
-        log(`✅ Compra #${i+1}: ${ctype} dígito ${digit} ventana ${windowInfo.w}`, 'success');
-        this.voice.say(`Entrada confirmada, dígito ${digit}`, 'trade');
-        this.windows.startPrediction(digit, ctype);
-        // Esperar resultado
-        await this._waitForResult(buy.buy.contract_id, stake);
+
+        log(`✅ Compra #${i+1}: ${ctype} dígito ${digit} ventana ${duration}s`, 'success');
+        this.voice.say(`Entrada confirmada, dígito ${digit}, ventana ${duration} segundos`, 'trade');
+
+        const startEpoch = buy.buy.date_start || Math.floor(Date.now()/1000);
+        this.windows.startPrediction(digit, ctype, score, startEpoch);
+
+        await this._waitForResult(buy.buy.contract_id, stake, digit, ctype, startEpoch);
+
         if (i < this.settings.opsPerSignal - 1) await this._sleep(2500);
       } catch (e) {
         log(`❌ Error: ${e.message}`, 'error');
       }
     }
+
+    // Pausa entre ciclos
+    if (this.settings.pause > 0) await this._sleep(this.settings.pause * 1000);
+    this.tradeInProgress = false;
   }
 
-  _waitForResult(contractId, stake) {
+  _waitForResult(contractId, stake, digit, ctype, startEpoch) {
     return new Promise((resolve) => {
+      const second = (startEpoch % 10) + 1;
       const check = async () => {
-        const res = await this.api.send({ proposal_open_contract: 1, contract_id: contractId });
-        const c = res.proposal_open_contract;
-        if (c.is_sold || c.status === 'lost' || c.status === 'won') {
-          const pnl = c.profit;
-          this.risk.recordTrade(pnl);
-          if (pnl < 0) {
-            this.rotation.losses++;
-            log(`❌ Perdida: $${pnl.toFixed(2)} (racha: ${this.rotation.losses})`, 'error');
+        try {
+          const res = await this.api.send({ proposal_open_contract: 1, contract_id: contractId });
+          const c = res.proposal_open_contract;
+          if (c.is_sold) {
+            const pnl = c.profit;
+            const hit = pnl > 0;
+            this.risk.recordTrade(pnl);
+            this.seconds.recordResult(second, hit);
+            this.backtest.recordSignal(digit, ctype, hit);
+            statsWorker.postMessage({ type: 'memory', payload: { digit, delta: hit ? 1 : 0 } });
+            this.ui.queue('seconds', () => this._renderSecondsGrid());
+            this.ui.queue('backtest', () => this._renderBacktest());
+            this._updateRiskStats();
+
+            if (hit) {
+              log(`✅ Ganada: +$${pnl.toFixed(2)}`, 'success');
+              this.voice.say('Operación ganada', 'trade');
+            } else {
+              log(`❌ Perdida: $${pnl.toFixed(2)} (racha: ${this.risk.daily.losingStreak})`, 'error');
+              this.voice.say('Operación perdida', 'trade');
+              // Rotación
+              if (this.risk.daily.losingStreak >= this.settings.rotateAfter) {
+                this.seconds.blockSecond(second);
+                const newSecond = this.seconds.getRandomAvailable();
+                log(`🔄 Segundo S${second} bloqueado 30min. Rotando a S${newSecond}`, 'warn');
+                this.voice.say(`Segundo ${second} bloqueado, rotando`, 'signal');
+              }
+            }
+            resolve();
           } else {
-            this.rotation.losses = 0;
-            log(`✅ Ganada: +$${pnl.toFixed(2)}`, 'success');
+            setTimeout(check, 500);
           }
-          this._updateRiskStats();
-          resolve();
-        } else {
-          setTimeout(check, 500);
+        } catch (e) {
+          setTimeout(check, 1000);
         }
       };
       check();
@@ -1082,7 +1662,6 @@ class Bot {
     body.innerHTML = '';
     stats.ranking.forEach((r, i) => {
       const tr = document.createElement('tr');
-      // Color degradado en SCORE
       const maxScore = stats.ranking[0].score || 1;
       const intensity = Math.min(r.score / maxScore, 1);
       const bg = `rgba(16, 185, 129, ${intensity * 0.4})`;
@@ -1090,19 +1669,54 @@ class Bot {
         <td>${i+1}</td>
         <td style="font-weight:700">${r.d}</td>
         <td class="score-cell" style="background:${bg}">${r.score}</td>
-        <td>${r.freq}</td>
-        <td>${r.freq}</td>
-        <td>${r.freq}</td>
+        <td>${r.w20}</td>
+        <td>${r.w50}</td>
+        <td>${r.w100}</td>
         <td class="${r.z > 0 ? 'text-green' : 'text-red'}">${r.z}</td>
+        <td>${r.cal}</td>
       `;
       body.appendChild(tr);
     });
-    // Candidato principal
-    const best = stats.best;
-    document.getElementById('mainDigit').textContent = best.d;
-    document.getElementById('mainScore').textContent = best.score;
-    document.getElementById('mainZ').textContent = best.z;
-    this._bestCandidate = { digit: best.d, score: best.score, second: null };
+  }
+
+  _renderCandidate() {
+    if (!this.bestCandidate) return;
+    const b = this.bestCandidate;
+    document.getElementById('mainDigit').textContent = b.d;
+    document.getElementById('candScore').textContent = b.score;
+    document.getElementById('candQual').textContent = b.cal;
+    document.getElementById('candLastDigit').textContent = this.auditor.lastDigit ?? '—';
+    document.getElementById('candPrice').textContent = this.auditor.lastPrice?.toFixed(2) || '—';
+    const bestSecond = this.seconds.getBestSecond();
+    const adv = bestSecond ? (b.score * bestSecond.rate).toFixed(2) : '0.0';
+    document.getElementById('candAdv').textContent = adv;
+  }
+
+  _renderMathMap(stats) {
+    const container = document.getElementById('mathMap');
+    container.innerHTML = '';
+    for (let d = 0; d < 10; d++) {
+      const freq = stats ? stats.ranking.find(r => r.d === d)?.freq || 0 : 0;
+      const isHot = stats && d === stats.best.d;
+      const isCold = stats && d === stats.ranking[stats.ranking.length-1].d;
+      const cell = document.createElement('div');
+      cell.className = 'math-cell' + (isHot ? ' hot' : '') + (isCold ? ' cold' : '');
+      cell.innerHTML = `<div class="digit">${d}</div><div class="freq">${freq}</div>`;
+      container.appendChild(cell);
+    }
+  }
+
+  _renderMemoryMap(memory) {
+    const container = document.getElementById('memoryMap');
+    container.innerHTML = '';
+    const max = Math.max(...(memory || new Array(10).fill(0)), 1);
+    for (let d = 0; d < 10; d++) {
+      const v = memory ? memory[d] : 0;
+      const cell = document.createElement('div');
+      cell.className = 'math-cell';
+      cell.innerHTML = `<div class="digit">${d}</div><div class="freq">${v}/${max}</div>`;
+      container.appendChild(cell);
+    }
   }
 
   _renderWindows() {
@@ -1111,22 +1725,91 @@ class Bot {
       const total = s.hits + s.fails;
       const rate = total ? (s.hits/total*100).toFixed(1) : '--';
       document.getElementById(`w${w}Hit`).textContent = s.hits;
+      document.getElementById(`w${w}Fail`).textContent = s.fails;
       document.getElementById(`w${w}Rate`).textContent = rate + '%';
+      document.getElementById(`w${w}Cand`).textContent = 'Candidato: ' + (s.candidate ?? '—') + ' · Score: ' + (s.score?.toFixed(2) ?? '—');
+      const card = document.querySelector(`.window-card[data-w="${w}"]`);
+      const best = this.windows.getBestWindow();
+      card.classList.toggle('best', best && best.w === w);
     }
     const best = this.windows.getBestWindow();
-    document.getElementById('bestWindow').textContent = best ? best.w : '--';
-    document.getElementById('stability').textContent = best ? (best.rate*100).toFixed(1) + '%' : '--';
+    document.getElementById('bestWin').textContent = best ? best.w + 's' : '--';
+    document.getElementById('bestWinRate').textContent = best ? best.hits + '/' + best.total : '0 ciclos';
+    document.getElementById('bestWinStab').textContent = this.windows.getStability();
+    document.getElementById('bestWinDiag').textContent = best ? (best.rate >= 0.6 ? 'fuerte' : best.rate >= 0.5 ? 'moderado' : 'débil') : 'esperando muestras…';
+  }
+
+  _renderCycleResult() {
+    const c = this.windows.lastCycle;
+    if (!c) return;
+    document.getElementById('cycSignal').textContent = `D${c.digit} ${c.ctype}`;
+    document.getElementById('cyc4s').textContent = c.resolved[4] === true ? '✅' : c.resolved[4] === false ? '❌' : '—';
+    document.getElementById('cyc5s').textContent = c.resolved[5] === true ? '✅' : c.resolved[5] === false ? '❌' : '—';
+    document.getElementById('cyc7s').textContent = c.resolved[7] === true ? '✅' : c.resolved[7] === false ? '❌' : '—';
+    document.getElementById('cyc10s').textContent = c.resolved[10] === true ? '✅' : c.resolved[10] === false ? '❌' : '—';
+    const positives = [4,5,7,10].filter(w => c.resolved[w] === true).length;
+    document.getElementById('cycPos').textContent = positives;
+    const rates = [4,5,7,10].map(w => {
+      const s = this.windows.windows[w];
+      const total = s.hits + s.fails;
+      return total > 0 ? s.hits/total : 0;
+    });
+    const bestIdx = rates.indexOf(Math.max(...rates));
+    document.getElementById('cycBest').textContent = ['4s','5s','7s','10s'][bestIdx];
+    const agree = positives >= 3 ? 'ALTO' : positives >= 2 ? 'MEDIO' : 'BAJO';
+    document.getElementById('cycAgree').textContent = agree;
+  }
+
+  _renderSecondsGrid() {
+    const container = document.getElementById('secondsGrid');
+    container.innerHTML = '';
+    const allSeconds = this.seconds.getAllSeconds();
+    const best = this.seconds.getBestSecond();
+    allSeconds.forEach(s => {
+      const div = document.createElement('div');
+      div.className = 'second-item' + (best && best.second === s.second ? ' best' : '') + (s.blocked ? ' blocked' : '');
+      div.innerHTML = `
+        <div class="s-num">S${s.second}</div>
+        <div class="s-rate">${s.total > 0 ? (s.rate*100).toFixed(0) + '%' : '--'}</div>
+        <div class="s-ops">${s.total} ops</div>
+      `;
+      container.appendChild(div);
+    });
+    if (best) {
+      document.getElementById('bestMoment').textContent = 'S' + best.second;
+      document.getElementById('bestMomentRate').textContent = (best.rate*100).toFixed(1) + '%';
+    } else {
+      document.getElementById('bestMoment').textContent = 'APRENDIENDO';
+      document.getElementById('bestMomentRate').textContent = '--';
+    }
+  }
+
+  _renderBacktest() {
+    document.getElementById('btSignals').textContent = this.backtest.signals;
+    document.getElementById('btHits').textContent = this.backtest.hits;
+    document.getElementById('btFails').textContent = this.backtest.fails;
+    document.getElementById('btRate').textContent = this.backtest.getRate();
+    const container = document.getElementById('lastSignals');
+    if (this.backtest.lastSignals.length === 0) {
+      container.textContent = 'Todavía no hay señales.';
+    } else {
+      container.innerHTML = this.backtest.lastSignals.map(s =>
+        `<div style="padding:2px 0; border-bottom:1px dashed var(--border);">
+          ${s.time} · D${s.digit} · ${s.ctype} · <span class="${s.result ? 'text-green' : 'text-red'}">${s.result ? '✅' : '❌'}</span>
+        </div>`
+      ).join('');
+    }
   }
 
   _updateRiskStats() {
     document.getElementById('pnlToday').textContent = '$' + this.risk.daily.pnl.toFixed(2);
-    document.getElementById('opsToday').textContent = this.risk.daily.ops;
     document.getElementById('pnlToday').className = this.risk.daily.pnl >= 0 ? 'text-green' : 'text-red';
+    document.getElementById('opsToday').textContent = this.risk.daily.ops;
+    document.getElementById('streakToday').textContent = this.risk.daily.losingStreak;
   }
 
   setStatus(status, text) {
-    const b = document.getElementById('statusBeacon');
-    b.dataset.status = status;
+    document.getElementById('statusBeacon').dataset.status = status;
     document.getElementById('statusText').textContent = text;
   }
 }
@@ -1140,13 +1823,12 @@ function log(msg, type = 'info') {
   line.style.color = colors[type];
   line.textContent = `[${time}] ${msg}`;
   box.insertBefore(line, box.firstChild);
-  while (box.children.length > 50) box.removeChild(box.lastChild);
+  while (box.children.length > 60) box.removeChild(box.lastChild);
 }
 
 /* ---------- INIT ---------- */
 const bot = new Bot();
-log('🚀 Scanner Azul v3 inicializado', 'info');
-// Inicia automáticamente la conexión pública de solo lectura.
+// Conexión pública automática para prueba de señales, sin operar.
 setTimeout(() => bot.connect(), 300);
 </script>
 </body>
