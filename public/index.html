@@ -914,6 +914,9 @@ class Bot {
       log(`⚠️ ${audit.reason}`, 'warn');
       return;
     }
+    if (this.auditor.validCount >= 5 && this.state !== 'trading') {
+      this.setStatus('ready', 'LIVE · SOLO DATOS');
+    }
 
     // Worker stats
     const digit = parseInt(this._lastDigit(tick.quote));
@@ -1143,6 +1146,8 @@ function log(msg, type = 'info') {
 /* ---------- INIT ---------- */
 const bot = new Bot();
 log('🚀 Scanner Azul v3 inicializado', 'info');
+// Inicia automáticamente la conexión pública de solo lectura.
+setTimeout(() => bot.connect(), 300);
 </script>
 </body>
 </html>
