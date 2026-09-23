@@ -1761,11 +1761,19 @@ function registerTickSync(tick){
 /* ===== V23 · PUNTO DE ENTRADA PRECISO ===== */
 const ENTRY_MIN_SECOND=3; /* S1 y S2 eliminados: entrada solo desde S3 */
 function bestHistoricalTiming(){
+  /* V24.1: prioriza el historial del candidato actual. El historial global
+     queda como respaldo para no imponer un punto aprendido con otro dígito. */
+  try{
+    const candidate=window.getCandidateEntrySecond?.(pendingPrediction);
+    if(candidate){
+      return {second:candidate.sec,rate:candidate.rate*100,score:candidate.score,samples:candidate.attempts,source:'candidato'};
+    }
+  }catch(e){}
   /* Con rotación, el objetivo del panel es el segundo que el bot está usando */
   try{
     const r=getAdaptiveBestSecond();
     if(!r||r.wait||!r.informed)return null;
-    return {second:r.sec,rate:timingRate(r.stat),score:r.score,samples:r.stat.signals};
+    return {second:r.sec,rate:timingRate(r.stat),score:r.score,samples:r.stat.signals,source:'global'};
   }catch(e){}
   let best=null;
   timingStats.forEach((stat,index)=>{
@@ -1773,7 +1781,7 @@ function bestHistoricalTiming(){
     const score=timingScore(stat);
     if(!best||score>best.score||(score===best.score&&stat.signals>best.stat.signals))best={stat,index,score};
   });
-  return best?{second:best.index+1,rate:timingRate(best.stat),score:best.score,samples:best.stat.signals}:null;
+  return best?{second:best.index+1,rate:timingRate(best.stat),score:best.score,samples:best.stat.signals,source:'global'}:null;
 }
 /* Segundo activo según el RELOJ de la sesión (no según cuándo llegó el último tick).
    Antes, con ticks cada 2 s, el segundo objetivo podía no "existir" y el panel se quedaba desactualizado hasta 2 s. */
@@ -1833,7 +1841,7 @@ function entryPointEngine(activeSecond=0){
   const readyIfOnTarget=stable&&(onTarget?score:Math.min(100,score+10))>=68;
   const state=confirmed?'ENTRADA':preparing?'PREPARAR':(stable?'VALIDAR':'ESPERAR');
   entryGate={confirmed,bestSecond:target,bestWindow:bestWin?.w||null,confidence:qualityScore,historyRate:learned?.rate||null,gap:rawGap,score,state,falseRisk,stable,onTarget,readyIfOnTarget,sessionStart:sess?.startMs||null}; window.entryGate=entryGate;
-  return {p,learned,windows,bestWin,liveOk,latencyOk,sampleReady,qualityScore,rawGap,gapOk,timingReady,target,onTarget,readyIfOnTarget,preparing,validRates,windowConsensus,qualityScore,historyScore,windowScore,stabilityScore,evidenceScore,timingScore22,score,falseRisk,enoughWindows,stable,confirmed,state};
+  return {p,learned,windows,bestWin,liveOk,latencyOk,sampleReady,qualityScore,rawGap,gapNeed,gapOk,timingReady,target,onTarget,readyIfOnTarget,preparing,validRates,windowConsensus,qualityScore,historyScore,windowScore,stabilityScore,evidenceScore,timingScore22,score,falseRisk,enoughWindows,stable,confirmed,state};
 }
 function updateEntryPanel(activeSecond=0){
   activeSecond=entryClockSecond(activeSecond);
@@ -1847,7 +1855,7 @@ function updateEntryPanel(activeSecond=0){
   els.win.textContent=e.bestWin?`${e.bestWin.w}S · ${multiRate(e.bestWin.st).toFixed(1)}%`:'—';
   els.gap.textContent=e.p?(e.p.mode==='matches'?e.rawGap.toFixed(2):'CONF. BINARIA'):'—';
   els.conf.textContent=`CONFIRMACIÓN: ${Math.round(e.score)}/100 · ${e.state}${e.latencyOk?'':' · FLUJO RETRASADO'}`;
-  els.hist.textContent=e.learned?`RENDIMIENTO HISTÓRICO: ${e.learned.rate.toFixed(1)}% · ${e.learned.samples} muestras · MOMENTO APRENDIDO`:'RENDIMIENTO HISTÓRICO: AÚN APRENDIENDO';
+  els.hist.textContent=e.learned?`RENDIMIENTO HISTÓRICO: ${e.learned.rate.toFixed(1)}% · ${e.learned.samples} muestras · ${e.learned.source==='candidato'?'CANDIDATO ACTUAL':'MOTOR GLOBAL'} · MOMENTO APRENDIDO`:'RENDIMIENTO HISTÓRICO: AÚN APRENDIENDO';
   els.status.className='entry-status '+(e.confirmed?'green':(e.state==='PREPARAR'||e.state==='VALIDAR'?'yellow':'red'));
   els.status.textContent=e.confirmed?'🟢 ENTRADA · VALIDACIÓN COMPLETA':e.state==='PREPARAR'?'🟡 PREPARAR · PRÓXIMO SEGUNDO':e.state==='VALIDAR'?'🟡 VALIDAR · CONFLUENCIA ACTIVA':'🔴 ESPERAR · NO ENTRAR';
   els.panel.classList.toggle('entry-ready',e.confirmed);els.panel.classList.toggle('entry-wait',!e.confirmed);
@@ -2359,10 +2367,24 @@ function recordCandidateTiming(mode,candidate,second,hit){
 }
 function getCandidateBestSecond(pp){
   if(!pp)return null;const mode=pp.mode||timingMode(),candidate=mode==='matches'?pp.digit:mode;
-  const a=candidateTimingStats(mode,candidate), pool=a.map((x,i)=>({sec:i+1,attempts:x.attempts,hits:x.hits,rate:x.attempts?x.hits/x.attempts:0}))
-    .filter(x=>x.sec>=3&&x.attempts>=2).sort((x,y)=>y.hits-x.hits||y.rate-x.rate||y.attempts-x.attempts);
+  const a=candidateTimingStats(mode,candidate), base=mode==='matches'?0.10:0.50;
+  const wilson=(hits,total)=>{
+    if(!total)return 0;
+    const z=1.96,p=hits/total,z2=z*z,den=1+z2/total;
+    return Math.max(0,(p+z2/(2*total)-z*Math.sqrt((p*(1-p)+z2/(4*total))/total))/den);
+  };
+  const pool=a.map((x,i)=>{
+    const attempts=Number(x.attempts)||0,hits=Number(x.hits)||0,rate=attempts?hits/attempts:0;
+    const lower=wilson(hits,attempts),sampleSupport=Math.min(1,attempts/12);
+    /* El límite inferior y el soporte muestral evitan elegir un 2/2 afortunado. */
+    const score=Math.max(0,Math.min(100,lower*100*.75+rate*100*.15+sampleSupport*100*.10));
+    return {sec:i+1,attempts,hits,rate,lower,score};
+  }).filter(x=>x.sec>=3&&x.attempts>=5&&x.lower>base)
+    .sort((x,y)=>y.score-x.score||y.lower-x.lower||y.attempts-x.attempts||x.sec-y.sec);
   return pool[0]||null;
 }
+/* API compartida con el panel de entrada; mantiene panel y bot alineados. */
+window.getCandidateEntrySecond=getCandidateBestSecond;
 const candidateCloudLoaded={};
 async function mergeCloudCandidateTiming(asset){
   if(!asset||candidateCloudLoaded[asset])return; candidateCloudLoaded[asset]=true;
